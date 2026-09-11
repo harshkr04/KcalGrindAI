@@ -1,0 +1,251 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>Edit Food - Vitality</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=Roboto+Flex:wght@400;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#f8faf9",
+                        "surface-container-highest": "#e1e3e2",
+                        "on-secondary-container": "#327053",
+                        "on-tertiary-fixed": "#000866",
+                        "primary": "#0f5238",
+                        "secondary": "#2b694d",
+                        "on-primary-container": "#a8e7c5",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#95d4b3",
+                        "tertiary-fixed-dim": "#bdc2ff",
+                        "on-background": "#191c1c",
+                        "secondary-fixed-dim": "#94d4b1",
+                        "on-secondary-fixed-variant": "#0c5136",
+                        "outline-variant": "#bfc9c1",
+                        "surface-container-low": "#f2f4f3",
+                        "primary-fixed": "#b1f0ce",
+                        "surface-bright": "#f8faf9",
+                        "primary-container": "#2d6a4f",
+                        "secondary-container": "#b0f1cc",
+                        "surface-variant": "#e1e3e2",
+                        "surface-container-high": "#e6e9e8",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-container": "#d5d7ff",
+                        "on-secondary-fixed": "#002113",
+                        "on-primary-fixed-variant": "#0e5138",
+                        "surface-container": "#eceeed",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#002114",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#95d4b3",
+                        "on-surface": "#191c1c",
+                        "surface-tint": "#2c694e",
+                        "outline": "#707973",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#313c9f",
+                        "error": "#ba1a1a",
+                        "tertiary-container": "#4a55b9",
+                        "inverse-on-surface": "#eff1f0",
+                        "secondary-fixed": "#b0f1cc",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#303b9f",
+                        "surface-dim": "#d8dada",
+                        "on-surface-variant": "#404943",
+                        "background": "#f8faf9",
+                        "tertiary-fixed": "#dfe0ff",
+                        "inverse-surface": "#2e3131"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding": "20px",
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "margin-tablet": "24px",
+                        "stack-md": "16px",
+                        "margin-mobile": "16px",
+                        "stack-sm": "8px",
+                        "stack-lg": "32px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Roboto Flex"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "headline-lg-mobile": ["Roboto Flex"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Roboto Flex"],
+                        "label-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0.5px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "title-lg": ["22px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "500" }],
+                        "display-lg": ["57px", { "lineHeight": "64px", "letterSpacing": "-0.25px", "fontWeight": "400" }],
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Custom scrollbar for horizontal overflow */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Safe area padding for bottom nav/FABs */
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen antialiased flex flex-col md:max-w-screen-xl md:mx-auto">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-md flex items-center justify-between px-margin-mobile h-16 max-w-screen-xl mx-auto shadow-sm">
+<div class="flex items-center gap-4">
+<button class="p-2 -ml-2 rounded-full hover:bg-surface-variant/50 transition-colors text-on-surface">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-title-lg text-title-lg text-primary">Edit Food</h1>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 mt-16 px-margin-mobile py-stack-md md:px-margin-tablet pb-32">
+<!-- Food Header Image & Title -->
+<div class="relative w-full h-48 rounded-xl overflow-hidden mb-stack-lg shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Close up photography of a fresh, delicious looking slice of avocado toast on whole wheat bread, bright natural lighting, set on a clean marble countertop, conveying healthy modern nutrition, soft depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBi5Zw-jW7mLN6PJcNBp-lM_GwzK075__SJy5H5P7pRxF-52YQyN3UAke2qOE5AdFiy5-i2BpNECQ3-G8L2j7nYH5it1rg2Maj0dEF7d9VKLZ00FYwQEvNZvBahdkv8UyzHw0qN_JENK--JCWtYSQcFDxYnNRL-shIYKDpOFa_gu04GexOCTsWf1ubT-Iq_AVzw41OfzZAqXibbIoMM0CUHlf7ITiwUDp1-ojBDP5Ki0zu_g5HAap6h">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-4">
+<h2 class="font-title-lg text-title-lg text-white">Avocado Toast</h2>
+<p class="font-body-md text-body-md text-white/80">Café Style</p>
+</div>
+</div>
+<!-- Real-time Macros Display (Level 2 Elevation / Glass) -->
+<section class="bg-surface-container-low/60 backdrop-blur-sm border border-outline-variant/30 rounded-xl p-4 mb-stack-lg shadow-sm">
+<div class="flex justify-between items-center mb-4">
+<span class="font-label-lg text-label-lg text-on-surface-variant">Estimated Macros</span>
+<span class="font-title-lg text-title-lg text-primary" id="total-calories">320 kcal</span>
+</div>
+<div class="flex justify-between gap-2">
+<!-- Protein -->
+<div class="flex-1 flex flex-col items-center">
+<div class="w-full h-2 bg-surface-variant rounded-full mb-1 overflow-hidden">
+<div class="h-full bg-tertiary w-[30%]"></div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Protein</span>
+<span class="font-body-md text-body-md text-on-surface font-medium" id="macro-protein">12g</span>
+</div>
+<!-- Carbs -->
+<div class="flex-1 flex flex-col items-center">
+<div class="w-full h-2 bg-surface-variant rounded-full mb-1 overflow-hidden">
+<div class="h-full bg-secondary w-[45%]"></div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Carbs</span>
+<span class="font-body-md text-body-md text-on-surface font-medium" id="macro-carbs">34g</span>
+</div>
+<!-- Fat -->
+<div class="flex-1 flex flex-col items-center">
+<div class="w-full h-2 bg-surface-variant rounded-full mb-1 overflow-hidden">
+<div class="h-full bg-primary w-[25%]"></div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Fat</span>
+<span class="font-body-md text-body-md text-on-surface font-medium" id="macro-fat">15g</span>
+</div>
+</div>
+</section>
+<!-- Portion Adjustment -->
+<section class="mb-stack-lg">
+<h3 class="font-title-lg text-title-lg text-on-surface mb-stack-sm">Portion Size</h3>
+<div class="flex gap-4 mb-4">
+<!-- Quantity Input -->
+<div class="flex-1 relative">
+<label class="absolute top-2 left-3 font-label-sm text-label-sm text-on-surface-variant">Quantity</label>
+<input class="w-full h-14 pt-6 px-3 bg-primary/5 border-b-2 border-primary rounded-t-lg font-body-lg text-body-lg text-on-surface focus:outline-none focus:bg-primary/10 transition-colors" step="0.5" type="number" value="1">
+</div>
+<!-- Unit Select -->
+<div class="flex-[2] relative">
+<label class="absolute top-2 left-3 font-label-sm text-label-sm text-on-surface-variant">Unit</label>
+<select class="w-full h-14 pt-6 px-3 pb-0 bg-primary/5 border-b-2 border-primary rounded-t-lg font-body-lg text-body-lg text-on-surface focus:outline-none focus:bg-primary/10 transition-colors appearance-none">
+<option value="slice">Slice</option>
+<option value="gram">Grams (g)</option>
+<option value="serving">Serving</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-5 text-on-surface-variant pointer-events-none">arrow_drop_down</span>
+</div>
+</div>
+</section>
+<!-- Ingredients Adjustment -->
+<section class="mb-stack-lg">
+<div class="flex justify-between items-center mb-stack-sm">
+<h3 class="font-title-lg text-title-lg text-on-surface">Ingredients</h3>
+<button class="text-primary font-label-lg text-label-lg flex items-center gap-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined" style="font-size: 20px;">add</span> Add
+                </button>
+</div>
+<div class="flex flex-col gap-2">
+<!-- Ingredient Item 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-lg p-3 flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">bakery_dining</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface font-medium">Whole Wheat Bread</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">1 slice (40g)</p>
+</div>
+</div>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors rounded-full hover:bg-error-container/20">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+<!-- Ingredient Item 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-lg p-3 flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">eco</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface font-medium">Avocado, mashed</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">0.5 medium (50g)</p>
+</div>
+</div>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors rounded-full hover:bg-error-container/20">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Fixed Bottom Actions -->
+<div class="fixed bottom-0 left-0 w-full z-40 bg-surface/90 backdrop-blur-xl border-t border-outline-variant/30 p-4 pb-safe md:max-w-screen-xl md:left-1/2 md:-translate-x-1/2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<button class="w-full bg-primary text-on-primary font-label-lg text-label-lg rounded-full py-4 px-6 flex items-center justify-center gap-2 hover:bg-primary/90 active:scale-95 transition-all shadow-md shadow-primary/20">
+<span class="material-symbols-outlined" data-weight="fill">check_circle</span>
+            Save Log
+        </button>
+</div>
+</body></html>

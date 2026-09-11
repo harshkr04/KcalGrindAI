@@ -1,0 +1,110 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="#f8faf9" name="theme-color">
+<title>Saved Meals · Vitality</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="shared/theme.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Roboto+Flex:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="shared/vitality.css" rel="stylesheet">
+<script src="shared/store.js"></script>
+<script src="shared/nutrition.js"></script>
+<script src="shared/ui.js"></script>
+<script src="shared/diary.js"></script>
+</head>
+<!-- Saved Meals — Reusable meal templates. -->
+<body class="bg-background text-on-background min-h-screen flex flex-col items-center justify-start pb-24 relative overflow-x-hidden">
+<header class="w-full max-w-md mx-auto sticky top-0 z-50 glass-effect">
+<div class="flex items-center justify-between p-4 pb-2">
+<div class="flex items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">person</span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-medium" id="greeting">Good morning</p>
+<h2 class="font-title-lg text-[18px] text-on-surface font-bold leading-tight tracking-[-0.015em]">Saved Meals</h2>
+</div>
+</div>
+<button class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+
+<main class="w-full max-w-md mx-auto flex-1 px-container-padding flex flex-col gap-4 pt-4">
+  <div id="saved-list" class="flex flex-col gap-3"></div>
+  <div id="saved-empty" class="hidden w-full flex flex-col items-center gap-3 py-8 text-center">
+    <span class="material-symbols-outlined text-on-surface-variant text-[40px]">bookmark</span>
+    <p class="font-body-lg text-body-lg text-on-surface-variant">No saved meals yet.</p>
+    <p class="font-body-md text-body-md text-on-surface-variant/70">Save a meal from the Diary to reuse it later.</p>
+  </div>
+</main>
+
+<div class="fixed bottom-0 w-full max-w-md mx-auto z-40 bg-surface-bright pb-safe">
+<div class="flex gap-2 border-t border-surface-variant px-4 pb-3 pt-2">
+<a class="flex flex-1 flex-col items-center justify-end gap-1 rounded-full text-on-surface-variant" href="11_home.html">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">home</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Home</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-on-surface-variant" href="diary.html">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">book</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Diary</p>
+</a>
+<div class="flex-1"></div>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-on-surface-variant" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">bar_chart</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Insights</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-on-surface-variant" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">person</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Profile</p>
+</a>
+</div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var state = VF.store.get();
+    if (!state.completed) { location.replace('index.html'); return; }
+    var listEl = document.getElementById('saved-list');
+    var emptyEl = document.getElementById('saved-empty');
+    var h = new Date().getHours();
+    var greetEl = document.getElementById('greeting');
+    if (h < 12) greetEl.textContent = 'Good morning';
+    else if (h < 17) greetEl.textContent = 'Good afternoon';
+    else greetEl.textContent = 'Good evening';
+
+    var meals = VF.diary.getSavedMeals();
+    if (!meals.length) { emptyEl.classList.remove('hidden'); } else {
+      emptyEl.classList.add('hidden');
+      meals.forEach(function (meal) {
+        var card = document.createElement('div');
+        card.className = 'bg-surface-container-lowest rounded-2xl p-4 shadow-sm border border-surface-variant';
+        card.innerHTML =
+          '<div class="flex items-center justify-between">' +
+            '<div class="flex-1 min-w-0">' +
+              '<h3 class="font-title-lg text-title-lg text-on-surface truncate">' + meal.name + '</h3>' +
+              '<p class="font-body-md text-body-md text-on-surface-variant">' + meal.items.length + ' items · ' + VF.ui.fmt(meal.totalCalories) + ' kcal</p>' +
+            '</div>' +
+            '<button class="add-saved font-label-sm text-label-sm text-primary hover:underline" data-id="' + meal.id + '">Add</button>' +
+          '</div>';
+        card.querySelector('.add-saved').addEventListener('click', function () {
+          VF.ui.haptics.select();
+          VF.aiFood.saveExtraction({ source: 'saved_meal', items: meal.items.map(function (it) { return Object.assign({}, it); }), totalCalories: meal.totalCalories });
+          VF.ui.go('meal_confirm.html?mealType=' + meal.mealType + '&returnTo=' + encodeURIComponent('saved_meals.html'));
+        });
+        listEl.appendChild(card);
+      });
+    }
+  });
+</script>
+</body></html>

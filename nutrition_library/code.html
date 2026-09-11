@@ -1,0 +1,336 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Nutritional Education Library</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=Roboto+Flex:opsz,wght@8..144,400;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-container": "#b0f1cc",
+                      "on-secondary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "inverse-surface": "#2e3131",
+                      "outline": "#707973",
+                      "on-background": "#191c1c",
+                      "tertiary-container": "#4a55b9",
+                      "on-secondary-fixed-variant": "#0c5136",
+                      "inverse-primary": "#95d4b3",
+                      "primary-fixed-dim": "#95d4b3",
+                      "surface-container-lowest": "#ffffff",
+                      "inverse-on-surface": "#eff1f0",
+                      "on-tertiary": "#ffffff",
+                      "tertiary-fixed-dim": "#bdc2ff",
+                      "primary-fixed": "#b1f0ce",
+                      "error-container": "#ffdad6",
+                      "tertiary": "#313c9f",
+                      "surface": "#f8faf9",
+                      "on-surface-variant": "#404943",
+                      "surface-container-high": "#e6e9e8",
+                      "surface-bright": "#f8faf9",
+                      "on-tertiary-fixed": "#000866",
+                      "on-primary": "#ffffff",
+                      "on-secondary-fixed": "#002113",
+                      "surface-tint": "#2c694e",
+                      "primary-container": "#2d6a4f",
+                      "primary": "#0f5238",
+                      "on-primary-fixed": "#002114",
+                      "surface-container": "#eceeed",
+                      "background": "#f8faf9",
+                      "surface-container-highest": "#e1e3e2",
+                      "on-secondary-container": "#327053",
+                      "tertiary-fixed": "#dfe0ff",
+                      "secondary": "#2b694d",
+                      "on-surface": "#191c1c",
+                      "secondary-fixed": "#b0f1cc",
+                      "on-tertiary-container": "#d5d7ff",
+                      "on-error-container": "#93000a",
+                      "surface-variant": "#e1e3e2",
+                      "on-primary-fixed-variant": "#0e5138",
+                      "secondary-fixed-dim": "#94d4b1",
+                      "surface-container-low": "#f2f4f3",
+                      "outline-variant": "#bfc9c1",
+                      "surface-dim": "#d8dada",
+                      "error": "#ba1a1a",
+                      "on-primary-container": "#a8e7c5",
+                      "on-tertiary-fixed-variant": "#303b9f"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-lg": "32px",
+                      "container-padding": "20px",
+                      "margin-mobile": "16px",
+                      "stack-md": "16px",
+                      "stack-sm": "8px",
+                      "unit": "4px",
+                      "margin-tablet": "24px",
+                      "gutter": "16px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Roboto Flex"
+                      ],
+                      "headline-lg-mobile": [
+                              "Roboto Flex"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "title-lg": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Roboto Flex"
+                      ],
+                      "label-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "0.5px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.5px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "title-lg": [
+                              "22px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "57px",
+                              {
+                                      "lineHeight": "64px",
+                                      "letterSpacing": "-0.25px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-lg": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.1px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .glass-card {
+            background: linear-gradient(135deg, rgba(248, 250, 249, 0.9) 0%, rgba(248, 250, 249, 0.7) 100%);
+            box-shadow: 0 4px 24px -4px rgba(15, 82, 56, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+        
+        .chip-active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen pb-24 pt-16 font-body-md">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface-container/80 backdrop-blur-md shadow-sm">
+<div class="flex justify-between items-center px-container-padding h-16 w-full max-w-[840px] mx-auto">
+<div class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-surface-container-high border border-outline-variant/30">
+<img alt="User Profile Photo" class="w-full h-full object-cover" data-alt="A high-quality, professional headshot of an individual, framed closely. The lighting is soft and natural, suggesting a healthy lifestyle. The background is a subtle blur of light, airy tones, perhaps a well-lit kitchen or a bright outdoor space, keeping the focus entirely on the subject's face. The aesthetic is clean, modern, and aligned with a premium health application interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgN1AQF3so56aSt_v9ZQvfpVcKTwPrkrDXMliabA69t18t9yZJXPyu8DC1ppgAniFWLnRrMe9lDjep1N1BTFkpiqRN8jAcKNjxhji3Et2CZhzWEmxazutYbMTBaGsoqC8Sb-mGO3Z2fJ7-xcqMsEO9L7vdNB492mWdw6maNEx0vAYTB-ViggySmDU_tl0CzhlvHGPqUQk-WMiA1SIXSulCGYhZwoUywr65e9qQqrrfRj_jLzwOsyAq">
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary dark:text-primary-fixed-dim text-center flex-1">Nutritional Vitality</h1>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high/50 transition-colors text-primary dark:text-primary-fixed-dim active:scale-95 duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+</div>
+</header>
+<main class="w-full max-w-[840px] mx-auto px-margin-mobile md:px-margin-tablet pt-stack-md flex flex-col gap-stack-lg">
+<!-- Search & Filter Section -->
+<section class="flex flex-col gap-stack-md">
+<!-- Search Bar -->
+<div class="relative w-full">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+</div>
+<input class="w-full pl-12 pr-4 py-3 bg-surface-container-low border-none rounded-t-lg rounded-b-sm font-body-lg text-body-lg text-on-surface placeholder:text-on-surface-variant focus:ring-2 focus:ring-primary focus:bg-surface transition-colors" placeholder="Search articles, tips, recipes..." type="text">
+</div>
+<!-- Categories / Chips -->
+<div class="flex gap-unit overflow-x-auto no-scrollbar pb-2">
+<button class="flex-shrink-0 px-4 py-1.5 rounded-full font-label-lg text-label-lg bg-primary-container text-on-primary-container chip-active transition-transform">All</button>
+<button class="flex-shrink-0 px-4 py-1.5 rounded-full font-label-lg text-label-lg bg-surface border border-outline-variant text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-98">Macros</button>
+<button class="flex-shrink-0 px-4 py-1.5 rounded-full font-label-lg text-label-lg bg-surface border border-outline-variant text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-98">Recipes</button>
+<button class="flex-shrink-0 px-4 py-1.5 rounded-full font-label-lg text-label-lg bg-surface border border-outline-variant text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-98">Science</button>
+<button class="flex-shrink-0 px-4 py-1.5 rounded-full font-label-lg text-label-lg bg-surface border border-outline-variant text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-98">Dietary</button>
+</div>
+</section>
+<!-- Featured Article -->
+<section>
+<h2 class="font-title-lg text-title-lg text-on-surface mb-stack-sm">Featured Insight</h2>
+<div class="glass-card rounded-xl overflow-hidden cursor-pointer group">
+<div class="h-48 w-full relative">
+<div class="absolute inset-0 bg-cover bg-center w-full h-full transition-transform duration-500 group-hover:scale-105" data-alt="A close-up, high-quality photograph of a vibrant, healthy meal bowl. It features a colorful mix of quinoa, sliced avocados, roasted sweet potatoes, and leafy greens, sprinkled with seeds. The lighting is bright and natural, coming from the side to highlight the textures of the food. The scene is set on a light marble or clean white surface, conveying freshness, vitality, and high-end nutritional aesthetics." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCi-xG2dg2FqH4uGTaVMQgx5kxUxpxWRKxLPUBESKXCkgRGMWp1kASViAQ_0JEEGZgSHzWvmekbSo8GNGmwPH7h_FPQXEjvYWn6zc1uquVxooVgutfNOVZHpiTnGGSLmS1FWue5OfbSmZTvxOP6nrbgNmG6ozVAAsUHmN-TX9p_ZyNw7ipPZK8ZcbuHQe-M_XKdkVpSzAXjgRvfIG-CBiNXRFW2_UIXieJb7u_Tc1Egydx8OnO-gO6E')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+<div class="absolute bottom-4 left-4 right-4">
+<span class="inline-block px-2 py-1 bg-tertiary-container/90 text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider rounded backdrop-blur-sm mb-2">Science</span>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-white leading-tight">The Power of Magnesium in Recovery</h3>
+</div>
+</div>
+<div class="p-4 flex items-center justify-between">
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">Discover how this essential mineral plays a crucial role in muscle repair, sleep quality, and overall energy levels after intense workouts.</p>
+<span class="material-symbols-outlined text-primary ml-2 group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</div>
+</div>
+</section>
+<!-- Feed Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+<!-- Article Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/30 hover:shadow-md transition-shadow cursor-pointer flex md:flex-col">
+<div class="w-1/3 md:w-full h-28 md:h-40 relative flex-shrink-0">
+<img alt="Pre-workout Fuel" class="w-full h-full object-cover" data-alt="A stylized, top-down photograph of pre-workout ingredients arranged neatly on a clean, light surface. The composition includes a banana, a small cup of black espresso, a handful of almonds, and a sleek modern shaker bottle. The lighting is crisp and studio-quality, emphasizing clarity and energy, perfectly suited for a health and fitness editorial context." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCp60WQVTbPy1AzIeEaOdCDU1OcoBuYAgTOhPmXN53sQgwPdlzpGh0gRqNgLgiH118vqGsVukqn2Rl3oivMJ6RjCIyVB43KlaMA6snAbCuBl8F6E4evoA8_dnKGy0Z9PXdavH370oLpHEzZIH4O_zKRRfpUJzNXy6_6d_ZwEo5zfQO3oMkgW07p-0lVn_PK0Z0pGVnP7DaXHDPJ8OZWqtCwzT16FlXo40p9NU9VKgmQHw8g4SGkP1Ei">
+</div>
+<div class="p-4 flex flex-col justify-center flex-1">
+<span class="font-label-sm text-label-sm text-secondary mb-1">Macros</span>
+<h3 class="font-title-lg text-[18px] leading-[24px] text-on-surface mb-1 font-medium">Pre-workout Fuel: Timing is Everything</h3>
+<p class="font-body-md text-[13px] text-on-surface-variant line-clamp-2 mt-auto">Optimize your energy stores before hitting the gym with these macro-balanced snacks.</p>
+</div>
+</div>
+<!-- Article Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/30 hover:shadow-md transition-shadow cursor-pointer flex md:flex-col">
+<div class="w-1/3 md:w-full h-28 md:h-40 relative flex-shrink-0">
+<img alt="Antioxidants" class="w-full h-full object-cover" data-alt="A macro shot of vibrant blueberries and chia seeds resting in a smooth, creamy yogurt base. The focus is incredibly sharp on the texture of the seeds and the smooth skin of the berries, with a soft, shallow depth of field blurring the background. The color palette features deep blues, bright whites, and natural tones, radiating a sense of antioxidant-rich health and clean eating." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxVwAzBDOEmRK5QE6gz-k5tT9pRehD3-3WJPnZ-d5jzOEQBUkwJd-9v0MU1VKLezq9mX8KxQiBfEbnWBnMphcoIKFGfgUEcYceMtV1_c42PCwG8PUiWsnyLFlytgjSF3LFRNiMz6JmERa7F_iOmM6lvKqNDovv8fCBM1CEmp1unYPwPmbFUD-7tJZ8lOC7ga3ybIxrTNspJB0v-oKUvSuFH0a-DZbiFRnD4jGbhlatSr7pW8RHdLky">
+</div>
+<div class="p-4 flex flex-col justify-center flex-1">
+<span class="font-label-sm text-label-sm text-tertiary mb-1">Science</span>
+<h3 class="font-title-lg text-[18px] leading-[24px] text-on-surface mb-1 font-medium">Demystifying Antioxidants</h3>
+<p class="font-body-md text-[13px] text-on-surface-variant line-clamp-2 mt-auto">What they actually do in your body and the best whole-food sources to incorporate daily.</p>
+</div>
+</div>
+<!-- Article Card 3 -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/30 hover:shadow-md transition-shadow cursor-pointer flex md:flex-col">
+<div class="w-1/3 md:w-full h-28 md:h-40 relative flex-shrink-0">
+<img alt="Omega 3s" class="w-full h-full object-cover" data-alt="A beautifully plated piece of grilled wild salmon on a bed of dark leafy greens, drizzled with a light vinaigrette. The image is taken at a slight angle to show the flaky texture of the fish. The setting is bright and contemporary, utilizing natural window light to give the food a fresh, appetizing glow. The aesthetic is premium culinary photography focused on healthy fats." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBJMjX9nnV_lnBCc0pdGGXEEALZNhJWR6vEKkpC-vAqzBMNZ5vynBwLzLWU0QDI-Ur2ZxB4rACmIeUMeRjaimdXfuFm3yu1scJRj1n6ysoBVbNKis19WZ8m83vrLXWQv2dkHJ25yF_kIIXUquCns_1v7eh2DrT7W7iRV2Kt-GvTXm-c7syTDuDPhM7JF7a3x1GnRz0JOwslPpu-4syKJbcm6iFPH2OfXGWw9oNarNYWfVT4jAl4zt7">
+</div>
+<div class="p-4 flex flex-col justify-center flex-1">
+<span class="font-label-sm text-label-sm text-secondary mb-1">Recipes</span>
+<h3 class="font-title-lg text-[18px] leading-[24px] text-on-surface mb-1 font-medium">Omega-3 Rich Dinner Ideas</h3>
+<p class="font-body-md text-[13px] text-on-surface-variant line-clamp-2 mt-auto">Quick, 20-minute meals that pack a serious punch for brain health and inflammation reduction.</p>
+</div>
+</div>
+</section>
+<!-- Load More -->
+<div class="flex justify-center mt-stack-sm mb-stack-lg">
+<button class="px-6 py-2 rounded-full border border-outline-variant text-on-surface font-label-lg text-label-lg hover:bg-surface-container-low transition-colors">Load More Articles</button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-4 pt-2 bg-surface/90 dark:bg-surface-container-low/90 backdrop-blur-lg shadow-[0_-4px_12px_rgba(0,0,0,0.05)] z-50 rounded-t-xl md:hidden">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-highest/40 transition-all active:scale-90 duration-150 rounded-lg p-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-highest/40 transition-all active:scale-90 duration-150 rounded-lg p-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu_book</span>
+<span class="font-label-sm text-label-sm mt-1">Diary</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-highest/40 transition-all active:scale-90 duration-150 rounded-lg p-2 relative">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 0;">auto_awesome</span>
+<span class="font-label-sm text-label-sm mt-1 text-tertiary">AI Log</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-secondary-container dark:bg-primary-container text-on-secondary-container dark:text-on-primary-container rounded-full px-4 py-1.5 hover:bg-surface-container-highest/40 transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">insights</span>
+<span class="font-label-sm text-label-sm mt-1">Insights</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-highest/40 transition-all active:scale-90 duration-150 rounded-lg p-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profile</span>
+</button>
+</nav>
+<!-- Desktop Nav Replacement (Hidden on mobile, visible on md+) -->
+<div class="hidden md:flex fixed left-0 top-16 bottom-0 w-20 bg-surface border-r border-outline-variant/20 flex-col items-center py-stack-md gap-stack-md z-40">
+<button class="w-12 h-12 flex items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">home</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">menu_book</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors group">
+<span class="material-symbols-outlined text-tertiary group-hover:scale-110 transition-transform">auto_awesome</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-xl bg-secondary-container text-on-secondary-container group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" style="font-variation-settings: 'FILL' 1;">insights</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors group mt-auto">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">person</span>
+</button>
+</div>
+<!-- Adjust main content margin for desktop nav -->
+<style>
+        @media (min-width: 768px) {
+            main {
+                margin-left: 80px;
+                max-width: calc(840px - 80px);
+            }
+            header > div {
+                 max-width: calc(840px - 80px);
+            }
+        }
+    </style>
+</body></html>

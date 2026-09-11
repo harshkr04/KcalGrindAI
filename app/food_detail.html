@@ -1,0 +1,214 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="#f8faf9" name="theme-color">
+<title>Food Detail · Vitality</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="shared/theme.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Roboto+Flex:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="shared/vitality.css" rel="stylesheet">
+<script src="shared/store.js"></script>
+<script src="shared/nutrition.js"></script>
+<script src="shared/ui.js"></script>
+<script src="shared/diary.js"></script>
+</head>
+<!-- Food Detail — Serving selector, nutrition calculation, add to diary. -->
+<body class="bg-surface min-h-screen w-full flex flex-col font-body-lg text-on-background overflow-x-hidden antialiased pb-32">
+<div id="vf-header"></div>
+<main class="flex-1 flex flex-col px-container-padding pb-stack-lg relative z-10 max-w-md mx-auto w-full vf-screen">
+  <div class="flex items-center justify-between mb-stack-md">
+    <div>
+      <h1 id="food-name" class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-tight">Food Name</h1>
+      <p id="food-brand" class="font-body-md text-body-md text-on-surface-variant">Brand</p>
+    </div>
+    <button id="fav-btn" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors">
+      <span class="material-symbols-outlined">star_border</span>
+    </button>
+  </div>
+
+  <!-- Serving Selector -->
+  <div class="glass-card rounded-xl p-4 mb-stack-md">
+    <div class="flex items-center justify-between mb-3">
+      <span class="font-label-lg text-label-lg text-on-surface">Serving size</span>
+      <div class="flex items-center gap-2">
+        <button id="serving-minus" class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface hover:bg-surface-container-highest transition-colors">-</button>
+        <span id="serving-value" class="font-body-lg text-body-lg text-on-surface w-20 text-center">1x</span>
+        <button id="serving-plus" class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface hover:bg-surface-container-highest transition-colors">+</button>
+      </div>
+    </div>
+    <p id="serving-label" class="font-body-md text-body-md text-on-surface-variant">1 serving</p>
+    <div class="mt-3">
+      <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">Unit</label>
+      <select id="unit-select" class="w-full bg-surface-container-highest/50 rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface border border-outline-variant/20 focus:border-primary focus:outline-none">
+        <option value="g">grams (g)</option>
+        <option value="oz">ounces (oz)</option>
+        <option value="cup">cups</option>
+        <option value="piece">pieces</option>
+        <option value="serving">servings</option>
+        <option value="tbsp">tablespoons</option>
+        <option value="tsp">teaspoons</option>
+      </select>
+    </div>
+    <div class="mt-3">
+      <label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">Quantity</label>
+      <input id="qty-input" type="number" inputmode="decimal" class="w-full bg-surface-container-highest/50 rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface border border-outline-variant/20 focus:border-primary focus:outline-none" value="1" min="0.1" step="0.1">
+    </div>
+  </div>
+
+  <!-- Nutrition -->
+  <div class="grid grid-cols-2 gap-3 mb-stack-lg">
+    <div class="bg-surface-container-low rounded-xl p-4 text-center border border-outline-variant/20">
+      <span id="detail-cal" class="font-headline-lg-mobile text-headline-lg-mobile text-primary block">0</span>
+      <span class="font-label-sm text-label-sm text-on-surface-variant">kcal</span>
+    </div>
+    <div class="bg-surface-container-low rounded-xl p-4 text-center border border-outline-variant/20">
+      <span id="detail-protein" class="font-headline-lg-mobile text-headline-lg-mobile text-secondary block">0g</span>
+      <span class="font-label-sm text-label-sm text-on-surface-variant">Protein</span>
+    </div>
+    <div class="bg-surface-container-low rounded-xl p-4 text-center border border-outline-variant/20">
+      <span id="detail-carbs" class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface block">0g</span>
+      <span class="font-label-sm text-label-sm text-on-surface-variant">Carbs</span>
+    </div>
+    <div class="bg-surface-container-low rounded-xl p-4 text-center border border-outline-variant/20">
+      <span id="detail-fat" class="font-headline-lg-mobile text-headline-lg-mobile text-tertiary block">0g</span>
+      <span class="font-label-sm text-label-sm text-on-surface-variant">Fat</span>
+    </div>
+  </div>
+
+  <!-- Meal Type Selector -->
+  <div class="mb-stack-md">
+    <label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2 block">Add to meal</label>
+    <div id="meal-type-options" class="grid grid-cols-4 gap-2"></div>
+  </div>
+</main>
+
+<div class="vf-footer">
+  <div class="absolute inset-0 bg-gradient-to-t from-surface via-surface/90 to-transparent pointer-events-none"></div>
+  <div class="relative max-w-md mx-auto px-container-padding pt-8 pb-8 pb-safe flex flex-col gap-3">
+    <button id="add-to-diary" class="vf-cta w-full py-4 rounded-full bg-tertiary text-on-tertiary font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-tertiary/90 active:scale-95 transition-all shadow-md shadow-tertiary/20">
+      <span class="material-symbols-outlined text-[20px]">add_circle</span> Add to Diary
+    </button>
+    <button id="back-btn" class="w-full py-3 rounded-full border-[1.5px] border-outline-variant/30 text-on-surface-variant font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-surface-container-high active:scale-95 transition-all">
+      Back
+    </button>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var state = VF.ui.initScreen('food_detail', { title: 'Food Detail', allowCompleted: true });
+    if (!state) return;
+
+    var foodId = VF.ui.qp('id');
+    var foodType = VF.ui.qp('type') || 'food';
+    var returnTo = VF.ui.qp('returnTo') || 'food_search.html';
+    var mealType = VF.ui.qp('mealType') || VF.diary.suggestMealType();
+    var food = null;
+
+    if (foodType === 'food') {
+      food = VF.diary.getFoodById(foodId) || VF.diary.getCustomFoods().find(function (f) { return f.id === foodId; });
+    } else if (foodType === 'custom') {
+      food = VF.diary.getCustomFoods().find(function (f) { return f.id === foodId; });
+    }
+
+    if (!food) {
+      VF.ui.go('food_search.html');
+      return;
+    }
+
+    var selectedMealType = mealType;
+    var servingMult = 1;
+    var currentQty = 1;
+    var currentUnit = 'g';
+
+    var nameEl = document.getElementById('food-name');
+    var brandEl = document.getElementById('food-brand');
+    var favBtn = document.getElementById('fav-btn');
+    var servingValue = document.getElementById('serving-value');
+    var servingLabel = document.getElementById('serving-label');
+    var unitSelect = document.getElementById('unit-select');
+    var qtyInput = document.getElementById('qty-input');
+    var detailCal = document.getElementById('detail-cal');
+    var detailProtein = document.getElementById('detail-protein');
+    var detailCarbs = document.getElementById('detail-carbs');
+    var detailFat = document.getElementById('detail-fat');
+    var mealTypeContainer = document.getElementById('meal-type-options');
+    var addBtn = document.getElementById('add-to-diary');
+    var backBtn = document.getElementById('back-btn');
+
+    function updateNutrition() {
+      var factor = servingMult * currentQty;
+      var cal = Math.round((food.calories || 0) * factor);
+      var prot = Math.round((food.protein || 0) * factor * 10) / 10;
+      var carbs = Math.round((food.carbs || 0) * factor * 10) / 10;
+      var fat = Math.round((food.fat || 0) * factor * 10) / 10;
+      detailCal.textContent = VF.ui.fmt(cal);
+      detailProtein.textContent = prot + 'g';
+      detailCarbs.textContent = carbs + 'g';
+      detailFat.textContent = fat + 'g';
+    }
+
+    function renderMealTypes() {
+      mealTypeContainer.innerHTML = '';
+      VF.diary.MEAL_TYPES.forEach(function (mt) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        var on = mt.id === selectedMealType;
+        btn.className = 'py-2 px-3 rounded-full font-label-lg text-label-lg transition-all border ' + (on ? 'bg-primary text-on-primary border-primary' : 'bg-surface-container-low text-on-surface-variant border-outline-variant/30 hover:border-outline-variant');
+        btn.innerHTML = '<span class="material-symbols-outlined text-[18px]" style="font-variation-settings:\'FILL\' 1;">' + mt.icon + '</span> ' + mt.label;
+        btn.addEventListener('click', function () {
+          selectedMealType = mt.id;
+          renderMealTypes();
+          VF.ui.haptics.select();
+        });
+        mealTypeContainer.appendChild(btn);
+      });
+    }
+
+    nameEl.textContent = food.name;
+    brandEl.textContent = food.brand || 'Generic';
+    servingValue.textContent = servingMult + 'x';
+    servingLabel.textContent = servingMult === 1 ? food.serving : servingMult + 'x ' + food.serving;
+    unitSelect.value = currentUnit;
+    qtyInput.value = currentQty;
+    updateNutrition();
+    renderMealTypes();
+
+    var fav = VF.diary.isFavorite(food.id, foodType);
+    favBtn.querySelector('.material-symbols-outlined').textContent = fav ? 'star' : 'star_border';
+    favBtn.querySelector('.material-symbols-outlined').style.fontVariationSettings = "'FILL' " + (fav ? '1' : '0');
+
+    document.getElementById('serving-plus').addEventListener('click', function () { servingMult++; servingValue.textContent = servingMult + 'x'; servingLabel.textContent = servingMult === 1 ? food.serving : servingMult + 'x ' + food.serving; updateNutrition(); VF.ui.haptics.select(); });
+    document.getElementById('serving-minus').addEventListener('click', function () { if (servingMult > 1) { servingMult--; servingValue.textContent = servingMult + 'x'; servingLabel.textContent = servingMult === 1 ? food.serving : servingMult + 'x ' + food.serving; updateNutrition(); } VF.ui.haptics.select(); });
+    qtyInput.addEventListener('input', function () { currentQty = parseFloat(qtyInput.value) || 1; updateNutrition(); });
+    unitSelect.addEventListener('change', function () { currentUnit = unitSelect.value; updateNutrition(); });
+    favBtn.addEventListener('click', function () {
+      var isFav = VF.diary.toggleFavorite({ id: food.id, type: foodType, name: food.name });
+      var icon = favBtn.querySelector('.material-symbols-outlined');
+      icon.textContent = isFav ? 'star' : 'star_border';
+      icon.style.fontVariationSettings = "'FILL' " + (isFav ? '1' : '0');
+      VF.ui.haptics.select();
+    });
+    addBtn.addEventListener('click', function () {
+      VF.ui.haptics.confirm();
+      var factor = servingMult * currentQty;
+      var item = {
+        id: uid(),
+        name: food.name,
+        brand: food.brand || '',
+        serving: servingMult === 1 && currentQty === 1 ? food.serving : currentQty + ' ' + currentUnit + ' (' + food.serving + ')',
+        servingGrams: Math.round((food.servingGrams || 100) * factor),
+        calories: Math.round((food.calories || 0) * factor),
+        protein: Math.round((food.protein || 0) * factor * 10) / 10,
+        carbs: Math.round((food.carbs || 0) * factor * 10) / 10,
+        fat: Math.round((food.fat || 0) * factor * 10) / 10,
+        fiber: Math.round((food.fiber || 0) * factor * 10) / 10
+      };
+      VF.aiFood.saveExtraction({ source: 'search', items: [item], totalCalories: item.calories });
+      VF.ui.go('meal_confirm.html?mealType=' + selectedMealType + '&returnTo=' + encodeURIComponent(returnTo));
+    });
+    backBtn.addEventListener('click', function () { VF.ui.haptics.select(); VF.ui.goBack('food_detail'); });
+  });
+</script>
+</body></html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>NutriVitality AI - AI Hub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=Roboto+Flex:wght@400;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-container": "#b0f1cc",
+                      "inverse-primary": "#95d4b3",
+                      "surface-container-high": "#e6e9e8",
+                      "primary-container": "#2d6a4f",
+                      "surface-bright": "#f8faf9",
+                      "on-primary-fixed": "#002114",
+                      "outline": "#707973",
+                      "on-error": "#ffffff",
+                      "primary": "#0f5238",
+                      "on-background": "#191c1c",
+                      "on-surface-variant": "#404943",
+                      "surface-container-highest": "#e1e3e2",
+                      "on-error-container": "#93000a",
+                      "surface": "#f8faf9",
+                      "on-tertiary-fixed": "#000866",
+                      "inverse-surface": "#2e3131",
+                      "on-tertiary-fixed-variant": "#303b9f",
+                      "secondary-fixed-dim": "#94d4b1",
+                      "on-primary-fixed-variant": "#0e5138",
+                      "tertiary-fixed": "#dfe0ff",
+                      "tertiary": "#313c9f",
+                      "on-secondary-fixed-variant": "#0c5136",
+                      "on-primary-container": "#a8e7c5",
+                      "surface-tint": "#2c694e",
+                      "primary-fixed": "#b1f0ce",
+                      "surface-dim": "#d8dada",
+                      "on-tertiary": "#ffffff",
+                      "error": "#ba1a1a",
+                      "secondary": "#2b694d",
+                      "background": "#f8faf9",
+                      "tertiary-fixed-dim": "#bdc2ff",
+                      "tertiary-container": "#4a55b9",
+                      "outline-variant": "#bfc9c1",
+                      "on-primary": "#ffffff",
+                      "on-secondary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "surface-container": "#eceeed",
+                      "secondary-fixed": "#b0f1cc",
+                      "primary-fixed-dim": "#95d4b3",
+                      "on-surface": "#191c1c",
+                      "on-secondary-fixed": "#002113",
+                      "surface-container-low": "#f2f4f3",
+                      "surface-variant": "#e1e3e2",
+                      "on-tertiary-container": "#d5d7ff",
+                      "on-secondary-container": "#327053",
+                      "surface-container-lowest": "#ffffff",
+                      "inverse-on-surface": "#eff1f0"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "container-padding": "20px",
+                      "gutter": "16px",
+                      "margin-mobile": "16px",
+                      "stack-sm": "8px",
+                      "margin-tablet": "24px",
+                      "stack-lg": "32px",
+                      "stack-md": "16px"
+              },
+              "fontFamily": {
+                      "label-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Roboto Flex"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "title-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Roboto Flex"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Roboto Flex"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "label-lg": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.1px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "title-lg": [
+                              "22px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-sm": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.5px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "57px",
+                              {
+                                      "lineHeight": "64px",
+                                      "letterSpacing": "-0.25px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "0.5px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .liquid-glass {
+            background: rgba(248, 250, 249, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 30px rgba(15, 82, 56, 0.05);
+        }
+        .ai-gradient-bg {
+            background: radial-gradient(circle at 0% 0%, rgba(176, 241, 204, 0.2) 0%, transparent 50%),
+                        radial-gradient(circle at 100% 100%, rgba(223, 224, 255, 0.2) 0%, transparent 50%);
+        }
+        
+        /* Hide scrollbar for horizontal scroll */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background ai-gradient-bg min-h-screen pb-24 font-sans selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-md fixed top-0 w-full z-50 flex items-center justify-between px-margin-mobile h-16 w-full">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-variant flex-shrink-0 cursor-pointer hover:ring-2 ring-primary transition-all duration-200">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A highly detailed close-up portrait of a health-conscious person with a soft, glowing complexion, smiling gently. The background is a clean, abstract blur of soft greens and whites, fitting the app's modern, light-mode AI aesthetic. The lighting is natural and flattering." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbnv6XNccRIuChKm9MFSKQgeFpj3_Sty_i2JQoPr0Go4xquppfBpCcwhpX5IlSNPjd1b3uN5QdY_5KTqmGPzWxIjF0kiSN2D1BBK2tGyWDDcD27VjFPwDAl4vsC4vY7MrC9I5whB4qr8nF-Zp6g9YEcbL-jAUN7Gj-rgRprqrgNxlRABychPuFd12UkE9f2H0GjtEfxk_AiYkKcy_8nG3c-gD3G7BfZycG4VfvKnsoqpjnmV9sC7f8">
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary dark:text-primary-fixed tracking-tight">NutriVitality AI</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant/50 transition-colors active:scale-95 duration-200 text-on-surface-variant">
+<span class="material-symbols-outlined text-[24px]">settings</span>
+</button>
+</header>
+<!-- Main Content -->
+<main class="pt-[88px] px-margin-mobile md:px-margin-tablet max-w-[840px] mx-auto flex flex-col gap-stack-lg">
+<!-- AI Search Hub Section -->
+<section class="flex flex-col gap-stack-sm">
+<h2 class="font-title-lg text-title-lg text-on-surface mb-2">How can I help you today?</h2>
+<div class="relative w-full liquid-glass rounded-xl overflow-hidden shadow-sm transition-all focus-within:shadow-md focus-within:ring-2 focus-within:ring-primary-container group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-primary">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<input class="w-full h-14 pl-12 pr-32 bg-transparent border-none text-body-lg text-on-surface placeholder:text-on-surface-variant/60 focus:ring-0" placeholder="Ask AI, log a meal, or scan..." type="text">
+<div class="absolute inset-y-0 right-0 pr-2 flex items-center gap-1">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-variant/50 hover:text-primary transition-colors active:scale-95">
+<span class="material-symbols-outlined text-[22px]">photo_camera</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-variant/50 hover:text-primary transition-colors active:scale-95">
+<span class="material-symbols-outlined text-[22px]">mic</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-variant/50 hover:text-primary transition-colors active:scale-95">
+<span class="material-symbols-outlined text-[22px]">barcode_scanner</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Quick Actions Bento Grid -->
+<section class="flex flex-col gap-stack-md">
+<div class="flex items-center justify-between">
+<h3 class="font-title-lg text-title-lg text-on-surface">Quick Actions</h3>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+<!-- Action 1 -->
+<button class="liquid-glass rounded-xl p-4 flex flex-col gap-3 items-start hover:bg-surface-variant/30 transition-all active:scale-95 duration-200 group col-span-2 md:col-span-1 border border-outline-variant/30">
+<div class="w-10 h-10 rounded-full bg-secondary-container/50 text-on-secondary-container flex items-center justify-center group-hover:bg-secondary-container transition-colors">
+<span class="material-symbols-outlined text-[24px]">restaurant_menu</span>
+</div>
+<span class="font-label-lg text-label-lg text-left text-on-surface">What should I eat for dinner?</span>
+</button>
+<!-- Action 2 -->
+<button class="liquid-glass rounded-xl p-4 flex flex-col gap-3 items-start hover:bg-surface-variant/30 transition-all active:scale-95 duration-200 group border border-outline-variant/30">
+<div class="w-10 h-10 rounded-full bg-primary-container/20 text-primary flex items-center justify-center group-hover:bg-primary-container/30 transition-colors">
+<span class="material-symbols-outlined text-[24px]">free_breakfast</span>
+</div>
+<span class="font-label-lg text-label-lg text-left text-on-surface">Log my breakfast</span>
+</button>
+<!-- Action 3 -->
+<button class="liquid-glass rounded-xl p-4 flex flex-col gap-3 items-start hover:bg-surface-variant/30 transition-all active:scale-95 duration-200 group border border-outline-variant/30">
+<div class="w-10 h-10 rounded-full bg-tertiary-container/20 text-tertiary flex items-center justify-center group-hover:bg-tertiary-container/30 transition-colors">
+<span class="material-symbols-outlined text-[24px]">image_search</span>
+</div>
+<span class="font-label-lg text-label-lg text-left text-on-surface">Analyze a photo</span>
+</button>
+</div>
+</section>
+<!-- Daily AI Insight -->
+<section class="flex flex-col gap-stack-md">
+<div class="liquid-glass rounded-xl p-6 relative overflow-hidden border border-tertiary-fixed/40">
+<!-- Decorative AI Glow -->
+<div class="absolute -top-10 -right-10 w-40 h-40 bg-tertiary/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex items-start gap-4 relative z-10">
+<div class="w-12 h-12 rounded-full bg-tertiary-container flex flex-shrink-0 items-center justify-center text-on-tertiary-container shadow-sm">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<div class="flex flex-col gap-2">
+<h3 class="font-title-lg text-title-lg text-on-surface">Daily AI Insight</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                            Based on your activity yesterday, your protein intake was slightly low. Consider adding a handful of almonds or a Greek yogurt to your mid-morning snack today for sustained energy.
+                        </p>
+<button class="mt-2 self-start font-label-lg text-label-lg text-tertiary flex items-center gap-1 hover:underline decoration-tertiary/50 underline-offset-4 active:scale-95 transition-transform">
+                            View nutritional breakdown
+                            <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Floating Action Button (FAB) -->
+<button class="fixed bottom-[90px] right-margin-mobile md:right-margin-tablet w-14 h-14 bg-tertiary text-on-tertiary rounded-2xl shadow-lg flex items-center justify-center hover:shadow-xl hover:-translate-y-1 active:scale-95 transition-all duration-200 z-40 group">
+<span class="material-symbols-outlined text-[28px] group-hover:rotate-90 transition-transform duration-300">add</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-xl bg-surface/90 dark:bg-surface-dim/90 backdrop-blur-lg shadow-lg dark:shadow-none fixed bottom-0 left-0 w-full flex justify-around items-center py-stack-sm pb-safe px-margin-mobile md:hidden">
+<!-- Active: AI Hub -->
+<button class="flex flex-col items-center justify-center bg-secondary-container dark:bg-primary-container text-on-secondary-container dark:text-on-primary-container rounded-full px-5 py-1 hover:bg-surface-container-high/50 active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="font-label-sm text-label-sm mt-1">AI Hub</span>
+</button>
+<!-- Inactive: Log -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-5 py-1 hover:bg-surface-container-high/50 active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined text-[24px]">add_a_photo</span>
+<span class="font-label-sm text-label-sm mt-1">Log</span>
+</button>
+<!-- Inactive: Insights -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-5 py-1 hover:bg-surface-container-high/50 active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined text-[24px]">analytics</span>
+<span class="font-label-sm text-label-sm mt-1">Insights</span>
+</button>
+<!-- Inactive: Profile -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-5 py-1 hover:bg-surface-container-high/50 active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined text-[24px]">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profile</span>
+</button>
+</nav>
+<!-- Desktop Navigation Drawer (Hidden on Mobile, Visible on md+) -->
+<!-- Applying partial styling for structure as it wasn't explicitly requested to be shown, but ensuring layout integrity if screen resizes -->
+<aside class="hidden md:flex fixed inset-y-0 left-0 z-[60] flex flex-col py-stack-lg bg-surface-container-low dark:bg-surface-dim h-full w-[320px] rounded-r-xl shadow-xl transform -translate-x-full transition-transform duration-300" id="desktop-nav">
+<!-- Simplified placeholder structure for visual completeness if inspected -->
+<div class="px-6 mb-8 flex items-center gap-4">
+<span class="font-headline-lg text-headline-lg text-primary">NutriVitality AI</span>
+</div>
+</aside>
+</body></html>

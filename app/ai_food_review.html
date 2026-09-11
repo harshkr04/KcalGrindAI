@@ -1,0 +1,192 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="#f8faf9" name="theme-color">
+<title>Review Meal · Vitality</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="shared/theme.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Roboto+Flex:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="shared/vitality.css" rel="stylesheet">
+<script src="shared/store.js"></script>
+<script src="shared/nutrition.js"></script>
+<script src="shared/ui.js"></script>
+<script src="shared/ai_food.js"></script>
+<script src="shared/diary.js"></script>
+</head>
+<!-- AI Food Review — Editable confirmation before logging.
+     All AI-derived entries remain editable. Nothing is logged without explicit confirmation. -->
+<body class="bg-surface min-h-screen w-full flex flex-col font-body-lg text-on-background overflow-x-hidden antialiased pb-32">
+<div id="vf-header"></div>
+<main class="flex-1 flex flex-col px-container-padding pb-stack-lg relative z-10 max-w-md mx-auto w-full vf-screen">
+
+  <div class="flex items-center justify-between mb-stack-md">
+    <div>
+      <h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-tight">Review your meal</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant">Edit any item before logging.</p>
+    </div>
+  </div>
+
+  <div id="items-list" class="flex flex-col gap-3 mb-stack-lg"></div>
+
+  <button id="add-custom" class="w-full py-3 rounded-full border-[1.5px] border-dashed border-outline-variant text-on-surface-variant font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-surface-container-high active:scale-95 transition-all">
+    <span class="material-symbols-outlined text-[20px]">add</span> Add custom food
+  </button>
+
+  <div class="mt-auto pt-stack-md">
+    <div class="flex items-center justify-between bg-surface-container-low rounded-xl p-4 border border-outline-variant/20 mb-stack-md">
+      <span class="font-label-lg text-label-lg text-on-surface">Estimated total</span>
+      <span id="total-cal" class="font-headline-lg-mobile text-headline-lg-mobile text-primary">0 kcal</span>
+    </div>
+  </div>
+
+</main>
+
+<div class="vf-footer">
+  <div class="absolute inset-0 bg-gradient-to-t from-surface via-surface/90 to-transparent pointer-events-none"></div>
+  <div class="relative max-w-md mx-auto px-container-padding pt-8 pb-8 pb-safe flex flex-col gap-3">
+    <button id="log-btn" class="vf-cta w-full py-4 rounded-full bg-tertiary text-on-tertiary font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-tertiary/90 active:scale-95 transition-all shadow-md shadow-tertiary/20" disabled>
+      <span class="material-symbols-outlined text-[20px]">check_circle</span> Log Meal
+    </button>
+    <button id="back-btn" class="w-full py-3 rounded-full border-[1.5px] border-outline-variant/30 text-on-surface-variant font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-surface-container-high active:scale-95 transition-all">
+      Back
+    </button>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var state = VF.ui.initScreen('ai_food_review', { title: 'Review Meal', allowCompleted: true });
+    if (!state) return;
+
+    var itemsList = document.getElementById('items-list');
+    var totalCal = document.getElementById('total-cal');
+    var logBtn = document.getElementById('log-btn');
+    var backBtn = document.getElementById('back-btn');
+    var addCustomBtn = document.getElementById('add-custom');
+
+    var extraction = VF.aiFood.loadExtraction();
+    if (!extraction || !extraction.items || !extraction.items.length) {
+      VF.ui.go('text_input.html');
+      return;
+    }
+
+    var items = extraction.items.map(function (it) {
+      return {
+        id: it.id || 'custom_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+        name: it.name || 'Custom food',
+        brand: it.brand || '',
+        serving: it.serving || '1 serving',
+        servingGrams: it.servingGrams || 100,
+        calories: it.calories || 0,
+        protein: it.protein || 0,
+        carbs: it.carbs || 0,
+        fat: it.fat || 0,
+        confirmed: false
+      };
+    });
+
+    function recalc() {
+      var total = 0;
+      items.forEach(function (it) { total += (Number(it.calories) || 0); });
+      totalCal.textContent = VF.ui.fmt(total) + ' kcal';
+      var allConfirmed = items.every(function (it) { return it.confirmed; });
+      VF.ui.gate(logBtn, allConfirmed && items.length > 0);
+    }
+
+    function render() {
+      itemsList.innerHTML = '';
+      items.forEach(function (item, idx) {
+        var card = document.createElement('div');
+        card.className = 'review-item bg-surface-container-low rounded-xl p-4 border border-outline-variant/20';
+        card.innerHTML =
+          '<div class="flex items-start justify-between gap-3 mb-3">' +
+            '<div class="flex-1 min-w-0">' +
+              '<input type="text" class="w-full bg-transparent border-b border-outline-variant/30 font-title-lg text-title-lg text-on-surface pb-1 mb-1 focus:border-primary focus:outline-none" data-field="name" value="' + item.name + '">' +
+              '<input type="text" class="w-full bg-transparent border-b border-outline-variant/30 font-body-md text-body-md text-on-surface-variant pb-1 focus:border-primary focus:outline-none" data-field="brand" value="' + item.brand + '" placeholder="Brand">' +
+            '</div>' +
+            '<button class="remove-item p-2 rounded-full hover:bg-error-container/20 text-on-surface-variant hover:text-error transition-colors flex-shrink-0" data-idx="' + idx + '" aria-label="Remove item">' +
+              '<span class="material-symbols-outlined text-[20px]">delete</span>' +
+            '</button>' +
+          '</div>' +
+          '<div class="grid grid-cols-2 gap-2 mb-3">' +
+            '<div>' +
+              '<label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">Serving</label>' +
+              '<input type="text" class="w-full bg-surface-container-highest/50 rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface border border-outline-variant/20 focus:border-primary focus:outline-none" data-field="serving" value="' + item.serving + '">' +
+            '</div>' +
+            '<div>' +
+              '<label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">Grams</label>' +
+              '<input type="number" inputmode="numeric" class="w-full bg-surface-container-highest/50 rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface border border-outline-variant/20 focus:border-primary focus:outline-none" data-field="servingGrams" value="' + item.servingGrams + '">' +
+            '</div>' +
+          '</div>' +
+          '<div class="grid grid-cols-4 gap-2">' +
+            '<div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">Cal</label><input type="number" inputmode="numeric" class="w-full bg-surface-container-highest/50 rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface border border-outline-variant/20 focus:border-primary focus:outline-none" data-field="calories" value="' + item.calories + '"></div>' +
+            '<div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">Prot</label><input type="number" inputmode="decimal" class="w-full bg-surface-container-highest/50 rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface border border-outline-variant/20 focus:border-primary focus:outline-none" data-field="protein" value="' + item.protein + '"></div>' +
+            '<div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">Carb</label><input type="number" inputmode="decimal" class="w-full bg-surface-container-highest/50 rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface border border-outline-variant/20 focus:border-primary focus:outline-none" data-field="carbs" value="' + item.carbs + '"></div>' +
+            '<div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">Fat</label><input type="number" inputmode="decimal" class="w-full bg-surface-container-highest/50 rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface border border-outline-variant/20 focus:border-primary focus:outline-none" data-field="fat" value="' + item.fat + '"></div>' +
+          '</div>' +
+          '<div class="mt-3 flex items-center gap-2">' +
+            '<input type="checkbox" id="conf-' + idx + '" class="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary" ' + (item.confirmed ? 'checked' : '') + '>' +
+            '<label for="conf-' + idx + '" class="font-label-sm text-label-sm text-on-surface-variant cursor-pointer">I confirm this entry</label>' +
+          '</div>';
+
+        card.querySelectorAll('input[type="text"], input[type="number"]').forEach(function (inp) {
+          inp.addEventListener('input', function () {
+            var field = inp.dataset.field;
+            var val = inp.type === 'number' ? (parseFloat(inp.value) || 0) : inp.value;
+            items[idx][field] = val;
+            recalc();
+          });
+        });
+        card.querySelector('input[type="checkbox"]').addEventListener('change', function () {
+          items[idx].confirmed = card.querySelector('input[type="checkbox"]').checked;
+          recalc();
+        });
+        card.querySelector('.remove-item').addEventListener('click', function () {
+          items.splice(idx, 1);
+          render();
+          recalc();
+          VF.ui.haptics.select();
+        });
+
+        itemsList.appendChild(card);
+      });
+      recalc();
+    }
+
+    addCustomBtn.addEventListener('click', function () {
+      items.push({
+        id: 'custom_' + Date.now(),
+        name: 'Custom food',
+        brand: '',
+        serving: '1 serving',
+        servingGrams: 100,
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+        confirmed: false
+      });
+      render();
+      VF.ui.haptics.select();
+      itemsList.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    logBtn.addEventListener('click', function () {
+      if (!items.every(function (it) { return it.confirmed; })) return;
+      VF.ui.haptics.confirm();
+      var returnTo = VF.ui.qp('returnTo') || '11_home.html';
+      VF.ui.go('meal_confirm.html?returnTo=' + encodeURIComponent(returnTo));
+    });
+
+    backBtn.addEventListener('click', function () {
+      VF.ui.haptics.select();
+      if (extraction.source === 'voice') VF.ui.go('voice_input.html');
+      else if (extraction.source === 'barcode') VF.ui.go('barcode_scanner.html');
+      else VF.ui.go('text_input.html');
+    });
+
+    render();
+  });
+</script>
+</body></html>

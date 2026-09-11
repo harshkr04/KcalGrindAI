@@ -1,0 +1,177 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="#f8faf9" name="theme-color">
+<title>AI Assistant · Vitality</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="shared/theme.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Roboto+Flex:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="shared/vitality.css" rel="stylesheet">
+<script src="shared/store.js"></script>
+<script src="shared/nutrition.js"></script>
+<script src="shared/ui.js"></script>
+<script src="shared/diary.js"></script>
+<script src="shared/ai_assistant.js"></script>
+</head>
+<!-- AI Assistant Home — Primary entry point for AI nutrition assistance.
+     Reuses existing design system, bottom nav, and navigation patterns. -->
+<body class="bg-background text-on-background min-h-screen flex flex-col items-center justify-start pb-24 relative overflow-x-hidden">
+<!-- Top App Bar -->
+<header class="w-full max-w-md mx-auto sticky top-0 z-50 glass-effect">
+<div class="flex items-center justify-between p-4 pb-2">
+<div class="flex items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">person</span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-medium" id="greeting">Good morning</p>
+<h2 class="font-title-lg text-[18px] text-on-surface font-bold leading-tight tracking-[-0.015em]">AI Assistant</h2>
+</div>
+</div>
+<button class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+
+<main class="w-full max-w-md mx-auto flex-1 px-container-padding flex flex-col gap-6 pt-4">
+
+  <!-- AI Status Card -->
+  <section class="w-full">
+    <div class="rounded-3xl bg-primary-container p-4 flex gap-4 items-start shadow-md relative overflow-hidden">
+      <div class="absolute -right-4 -top-4 w-24 h-24 bg-primary rounded-full opacity-20 blur-xl"></div>
+      <div class="w-10 h-10 rounded-full bg-primary flex-shrink-0 flex items-center justify-center text-on-primary shadow-sm z-10">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+      </div>
+      <div class="flex-1 z-10">
+        <h3 class="font-body-lg text-body-lg font-semibold text-on-primary-container mb-1">Your AI Nutrition Assistant</h3>
+        <p class="font-body-md text-body-md text-on-primary-container opacity-90">Ask me anything about your meals and nutrition.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Actions -->
+  <section class="w-full">
+    <h3 class="font-title-lg text-title-lg font-semibold text-on-surface mb-3">Suggested prompts</h3>
+    <div class="flex flex-col gap-2">
+      <button class="prompt-btn text-left glass-card rounded-xl p-4 border border-outline-variant/20 hover:border-outline-variant/60 transition-colors">
+        <p class="font-body-md text-body-md text-on-surface">"How am I doing today?"</p>
+      </button>
+      <button class="prompt-btn text-left glass-card rounded-xl p-4 border border-outline-variant/20 hover:border-outline-variant/60 transition-colors">
+        <p class="font-body-md text-body-md text-on-surface">"What should I eat next?"</p>
+      </button>
+      <button class="prompt-btn text-left glass-card rounded-xl p-4 border border-outline-variant/20 hover:border-outline-variant/60 transition-colors">
+        <p class="font-body-md text-body-md text-on-surface">"Suggest a dinner under 600 kcal"</p>
+      </button>
+      <button class="prompt-btn text-left glass-card rounded-xl p-4 border border-outline-variant/20 hover:border-outline-variant/60 transition-colors">
+        <p class="font-body-md text-body-md text-on-surface">"Did I get enough protein today?"</p>
+      </button>
+      <button class="prompt-btn text-left glass-card rounded-xl p-4 border border-outline-variant/20 hover:border-outline-variant/60 transition-colors">
+        <p class="font-body-md text-body-md text-on-surface">"Log two eggs and two slices of toast"</p>
+      </button>
+    </div>
+  </section>
+
+  <!-- Recent Conversations -->
+  <section class="w-full">
+    <h3 class="font-title-lg text-title-lg font-semibold text-on-surface mb-3">Recent</h3>
+    <div id="recent-list" class="flex flex-col gap-2"></div>
+    <div id="recent-empty" class="hidden w-full flex flex-col items-center gap-3 py-6 text-center">
+      <span class="material-symbols-outlined text-on-surface-variant text-[40px]">history</span>
+      <p class="font-body-lg text-body-lg text-on-surface-variant">No recent conversations</p>
+    </div>
+  </section>
+</main>
+
+<!-- Bottom Nav Bar -->
+<div class="fixed bottom-0 w-full max-w-md mx-auto z-40 bg-surface-bright pb-safe">
+<div class="flex gap-2 border-t border-surface-variant px-4 pb-3 pt-2">
+<a class="flex flex-1 flex-col items-center justify-end gap-1 rounded-full text-on-surface" href="11_home.html">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">home</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Home</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-on-surface-variant" href="diary.html">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">book</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Diary</p>
+</a>
+<div class="flex-1"></div>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-on-surface-variant" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">bar_chart</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Insights</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-on-surface-variant" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">person</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Profile</p>
+</a>
+</div>
+</div>
+<!-- FAB -->
+<button id="ai-fab" class="fixed bottom-[4.5rem] left-1/2 transform -translate-x-1/2 z-50 flex items-center justify-center gap-2 bg-primary text-on-primary rounded-full px-5 py-4 shadow-lg hover:shadow-xl hover:bg-primary-container transition-all active:scale-95">
+<span class="material-symbols-outlined text-2xl">add</span>
+<span class="font-label-lg text-label-lg font-semibold tracking-wide pr-1">Ask AI</span>
+</button>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var state = VF.store.get();
+    if (!state.completed) { location.replace('index.html'); return; }
+
+    var h = new Date().getHours();
+    var greetEl = document.getElementById('greeting');
+    if (h < 12) greetEl.textContent = 'Good morning';
+    else if (h < 17) greetEl.textContent = 'Good afternoon';
+    else greetEl.textContent = 'Good evening';
+
+    var recentList = document.getElementById('recent-list');
+    var recentEmpty = document.getElementById('recent-empty');
+    var fab = document.getElementById('ai-fab');
+
+    function renderRecent() {
+      var history = VF.aiAssistant.loadHistory();
+      var userMsgs = history.filter(function (h) { return h.role === 'user'; }).slice(0, 5);
+      if (!userMsgs.length) { recentList.innerHTML = ''; recentEmpty.classList.remove('hidden'); return; }
+      recentEmpty.classList.add('hidden');
+      recentList.innerHTML = '';
+      userMsgs.forEach(function (msg) {
+        var btn = document.createElement('button');
+        btn.className = 'text-left glass-card rounded-xl p-3 border border-outline-variant/20 hover:border-outline-variant/60 transition-colors w-full';
+        btn.innerHTML = '<p class="font-body-md text-body-md text-on-surface truncate">' + msg.text + '</p>';
+        btn.addEventListener('click', function () {
+          VF.ui.haptics.select();
+          VF.aiAssistant.addToHistory('user', msg.text);
+          VF.ui.go('ai_chat.html?prompt=' + encodeURIComponent(msg.text));
+        });
+        recentList.appendChild(btn);
+      });
+    }
+
+    renderRecent();
+
+    document.querySelectorAll('.prompt-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var text = btn.querySelector('p').textContent.replace(/"/g, '');
+        VF.ui.haptics.select();
+        VF.aiAssistant.addToHistory('user', text);
+        VF.ui.go('ai_chat.html?prompt=' + encodeURIComponent(text));
+      });
+    });
+
+    if (fab) {
+      fab.addEventListener('click', function () {
+        VF.ui.haptics.select();
+        VF.aiAssistant.addToHistory('user', '');
+        VF.ui.go('ai_chat.html');
+      });
+    }
+  });
+</script>
+</body></html>

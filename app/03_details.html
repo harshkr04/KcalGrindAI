@@ -1,0 +1,119 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="#f8faf9" name="theme-color">
+<title>About you · Vitality</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="shared/theme.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Roboto+Flex:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="shared/vitality.css" rel="stylesheet">
+<script src="shared/store.js"></script>
+<script src="shared/nutrition.js"></script>
+<script src="shared/ui.js"></script>
+</head>
+<!-- Screen 3 — Personal Details (Phase 2B).
+     M3 outlined-field (.m3-field / .m3-input / .m3-label) with:
+     · metric / imperial segmented control
+     · empty / focused / valid / invalid / boundary states
+     · trailing status icons (check / error)
+     · error shake animation
+     · scroll-to-first-error on failed submit
+     · keyboard-open → footer collapses (vf-footer / kb-open)
+     · values stored canonically in metric; unit-switching preserves data -->
+<body class="bg-surface min-h-screen w-full flex flex-col font-body-lg text-on-background overflow-x-hidden antialiased pb-40">
+<div id="vf-header"></div>
+<main class="flex-1 flex flex-col px-container-padding relative z-10 max-w-md mx-auto w-full vf-screen">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mt-stack-md mb-stack-sm tracking-tight">Tell us about yourself</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mb-stack-lg">We use this once, to estimate your daily energy needs. You can edit any of it later.</p>
+
+<!-- Units segmented control -->
+<div class="flex items-center justify-between mb-stack-lg">
+<span class="font-label-lg text-label-lg text-on-surface-variant">Units</span>
+<div class="inline-flex rounded-full bg-surface-container-high p-1" role="radiogroup" aria-label="Measurement units">
+<button type="button" data-units="metric" role="radio" class="unit-seg px-4 py-2 rounded-full font-label-lg text-label-lg transition-all duration-200">Metric</button>
+<button type="button" data-units="imperial" role="radio" class="unit-seg px-4 py-2 rounded-full font-label-lg text-label-lg transition-all duration-200">Imperial</button>
+</div>
+</div>
+
+<form id="form" class="flex flex-col gap-stack-lg" novalidate>
+<!-- Age -->
+<div class="fade-in-up" style="animation-delay:60ms">
+<div class="m3-field" id="f-age">
+<div class="m3-input-container">
+<input class="m3-input" id="age" inputmode="numeric" pattern="[0-9]*" placeholder=" " autocomplete="off" aria-describedby="age-msg" aria-required="true">
+<label class="m3-label" for="age">Age</label>
+<span class="m3-trail" id="age-icon" aria-hidden="true"></span>
+</div>
+</div>
+<p class="vf-help mt-1 px-1" id="age-msg">In whole years.</p>
+</div>
+
+<!-- Height (metric) -->
+<div class="fade-in-up" style="animation-delay:120ms">
+<div data-metric>
+<div class="m3-field" id="f-height">
+<div class="m3-input-container">
+<input class="m3-input" id="height" inputmode="numeric" pattern="[0-9]*" placeholder=" " autocomplete="off" aria-describedby="height-msg" aria-required="true">
+<label class="m3-label" for="height">Height (cm)</label>
+<span class="m3-trail" id="height-icon" aria-hidden="true"></span>
+</div>
+</div>
+</div>
+<!-- Height (imperial) -->
+<div data-imperial class="hidden grid grid-cols-2 gap-gutter">
+<div class="m3-field" id="f-height-ft">
+<div class="m3-input-container">
+<input class="m3-input" id="height-ft" inputmode="numeric" pattern="[0-9]*" placeholder=" " autocomplete="off" aria-describedby="height-msg" aria-required="true">
+<label class="m3-label" for="height-ft">Height (ft)</label>
+<span class="m3-trail" id="height-ft-icon" aria-hidden="true"></span>
+</div>
+</div>
+<div class="m3-field" id="f-height-in">
+<div class="m3-input-container">
+<input class="m3-input" id="height-in" inputmode="numeric" pattern="[0-9]*" placeholder=" " autocomplete="off" aria-describedby="height-msg">
+<label class="m3-label" for="height-in">Height (in)</label>
+<span class="m3-trail" id="height-in-icon" aria-hidden="true"></span>
+</div>
+</div>
+</div>
+<p class="vf-help mt-1 px-1" id="height-msg">Height helps size your calorie target.</p>
+</div>
+
+<!-- Current weight -->
+<div class="fade-in-up" style="animation-delay:180ms">
+<div class="m3-field" id="f-weight">
+<div class="m3-input-container">
+<input class="m3-input" id="weight" inputmode="decimal" placeholder=" " autocomplete="off" aria-describedby="weight-msg" aria-required="true">
+<label class="m3-label" for="weight">Current weight (kg)</label>
+<span class="m3-trail" id="weight-icon" aria-hidden="true"></span>
+</div>
+</div>
+<p class="vf-help mt-1 px-1" id="weight-msg">Your starting point.</p>
+</div>
+
+<!-- Goal weight -->
+<div class="fade-in-up" style="animation-delay:240ms">
+<div class="m3-field" id="f-goalweight">
+<div class="m3-input-container">
+<input class="m3-input" id="goalweight" inputmode="decimal" placeholder=" " autocomplete="off" aria-describedby="goalweight-msg" aria-required="true">
+<label class="m3-label" for="goalweight">Goal weight (kg)</label>
+<span class="m3-trail" id="goalweight-icon" aria-hidden="true"></span>
+</div>
+</div>
+<p class="vf-help mt-1 px-1" id="goalweight-msg">Where you'd like to be.</p>
+</div>
+</form>
+</main>
+
+<div class="vf-footer">
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-surface/90 to-transparent pointer-events-none vf-kb-hide"></div>
+<div class="relative max-w-md mx-auto px-container-padding pt-6 pb-8 pb-safe">
+<button class="vf-cta w-full py-4 rounded-full bg-tertiary text-on-tertiary font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-tertiary/90 active:scale-95 transition-all shadow-md shadow-tertiary/20" disabled id="continue">
+      Continue
+      <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<script src="shared/details.page.js"></script>
+</body></html>

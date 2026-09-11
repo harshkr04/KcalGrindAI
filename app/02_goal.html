@@ -1,0 +1,138 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="#f8faf9" name="theme-color">
+<title>Your goal · Vitality</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="shared/theme.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Roboto+Flex:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="shared/vitality.css" rel="stylesheet">
+<script src="shared/store.js"></script>
+<script src="shared/nutrition.js"></script>
+<script src="shared/ui.js"></script>
+</head>
+<!-- Screen 2 — Your Goal. Phase 1 `goal_selection`: bg-mesh canvas,
+     liquid-glass cards, 2-up grid with icon · title · blurb.
+     Phase 2B: staggered entrance, keyboard arrow-key navigation,
+     all four card states (unselected / selected / pressed / disabled). -->
+<body class="bg-mesh min-h-screen w-full flex flex-col font-body-lg text-on-background overflow-x-hidden antialiased pb-32">
+<div id="vf-header"></div>
+<main class="flex-1 flex flex-col px-container-padding pb-stack-lg relative z-10 max-w-md mx-auto w-full vf-screen">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-background mt-stack-md mb-stack-sm text-center tracking-tight">
+    What are you working toward?
+  </h1>
+<p class="font-body-md text-body-md text-on-surface-variant text-center mb-stack-lg">Pick the one that matters most right now. You can change it whenever you like.</p>
+<div aria-label="Primary goal" class="grid grid-cols-2 gap-gutter w-full" id="goals" role="radiogroup"></div>
+</main>
+<div class="vf-footer">
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-surface/90 to-transparent pointer-events-none"></div>
+<div class="relative max-w-md mx-auto px-container-padding pt-8 pb-8 pb-safe">
+<button class="vf-cta w-full py-4 rounded-full bg-tertiary text-on-tertiary font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-tertiary/90 active:scale-95 transition-all shadow-md shadow-tertiary/20" disabled id="continue">
+      Continue
+      <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+<p class="font-body-md text-body-md text-on-surface-variant text-center mt-3" id="hint">Choose a goal to continue.</p>
+</div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var state = VF.ui.initScreen('goal', { title: 'What are you working toward?' });
+    if (!state) return;
+    if (VF.ui.qp('resumed') === '1') VF.ui.snackbar('Picked up where you left off.', 'restore');
+
+    var ORDER = ['lose', 'maintain', 'gain', 'muscle', 'healthier', 'nutrition'];
+    var grid = document.getElementById('goals');
+    var cta = document.getElementById('continue');
+    var hint = document.getElementById('hint');
+    var selected = state.goal;
+    var cards = [];
+
+    ORDER.forEach(function (id, idx) {
+      var g = VF.nutrition.GOALS[id];
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.tabIndex = 0;
+      b.className = 'liquid-glass vf-selectable rounded-xl p-stack-md flex flex-col items-start gap-stack-sm text-left min-h-[152px] group fade-in-up';
+      b.style.animationDelay = (idx * 60) + 'ms';
+      b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', 'false');
+      b.setAttribute('aria-label', g.label + ' — ' + g.blurb);
+      b.dataset.goal = id;
+      b.dataset.idx = idx;
+      b.innerHTML =
+        '<div class="relative w-14 h-14 rounded-full bg-primary-container/20 text-primary flex items-center justify-center transition-colors duration-300" data-icon-wrap>' +
+          '<span class="material-symbols-outlined text-[32px]" style="font-variation-settings:\'FILL\' 1;">' + g.icon + '</span>' +
+          '<span class="material-symbols-outlined absolute -right-1 -bottom-1 text-[18px] w-6 h-6 rounded-full bg-primary text-on-primary items-center justify-center hidden transition-transform duration-200" data-check style="font-variation-settings:\'FILL\' 1;">check</span>' +
+        '</div>' +
+        '<h2 class="font-title-lg text-[16px] leading-tight text-on-surface">' + g.label + '</h2>' +
+        '<p class="font-body-md text-body-md text-on-surface-variant leading-snug">' + g.blurb + '</p>';
+      b.addEventListener('click', function () { choose(id, true); });
+      /* Keyboard navigation: arrow keys cycle through cards */
+      b.addEventListener('keydown', function (e) {
+        var idx = Number(b.dataset.idx);
+        var next = -1;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          next = (idx + 1) % ORDER.length;
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          next = (idx - 1 + ORDER.length) % ORDER.length;
+        } else if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          choose(id, true);
+          return;
+        } else {
+          return;
+        }
+        e.preventDefault();
+        cards[next].focus();
+        choose(ORDER[next], true);
+      });
+      grid.appendChild(b);
+      cards.push(b);
+    });
+
+    function choose(id, fromTap) {
+      selected = id;
+      cards.forEach(function (card) {
+        var on = card.dataset.goal === id;
+        card.classList.toggle('vf-selected', on);
+        card.setAttribute('aria-checked', String(on));
+        card.setAttribute('tabindex', on ? '0' : '-1');
+        card.querySelector('[data-icon-wrap]').className =
+          'relative w-14 h-14 rounded-full flex items-center justify-center transition-colors duration-300 ' +
+          (on ? 'bg-primary text-on-primary shadow-md shadow-primary/20' : 'bg-primary-container/20 text-primary');
+        var check = card.querySelector('[data-check]');
+        check.classList.toggle('hidden', !on);
+        check.classList.toggle('flex', on);
+        if (on && fromTap) {
+          card.classList.remove('vf-pop');
+          void card.offsetWidth;
+          card.classList.add('vf-pop');
+          /* Animate check badge in */
+          check.style.transform = 'scale(0)';
+          requestAnimationFrame(function () { check.style.transform = 'scale(1)'; });
+        }
+      });
+      VF.store.patch({ goal: id });
+      VF.ui.gate(cta, true);
+      hint.textContent = VF.nutrition.GOALS[id].label + ' selected. You can change this later.';
+      if (fromTap) { VF.ui.haptics.select(); VF.ui.announce(VF.nutrition.GOALS[id].label + ' selected'); }
+    }
+
+    /* Restore previous selection */
+    if (selected && VF.nutrition.GOALS[selected]) {
+      choose(selected, false);
+    } else {
+      /* No selection yet: first card is tabbable, rest are -1 */
+      cards.forEach(function (c, i) { c.setAttribute('tabindex', i === 0 ? '0' : '-1'); });
+      VF.ui.gate(cta, false, 'Choose a goal first');
+    }
+
+    cta.addEventListener('click', function () {
+      if (!selected) return;
+      VF.ui.haptics.confirm();
+      VF.ui.advance('goal');
+    });
+  });
+</script>
+</body></html>

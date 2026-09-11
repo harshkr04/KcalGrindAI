@@ -1,0 +1,158 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="#f8faf9" name="theme-color">
+<title>Permissions · Vitality</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="shared/theme.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Flex:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="shared/vitality.css" rel="stylesheet">
+<script src="shared/store.js"></script>
+<script src="shared/nutrition.js"></script>
+<script src="shared/ui.js"></script>
+</head>
+<!-- Screen 9 — Permissions. Shows permission cards for camera, microphone,
+     notifications, and health. Uses feature detection + Permissions API where
+     available. Skip button enabled. -->
+<body class="bg-surface min-h-screen w-full flex flex-col font-body-lg text-on-background overflow-x-hidden antialiased pb-32">
+<div id="vf-header"></div>
+<main class="flex-1 flex flex-col px-container-padding pb-stack-lg relative z-10 max-w-md mx-auto w-full vf-screen">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mt-stack-md mb-stack-sm tracking-tight">
+    Make tracking easier
+  </h1>
+<p class="font-body-md text-body-md text-on-surface-variant mb-stack-lg">These are optional. You can change them later in Settings.</p>
+
+<div class="flex flex-col gap-stack-md w-full" id="perms"></div>
+</main>
+<div class="vf-footer">
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-surface/90 to-transparent pointer-events-none"></div>
+<div class="relative max-w-md mx-auto px-container-padding pt-8 pb-8 pb-safe">
+<button class="vf-cta w-full py-4 rounded-full bg-tertiary text-on-tertiary font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-tertiary/90 active:scale-95 transition-all shadow-md shadow-tertiary/20" id="continue">
+      Continue
+      <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+    </button>
+</div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var state = VF.ui.initScreen('permissions', {
+      title: 'Make tracking easier',
+      skip: true,
+      onSkip: function () {
+        VF.store.patch({ permissionsSkipped: true });
+        VF.ui.haptics.select();
+        VF.ui.advance('permissions');
+      }
+    });
+    if (!state) return;
+
+    var PERMS = [
+      { id: 'camera',        icon: 'photo_camera',     label: 'Camera',        blurb: 'Scan meals and recognize food from photos.',  api: 'camera' },
+      { id: 'microphone',    icon: 'mic',              label: 'Microphone',    blurb: 'Log meals using your voice.',                    api: 'microphone' },
+      { id: 'notifications', icon: 'notifications',    label: 'Notifications', blurb: 'Get helpful meal and nutrition reminders.',          api: 'notifications' },
+      { id: 'health',        icon: 'monitor_heart',    label: 'Health data',   blurb: 'Sync supported activity and health information.',      api: null }
+    ];
+
+    var container = document.getElementById('perms');
+    var cta = document.getElementById('continue');
+
+    PERMS.forEach(function (p) {
+      var currentStatus = (state.permissions && state.permissions[p.id]) || 'not_requested';
+      var card = document.createElement('div');
+      card.className = 'glass-card rounded-xl p-4 flex items-center gap-stack-md';
+      card.innerHTML =
+        '<div class="w-12 h-12 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center flex-shrink-0">' +
+          '<span class="material-symbols-outlined text-[28px]" style="font-variation-settings:\'FILL\' 1;">' + p.icon + '</span>' +
+        '</div>' +
+        '<div class="flex-1 min-w-0">' +
+          '<h2 class="font-label-lg text-label-lg text-on-surface">' + p.label + '</h2>' +
+          '<p class="font-body-md text-body-md text-on-surface-variant leading-snug">' + p.blurb + '</p>' +
+        '</div>' +
+        '<button class="perm-btn flex-shrink-0 px-4 py-2 rounded-full font-label-lg text-label-lg transition-all active:scale-95" data-perm="' + p.id + '" data-api="' + (p.api || '') + '">' +
+          statusLabel(currentStatus) +
+        '</button>';
+      stylePermBtn(card.querySelector('.perm-btn'), currentStatus);
+      card.querySelector('.perm-btn').addEventListener('click', function () { requestPerm(p, this); });
+      container.appendChild(card);
+    });
+
+    function statusLabel(s) {
+      switch (s) {
+        case 'granted': return 'Allowed';
+        case 'denied':  return 'Denied';
+        case 'skipped': return 'Skipped';
+        case 'unavailable': return 'Unavailable';
+        case 'requesting': return 'Requesting…';
+        default: return 'Allow';
+      }
+    }
+
+    function stylePermBtn(btn, s) {
+      btn.className = 'perm-btn flex-shrink-0 px-4 py-2 rounded-full font-label-lg text-label-lg transition-all active:scale-95 ';
+      switch (s) {
+        case 'granted':
+          btn.className += 'bg-primary text-on-primary'; break;
+        case 'denied':
+        case 'unavailable':
+          btn.className += 'bg-surface-container-high text-on-surface-variant'; break;
+        default:
+          btn.className += 'border-[1.5px] border-primary text-primary hover:bg-primary/5'; break;
+      }
+    }
+
+    function requestPerm(p, btn) {
+      if (!p.api) {
+        // Health data — no web API; mark as unavailable in browser
+        updatePerm(p.id, 'unavailable', btn);
+        VF.ui.snackbar('Health data sync is available in the native app.', 'info');
+        return;
+      }
+
+      VF.ui.haptics.select();
+      updatePerm(p.id, 'requesting', btn);
+
+      // Use Permissions API to query, then getUserMedia / Notification.requestPermission
+      if (p.api === 'notifications' && 'Notification' in window) {
+        Notification.requestPermission().then(function (result) {
+          updatePerm(p.id, result === 'granted' ? 'granted' : 'denied', btn);
+        });
+        return;
+      }
+
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        var constraints = {};
+        constraints[p.api === 'camera' ? 'video' : 'audio'] = true;
+        navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+          stream.getTracks().forEach(function (t) { t.stop(); });
+          updatePerm(p.id, 'granted', btn);
+          VF.ui.haptics.success();
+        }).catch(function () {
+          updatePerm(p.id, 'denied', btn);
+        });
+        return;
+      }
+
+      // Fallback: no API available
+      updatePerm(p.id, 'unavailable', btn);
+      VF.ui.snackbar('This permission is available in the native app.', 'info');
+    }
+
+    function updatePerm(id, status, btn) {
+      var perms = VF.store.get().permissions || {};
+      perms[id] = status;
+      VF.store.patch({ permissions: perms });
+      btn.textContent = statusLabel(status);
+      stylePermBtn(btn, status);
+    }
+
+    // CTA is always enabled — permissions are optional
+    VF.ui.gate(cta, true);
+
+    cta.addEventListener('click', function () {
+      VF.ui.haptics.confirm();
+      VF.ui.advance('permissions');
+    });
+  });
+</script>
+</body></html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Vitality - Setup Permissions</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=Roboto+Flex:wght@400;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface": "#f8faf9",
+                      "surface-container-highest": "#e1e3e2",
+                      "on-secondary-container": "#327053",
+                      "on-tertiary-fixed": "#000866",
+                      "primary": "#0f5238",
+                      "secondary": "#2b694d",
+                      "on-primary-container": "#a8e7c5",
+                      "on-primary": "#ffffff",
+                      "primary-fixed-dim": "#95d4b3",
+                      "tertiary-fixed-dim": "#bdc2ff",
+                      "on-background": "#191c1c",
+                      "secondary-fixed-dim": "#94d4b1",
+                      "on-secondary-fixed-variant": "#0c5136",
+                      "outline-variant": "#bfc9c1",
+                      "surface-container-low": "#f2f4f3",
+                      "primary-fixed": "#b1f0ce",
+                      "surface-bright": "#f8faf9",
+                      "primary-container": "#2d6a4f",
+                      "secondary-container": "#b0f1cc",
+                      "surface-variant": "#e1e3e2",
+                      "surface-container-high": "#e6e9e8",
+                      "on-tertiary": "#ffffff",
+                      "on-tertiary-container": "#d5d7ff",
+                      "on-secondary-fixed": "#002113",
+                      "on-primary-fixed-variant": "#0e5138",
+                      "surface-container": "#eceeed",
+                      "on-error": "#ffffff",
+                      "on-primary-fixed": "#002114",
+                      "surface-container-lowest": "#ffffff",
+                      "inverse-primary": "#95d4b3",
+                      "on-surface": "#191c1c",
+                      "surface-tint": "#2c694e",
+                      "outline": "#707973",
+                      "on-error-container": "#93000a",
+                      "on-secondary": "#ffffff",
+                      "tertiary": "#313c9f",
+                      "error": "#ba1a1a",
+                      "tertiary-container": "#4a55b9",
+                      "inverse-on-surface": "#eff1f0",
+                      "secondary-fixed": "#b0f1cc",
+                      "error-container": "#ffdad6",
+                      "on-tertiary-fixed-variant": "#303b9f",
+                      "surface-dim": "#d8dada",
+                      "on-surface-variant": "#404943",
+                      "background": "#f8faf9",
+                      "tertiary-fixed": "#dfe0ff",
+                      "inverse-surface": "#2e3131"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-padding": "20px",
+                      "unit": "4px",
+                      "gutter": "16px",
+                      "margin-tablet": "24px",
+                      "stack-md": "16px",
+                      "margin-mobile": "16px",
+                      "stack-sm": "8px",
+                      "stack-lg": "32px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Roboto Flex"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "title-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Roboto Flex"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Roboto Flex"
+                      ],
+                      "label-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "0.5px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "title-lg": [
+                              "22px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-sm": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.5px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "57px",
+                              {
+                                      "lineHeight": "64px",
+                                      "letterSpacing": "-0.25px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-lg": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.1px",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(248, 250, 249, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 24px rgba(15, 82, 56, 0.05);
+        }
+        
+        .fade-in-up {
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+<!-- Decorative background elements -->
+<div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-primary-container/10 blur-[100px] -z-10 pointer-events-none"></div>
+<div class="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-secondary-container/15 blur-[120px] -z-10 pointer-events-none"></div>
+<!-- Note: TopAppBar and BottomNavBar are suppressed per instructions for linear/onboarding intents -->
+<main class="w-full max-w-[600px] px-margin-mobile md:px-margin-tablet py-stack-lg flex flex-col min-h-screen justify-center">
+<header class="mb-stack-lg text-center fade-in-up">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-primary mb-stack-sm">
+                Unlock Full Potential
+            </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-md mx-auto">
+                Vitality works best when it can seamlessly integrate with your device to provide personalized, real-time insights.
+            </p>
+</header>
+<div class="flex flex-col gap-stack-md w-full max-w-md mx-auto">
+<!-- Health Connect Card -->
+<div class="glass-card rounded-xl p-stack-md flex flex-row items-center gap-gutter fade-in-up delay-100 transition-all hover:bg-surface-bright">
+<div class="w-12 h-12 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">monitor_heart</span>
+</div>
+<div class="flex-1">
+<h2 class="font-title-lg text-title-lg text-on-surface mb-unit">Health Connect</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Sync step counts, workouts, and vitals for comprehensive AI analysis.</p>
+</div>
+<button class="shrink-0 px-4 py-2 rounded-full border-[1.5px] border-primary text-primary font-label-lg text-label-lg hover:bg-primary-container/10 transition-colors active:scale-95">
+                    Enable
+                </button>
+</div>
+<!-- Camera Card -->
+<div class="glass-card rounded-xl p-stack-md flex flex-row items-center gap-gutter fade-in-up delay-200 transition-all hover:bg-surface-bright">
+<div class="w-12 h-12 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">photo_camera</span>
+</div>
+<div class="flex-1">
+<h2 class="font-title-lg text-title-lg text-on-surface mb-unit">Camera Access</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Log meals instantly with AI vision and scan barcodes effortlessly.</p>
+</div>
+<button class="shrink-0 px-4 py-2 rounded-full border-[1.5px] border-primary text-primary font-label-lg text-label-lg hover:bg-primary-container/10 transition-colors active:scale-95">
+                    Enable
+                </button>
+</div>
+<!-- Notifications Card -->
+<div class="glass-card rounded-xl p-stack-md flex flex-row items-center gap-gutter fade-in-up delay-300 transition-all hover:bg-surface-bright">
+<div class="w-12 h-12 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">notifications_active</span>
+</div>
+<div class="flex-1">
+<h2 class="font-title-lg text-title-lg text-on-surface mb-unit">Notifications</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Receive timely reminders, AI insights, and motivational nudges.</p>
+</div>
+<button class="shrink-0 px-4 py-2 rounded-full border-[1.5px] border-primary text-primary font-label-lg text-label-lg hover:bg-primary-container/10 transition-colors active:scale-95">
+                    Enable
+                </button>
+</div>
+</div>
+<div class="mt-stack-lg w-full max-w-md mx-auto pt-stack-md flex justify-center fade-in-up delay-300">
+<button class="w-full py-4 rounded-full bg-primary text-on-primary font-label-lg text-label-lg hover:bg-primary/90 transition-all active:scale-[0.98] shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+                Finish Setup
+                <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+</main>
+<script>
+        // Simple interaction to toggle button state on click
+        document.querySelectorAll('button:not(.bg-primary)').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (this.innerText === 'Enable') {
+                    this.innerText = 'Enabled';
+                    this.classList.remove('border-primary', 'text-primary');
+                    this.classList.add('bg-primary-container', 'text-on-primary-container', 'border-transparent');
+                } else {
+                    this.innerText = 'Enable';
+                    this.classList.add('border-primary', 'text-primary');
+                    this.classList.remove('bg-primary-container', 'text-on-primary-container', 'border-transparent');
+                }
+            });
+        });
+    </script>
+</body></html>

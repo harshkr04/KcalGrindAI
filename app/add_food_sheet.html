@@ -1,0 +1,249 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="#f8faf9" name="theme-color">
+<title>Add Food · Vitality</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="shared/theme.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Flex:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="shared/vitality.css" rel="stylesheet">
+<script src="shared/store.js"></script>
+<script src="shared/nutrition.js"></script>
+<script src="shared/ui.js"></script>
+</head>
+<!-- Add Food Bottom Sheet - triggered from Home FAB -->
+<body class="bg-background text-on-background min-h-screen flex flex-col items-center justify-start pb-24 relative overflow-x-hidden">
+<div id="vf-header"></div>
+<main class="w-full max-w-md mx-auto flex-1 px-container-padding flex flex-col gap-6 pt-4 pb-24">
+<!-- This main content is hidden when sheet is open, shown for context -->
+<div id="home-content" class="flex-1">
+<!-- Home content would be here, but sheet overlays it -->
+</div>
+</main>
+
+<!-- Scrim/Overlay -->
+<div id="sheet-scrim" class="fixed inset-0 bg-inverse-surface/60 z-40 opacity-0 pointer-events-none transition-opacity duration-300" hidden></div>
+
+<!-- Add Food Bottom Sheet -->
+<div id="add-food-sheet" class="bottom-sheet fixed bottom-0 left-0 right-0 z-50 glass-overlay rounded-t-[32px] border-t border-outline-variant/30 shadow-[0_-8px_40px_rgba(15,82,56,0.15)] px-container-padding pb-safe pt-4 flex flex-col md:max-w-2xl md:mx-auto" hidden>
+<!-- Drag Handle -->
+<div class="w-12 h-1.5 bg-outline-variant/60 rounded-full mx-auto mb-stack-md"></div>
+<div class="flex justify-between items-center mb-stack-lg">
+<h2 class="font-title-lg text-title-lg text-on-surface font-[Roboto_Flex]">What did you eat?</h2>
+<button class="p-2 rounded-full hover:bg-surface-variant/80 transition-colors text-on-surface-variant bg-surface-variant/40" id="close-sheet-btn" aria-label="Close">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+
+<!-- Primary Actions (Photo & Tell AI - visually prominent) -->
+<div class="flex flex-col gap-stack-md mb-stack-lg">
+<!-- Take Photo - Most Prominent -->
+<button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-[24px] p-6 flex flex-col items-center justify-center gap-stack-sm hover:opacity-95 active:scale-[0.98] transition-all shadow-lg shadow-primary/30 relative overflow-hidden group" id="take-photo-btn" type="button">
+<div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<span class="material-symbols-outlined text-5xl mb-2 filled" style="font-variation-settings: 'FILL' 1;">photo_camera</span>
+<span class="font-label-lg text-label-lg font-[Roboto_Flex]">Take Photo</span>
+<span class="font-body-md text-body-md text-on-primary/80">Snap your meal and let AI identify it</span>
+</button>
+
+<!-- Tell AI - Second Most Prominent -->
+<button class="w-full bg-gradient-to-br from-tertiary to-tertiary-container text-on-tertiary rounded-[24px] p-6 flex flex-col items-center justify-center gap-stack-sm hover:opacity-95 active:scale-[0.98] transition-all shadow-lg shadow-tertiary/30 relative overflow-hidden group" id="tell-ai-btn" type="button">
+<div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<span class="material-symbols-outlined text-5xl mb-2 filled" style="font-variation-settings: 'FILL' 1;">mic</span>
+<span class="font-label-lg text-label-lg font-[Roboto_Flex]">Tell AI</span>
+<span class="font-body-md text-body-md text-on-tertiary/80">Describe what you ate in your own words</span>
+</button>
+</div>
+
+<!-- Secondary Actions Grid -->
+<div class="grid grid-cols-2 gap-stack-sm mb-stack-lg">
+<!-- Search Food -->
+<button class="bg-surface-container-high/60 backdrop-blur-md rounded-2xl p-4 flex flex-col items-center justify-center gap-stack-sm border border-outline-variant/30 hover:bg-surface-variant/80 transition-colors active:scale-[0.98]" id="search-food-btn" type="button">
+<span class="material-symbols-outlined text-3xl text-secondary mb-1">search</span>
+<span class="font-label-lg text-label-lg text-on-surface font-[Roboto_Flex]">Search Food</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Search your food database</span>
+</button>
+
+<!-- Saved Meals -->
+<button class="bg-surface-container-high/60 backdrop-blur-md rounded-2xl p-4 flex flex-col items-center justify-center gap-stack-sm border border-outline-variant/30 hover:bg-surface-variant/80 transition-colors active:scale-[0.98]" id="saved-meals-btn" type="button">
+<span class="material-symbols-outlined text-3xl text-secondary mb-1">bookmark</span>
+<span class="font-label-lg text-label-lg text-on-surface font-[Roboto_Flex]">Saved Meals</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Reuse a saved meal</span>
+</button>
+
+<!-- Scan Barcode -->
+<button class="bg-surface-container-high/60 backdrop-blur-md rounded-2xl p-4 flex flex-col items-center justify-center gap-stack-sm border border-outline-variant/30 hover:bg-surface-variant/80 transition-colors active:scale-[0.98]" id="scan-barcode-btn" type="button">
+<span class="material-symbols-outlined text-3xl text-secondary mb-1">barcode_scanner</span>
+<span class="font-label-lg text-label-lg text-on-surface font-[Roboto_Flex]">Scan Barcode</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Scan packaged food</span>
+</button>
+</div>
+
+<!-- Create Recipe -->
+<button class="w-full bg-surface-container-high/60 backdrop-blur-md rounded-2xl p-4 flex items-center justify-center gap-3 border border-outline-variant/30 hover:bg-surface-variant/80 transition-colors active:scale-[0.98]" id="create-recipe-btn" type="button">
+<span class="material-symbols-outlined text-3xl text-secondary">restaurant</span>
+<div class="text-left">
+<span class="font-label-lg text-label-lg text-on-surface font-[Roboto_Flex]">Create Recipe</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Create and save a custom recipe</span>
+</div>
+</button>
+
+<!-- AI Assistant -->
+<button class="w-full bg-gradient-to-br from-tertiary to-tertiary-container text-on-tertiary rounded-[24px] p-6 flex flex-col items-center justify-center gap-stack-sm hover:opacity-95 active:scale-[0.98] transition-all shadow-lg shadow-tertiary/30 relative overflow-hidden group" id="ai-assistant-btn" type="button">
+<div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<span class="material-symbols-outlined text-5xl mb-2" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="font-label-lg text-label-lg font-[Roboto_Flex]">Ask AI Assistant</span>
+<span class="font-body-md text-body-md text-on-tertiary/80">Get personalized nutrition advice</span>
+</button>
+</div>
+
+<!-- Bottom Nav Bar (stays visible) -->
+<div class="fixed bottom-0 w-full max-w-md mx-auto z-40 bg-surface-bright pb-safe">
+<div class="flex gap-2 border-t border-surface-variant px-4 pb-3 pt-2">
+<a class="flex flex-1 flex-col items-center justify-end gap-1 rounded-full text-on-surface" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Home</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-on-surface-variant" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">book</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Diary</p>
+</a>
+<div class="flex-1"></div>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-on-surface-variant" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">bar_chart</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Insights</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-on-surface-variant" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">person</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Profile</p>
+</a>
+</div>
+</div>
+<!-- FAB (hidden when sheet open) -->
+<button id="home-fab" class="fixed bottom-[4.5rem] left-1/2 transform -translate-x-1/2 z-50 flex items-center justify-center gap-2 bg-primary text-on-primary rounded-full px-5 py-4 shadow-lg hover:shadow-xl hover:bg-primary-container transition-all active:scale-95">
+<span class="material-symbols-outlined text-2xl">add</span>
+<span class="font-label-lg text-label-lg font-semibold tracking-wide pr-1">Log</span>
+</button>
+</body></html>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+var state = VF.store.get();
+
+// If not completed, redirect to onboarding
+if (!state.completed) {
+location.replace('index.html');
+return;
+}
+
+// Don't use VF.ui.initScreen for bottom sheet - it adds onboarding header
+VF.ui.announce('Add Food');
+
+var sheet = document.getElementById('add-food-sheet');
+var scrim = document.getElementById('sheet-scrim');
+var homeFab = document.getElementById('home-fab');
+var homeContent = document.getElementById('home-content');
+var closeBtn = document.getElementById('close-sheet-btn');
+
+var takePhotoBtn = document.getElementById('take-photo-btn');
+var tellAiBtn = document.getElementById('tell-ai-btn');
+var searchFoodBtn = document.getElementById('search-food-btn');
+var scanBarcodeBtn = document.getElementById('scan-barcode-btn');
+var createRecipeBtn = document.getElementById('create-recipe-btn');
+var aiAssistantBtn = document.getElementById('ai-assistant-btn');
+var savedMealsBtn = document.getElementById('saved-meals-btn');
+
+function openSheet() {
+sheet.hidden = false;
+scrim.hidden = false;
+homeFab.hidden = true;
+// Force reflow then animate
+requestAnimationFrame(function () {
+sheet.classList.add('open');
+scrim.classList.add('open');
+});
+VF.ui.haptics.select();
+VF.ui.announce('Add food options opened');
+}
+
+function closeSheet() {
+sheet.classList.remove('open');
+scrim.classList.remove('open');
+setTimeout(function () {
+sheet.hidden = true;
+scrim.hidden = true;
+homeFab.hidden = false;
+}, 300);
+VF.ui.haptics.select();
+}
+
+function navigateTo(file) {
+  var returnTo = VF.ui.qp('returnTo') || '11_home.html';
+  var sep = file.indexOf('?') > -1 ? '&' : '?';
+  closeSheet();
+  setTimeout(function () {
+    VF.ui.go(file + sep + 'returnTo=' + encodeURIComponent(returnTo));
+  }, 150);
+}
+
+closeBtn.addEventListener('click', closeSheet);
+scrim.addEventListener('click', closeSheet);
+
+// Navigation handlers
+takePhotoBtn.addEventListener('click', function () { navigateTo('text_input.html'); });
+tellAiBtn.addEventListener('click', function () { navigateTo('voice_input.html'); });
+searchFoodBtn.addEventListener('click', function () { navigateTo('food_search.html'); });
+scanBarcodeBtn.addEventListener('click', function () { navigateTo('barcode_scanner.html'); });
+createRecipeBtn.addEventListener('click', function () { navigateTo('recipe_create.html'); });
+aiAssistantBtn.addEventListener('click', function () { navigateTo('ai_assistant.html'); });
+savedMealsBtn.addEventListener('click', function () { navigateTo('saved_meals.html'); });
+
+// Keyboard support
+document.addEventListener('keydown', function (e) {
+if (e.key === 'Escape' && !sheet.hidden && sheet.classList.contains('open')) {
+closeSheet();
+}
+});
+
+// Auto-open sheet if triggered from home (check URL param)
+if (VF.ui.qp('sheet') === 'open') {
+setTimeout(openSheet, 100);
+}
+
+// Expose for home page to trigger
+window.VF = window.VF || {};
+window.VF.addFoodSheet = { open: openSheet, close: closeSheet };
+});
+</script>
+<style>
+.bottom-sheet {
+transform: translateY(100%);
+transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1);
+}
+.bottom-sheet.open {
+transform: translateY(0);
+}
+.overlay {
+opacity: 0;
+pointer-events: none;
+transition: opacity 0.3s ease;
+}
+.overlay.open {
+opacity: 1;
+pointer-events: auto;
+}
+.glass-overlay {
+  background: rgba(242, 244, 243, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+</style>
+</body>
+</html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>NutriVitality AI - Meal Suggestion</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#b0f1cc",
+                        "inverse-primary": "#95d4b3",
+                        "surface-container-high": "#e6e9e8",
+                        "primary-container": "#2d6a4f",
+                        "surface-bright": "#f8faf9",
+                        "on-primary-fixed": "#002114",
+                        "outline": "#707973",
+                        "on-error": "#ffffff",
+                        "primary": "#0f5238",
+                        "on-background": "#191c1c",
+                        "on-surface-variant": "#404943",
+                        "surface-container-highest": "#e1e3e2",
+                        "on-error-container": "#93000a",
+                        "surface": "#f8faf9",
+                        "on-tertiary-fixed": "#000866",
+                        "inverse-surface": "#2e3131",
+                        "on-tertiary-fixed-variant": "#303b9f",
+                        "secondary-fixed-dim": "#94d4b1",
+                        "on-primary-fixed-variant": "#0e5138",
+                        "tertiary-fixed": "#dfe0ff",
+                        "tertiary": "#313c9f",
+                        "on-secondary-fixed-variant": "#0c5136",
+                        "on-primary-container": "#a8e7c5",
+                        "surface-tint": "#2c694e",
+                        "primary-fixed": "#b1f0ce",
+                        "surface-dim": "#d8dada",
+                        "on-tertiary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "secondary": "#2b694d",
+                        "background": "#f8faf9",
+                        "tertiary-fixed-dim": "#bdc2ff",
+                        "tertiary-container": "#4a55b9",
+                        "outline-variant": "#bfc9c1",
+                        "on-primary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-container": "#eceeed",
+                        "secondary-fixed": "#b0f1cc",
+                        "primary-fixed-dim": "#95d4b3",
+                        "on-surface": "#191c1c",
+                        "on-secondary-fixed": "#002113",
+                        "surface-container-low": "#f2f4f3",
+                        "surface-variant": "#e1e3e2",
+                        "on-tertiary-container": "#d5d7ff",
+                        "on-secondary-container": "#327053",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#eff1f0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "container-padding": "20px",
+                        "gutter": "16px",
+                        "margin-mobile": "16px",
+                        "stack-sm": "8px",
+                        "margin-tablet": "24px",
+                        "stack-lg": "32px",
+                        "stack-md": "16px"
+                    },
+                    "fontFamily": {
+                        "label-lg": ["Inter"],
+                        "headline-lg-mobile": ["Roboto Flex"],
+                        "body-md": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "headline-lg": ["Roboto Flex"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Roboto Flex"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "title-lg": ["22px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "500" }],
+                        "display-lg": ["57px", { "lineHeight": "64px", "letterSpacing": "-0.25px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0.5px", "fontWeight": "400" }]
+                    }
+                },
+            },
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=Roboto+Flex:wght@400;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .surface-glass {
+            background-color: rgba(248, 250, 249, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .ai-shadow {
+            box-shadow: 0 8px 32px rgba(15, 82, 56, 0.12);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col md:flex-row font-body-md">
+<!-- TopAppBar (Mobile Only due to side nav on desktop) -->
+<header class="md:hidden fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-md flex items-center justify-between px-margin-mobile h-16 w-full">
+<div class="flex items-center gap-4">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="A small, circular, high-resolution portrait of a health-conscious individual smiling slightly, acting as a user profile avatar. Bright, clean lighting against a soft, neutral background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCirSZQFC0SoAwT8AnmKw_2ON24bTAAId-VOngk7HIYAA7JpBz7CVQhJkbTnR-x6jifoBHTut_y4JvGUuMtoeU5GvWCgHuaAP75NtmSh374jDYtVDzIzKbRQNVQZYnTjcegfddqcGv6PPq19_0QGMaIn7JbkiMjp7El7CKKKNJ5DqrpOg3IaulUQezx2A8J5RvcCwezEsQNE4jDQZMn_2s8Ru-xW70Hj3ScxyPgbuGDHxvmj0Xhs7eH">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary dark:text-primary-fixed">NutriVitality AI</h1>
+</div>
+<button class="text-primary dark:text-primary-fixed hover:bg-surface-variant/50 transition-colors active:scale-95 duration-200 rounded-full p-2">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</header>
+<!-- NavigationDrawer (Web Only) -->
+<nav class="hidden md:flex fixed inset-y-0 left-0 z-[60] flex flex-col py-stack-lg bg-surface-container-low dark:bg-surface-dim h-full w-[320px] rounded-r-xl shadow-xl">
+<div class="px-6 mb-8 flex items-center gap-4">
+<img class="w-12 h-12 rounded-full object-cover" data-alt="A small, circular, high-resolution portrait of a health-conscious individual smiling slightly, acting as a user profile avatar. Bright, clean lighting against a soft, neutral background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbeHLdFl7tZupjnUMCVXIRlm-cDdV4ulbQBOU6eMXRGD16apfqWjosgkrYJwL5zM6hAL2yl6N9HFqDJLNmyBRt5TZlzSnES5AdpQFi9IFYmCX-Zmq_CQbHqeiHX0ZnaKS9-A8fPM_6XE1DAY63_-LbN6yumX2hp8yKcpNwqp6DOhvrr5Gw6YHqAYiZUPO8N2RVmiYm1rcGSjz7DAM2ueRYMdW34R4SVOzlNHstHkDPVYTg3ntcJ7Qo">
+<div>
+<h2 class="font-title-lg text-title-lg font-bold text-primary dark:text-primary-fixed">Health Explorer</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Pro Member • 7-day streak</p>
+</div>
+</div>
+<div class="flex flex-col gap-2 flex-grow">
+<!-- Active State -->
+<a class="flex items-center gap-4 px-4 py-3 mx-2 bg-secondary-container text-on-secondary-container font-bold rounded-full hover:bg-surface-container-high active:scale-98 transition-all font-label-lg text-label-lg" href="#">
+<span class="material-symbols-outlined" data-icon="auto_awesome" data-weight="fill" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+                AI Hub
+            </a>
+<!-- Inactive States -->
+<a class="flex items-center gap-4 px-4 py-3 mx-2 text-on-surface-variant hover:bg-surface-container-high active:scale-98 transition-all font-label-lg text-label-lg rounded-full" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+                Daily Summary
+            </a>
+<a class="flex items-center gap-4 px-4 py-3 mx-2 text-on-surface-variant hover:bg-surface-container-high active:scale-98 transition-all font-label-lg text-label-lg rounded-full" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+                Meal History
+            </a>
+<a class="flex items-center gap-4 px-4 py-3 mx-2 text-on-surface-variant hover:bg-surface-container-high active:scale-98 transition-all font-label-lg text-label-lg rounded-full" href="#">
+<span class="material-symbols-outlined" data-icon="photo_library">photo_library</span>
+                Photo Gallery
+            </a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-20 md:pt-8 pb-24 md:pb-8 md:ml-[320px] px-margin-mobile md:px-margin-tablet max-w-[840px] mx-auto w-full flex flex-col gap-stack-lg">
+<!-- Header Section -->
+<section class="flex flex-col gap-2">
+<div class="flex items-center gap-2 text-tertiary">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span class="font-label-lg text-label-lg uppercase tracking-wider">Chef AI Suggests</span>
+</div>
+<h2 class="font-display-lg text-display-lg text-on-background">Mediterranean Quinoa Bowl</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-2 max-w-2xl">Perfectly balanced to hit your remaining macro targets for today. High in protein, rich in healthy fats, and full of flavor.</p>
+</section>
+<!-- Bento Grid Layout -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Hero Image Card (Span 12 on mobile, 8 on tablet+) -->
+<div class="md:col-span-8 relative rounded-xl overflow-hidden h-[400px] bg-surface-container shadow-sm border border-surface-variant/50 group">
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A vibrant, highly appetizing overhead shot of a Mediterranean Quinoa Bowl. The bowl is filled with fluffy quinoa, bright red cherry tomatoes, crisp cucumber, Kalamata olives, and grilled chicken, drizzled with a light vinaigrette. Soft, natural sunlight creates an inviting, healthy aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuATkrd4wRCv3fOj_1dsn0KpjlYHrVRVvExnOqYfmOHsanfW8enzyGK0lQObSkwJzwR81txexCCGGF_Ekjgr22nM0iLTQIbjGE4998-U5Xn9xsztKOX1eOHExwbXsUx68Y1T_xRwqagZz-CpxsNheUVvKdXXMenmZTs19RJKBgiyQeMRanpk9CHEu55ZSmvUkn4dpfDoW8Eg8ddFOuFOtbqG8iiU4Yrs_MIoRSllEJ80kQYqb7spu1EU">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+<!-- Floating Tags -->
+<div class="absolute top-4 left-4 flex gap-2">
+<span class="bg-surface-glass text-on-surface px-3 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-1 backdrop-blur-md">
+<span class="material-symbols-outlined text-[14px]" data-icon="timer">timer</span> 15 Min Prep
+                    </span>
+<span class="bg-surface-glass text-on-surface px-3 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-1 backdrop-blur-md">
+<span class="material-symbols-outlined text-[14px]" data-icon="local_fire_department">local_fire_department</span> High Protein
+                    </span>
+</div>
+</div>
+<!-- Macro Summary Card (Span 12 on mobile, 4 on tablet+) -->
+<div class="md:col-span-4 flex flex-col gap-4">
+<div class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant shadow-sm h-full flex flex-col justify-between">
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-6">Macro Alignment</h3>
+<div class="flex flex-col gap-6">
+<!-- Protein -->
+<div>
+<div class="flex justify-between font-label-lg text-label-lg mb-2">
+<span class="text-on-surface-variant">Protein</span>
+<span class="font-bold text-primary">45g</span>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full w-[80%]"></div>
+</div>
+</div>
+<!-- Carbs -->
+<div>
+<div class="flex justify-between font-label-lg text-label-lg mb-2">
+<span class="text-on-surface-variant">Carbs</span>
+<span class="font-bold text-secondary">55g</span>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full w-[60%]"></div>
+</div>
+</div>
+<!-- Fats -->
+<div>
+<div class="flex justify-between font-label-lg text-label-lg mb-2">
+<span class="text-on-surface-variant">Fats</span>
+<span class="font-bold text-tertiary">22g</span>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-tertiary rounded-full w-[45%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-8 pt-6 border-t border-surface-variant flex justify-between items-end">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Total Calories</p>
+<p class="font-display-lg text-[40px] text-on-background leading-none mt-1">580</p>
+</div>
+<span class="material-symbols-outlined text-primary text-4xl" data-icon="check_circle">check_circle</span>
+</div>
+</div>
+</div>
+<!-- AI Insight Card -->
+<div class="col-span-1 md:col-span-12 surface-glass ai-shadow rounded-xl p-6 border border-tertiary/20 flex flex-col md:flex-row items-start md:items-center gap-6 mt-4">
+<div class="bg-tertiary-container text-on-tertiary-container p-3 rounded-full flex-shrink-0">
+<span class="material-symbols-outlined text-2xl" data-icon="lightbulb">lightbulb</span>
+</div>
+<div class="flex-grow">
+<h4 class="font-title-lg text-title-lg text-on-surface">Why this meal?</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">You're slightly behind on protein today and have a good allowance for complex carbs. Quinoa provides a complete amino acid profile, and the olive oil ensures you hit your healthy fat target without feeling sluggish.</p>
+</div>
+</div>
+<!-- Actions -->
+<div class="col-span-1 md:col-span-12 flex flex-col sm:flex-row gap-4 mt-4 justify-end">
+<button class="px-6 py-3 rounded-full border-[1.5px] border-outline text-on-surface font-label-lg text-label-lg hover:bg-surface-variant/50 transition-colors active:scale-95 duration-200">
+                    Swap Meal
+                </button>
+<button class="px-8 py-3 rounded-full bg-primary text-on-primary font-label-lg text-label-lg hover:bg-primary/90 transition-colors active:scale-95 duration-200 flex items-center justify-center gap-2 shadow-md">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+                    View Full Recipe
+                </button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center py-stack-sm pb-safe px-margin-mobile bg-surface/90 dark:bg-surface-dim/90 backdrop-blur-lg z-50 rounded-t-xl shadow-lg dark:shadow-none">
+<!-- Active Tab -->
+<a class="flex flex-col items-center justify-center bg-secondary-container dark:bg-primary-container text-on-secondary-container dark:text-on-primary-container rounded-full px-5 py-1 hover:bg-surface-container-high/50 active:scale-90 transition-transform duration-150 font-label-sm text-label-sm" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="auto_awesome" data-weight="fill" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+            AI Hub
+        </a>
+<!-- Inactive Tabs -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-5 py-1 hover:bg-surface-container-high/50 active:scale-90 transition-transform duration-150 font-label-sm text-label-sm" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="add_a_photo">add_a_photo</span>
+            Log
+        </a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-5 py-1 hover:bg-surface-container-high/50 active:scale-90 transition-transform duration-150 font-label-sm text-label-sm" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="analytics">analytics</span>
+            Insights
+        </a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-5 py-1 hover:bg-surface-container-high/50 active:scale-90 transition-transform duration-150 font-label-sm text-label-sm" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="person">person</span>
+            Profile
+        </a>
+</nav>
+<!-- Floating Action Button (Log Meal) -->
+<button class="md:hidden fixed bottom-24 right-4 bg-tertiary text-on-tertiary w-14 h-14 rounded-2xl shadow-lg flex items-center justify-center hover:bg-tertiary/90 transition-colors active:scale-95 z-40">
+<span class="material-symbols-outlined text-2xl" data-icon="add">add</span>
+</button>
+</body></html>

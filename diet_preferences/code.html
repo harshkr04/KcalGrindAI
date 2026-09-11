@@ -1,0 +1,322 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Dietary Preferences</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<!-- Google Fonts: Roboto Flex and Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Flex:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface": "#f8faf9",
+                    "surface-container-highest": "#e1e3e2",
+                    "on-secondary-container": "#327053",
+                    "on-tertiary-fixed": "#000866",
+                    "primary": "#0f5238",
+                    "secondary": "#2b694d",
+                    "on-primary-container": "#a8e7c5",
+                    "on-primary": "#ffffff",
+                    "primary-fixed-dim": "#95d4b3",
+                    "tertiary-fixed-dim": "#bdc2ff",
+                    "on-background": "#191c1c",
+                    "secondary-fixed-dim": "#94d4b1",
+                    "on-secondary-fixed-variant": "#0c5136",
+                    "outline-variant": "#bfc9c1",
+                    "surface-container-low": "#f2f4f3",
+                    "primary-fixed": "#b1f0ce",
+                    "surface-bright": "#f8faf9",
+                    "primary-container": "#2d6a4f",
+                    "secondary-container": "#b0f1cc",
+                    "surface-variant": "#e1e3e2",
+                    "container-high": "#e6e9e8",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-container": "#d5d7ff",
+                    "on-secondary-fixed": "#002113",
+                    "on-primary-fixed-variant": "#0e5138",
+                    "surface-container": "#eceeed",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed": "#002114",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-primary": "#95d4b3",
+                    "on-surface": "#191c1c",
+                    "surface-tint": "#2c694e",
+                    "outline": "#707973",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff",
+                    "tertiary": "#313c9f",
+                    "error": "#ba1a1a",
+                    "tertiary-container": "#4a55b9",
+                    "inverse-on-surface": "#eff1f0",
+                    "secondary-fixed": "#b0f1cc",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed-variant": "#303b9f",
+                    "surface-dim": "#d8dada",
+                    "on-surface-variant": "#404943",
+                    "background": "#f8faf9",
+                    "tertiary-fixed": "#dfe0ff",
+                    "inverse-surface": "#2e3131"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "99999px"
+            },
+            "spacing": {
+                    "container-padding": "20px",
+                    "unit": "4px",
+                    "gutter": "16px",
+                    "margin-tablet": "24px",
+                    "stack-md": "16px",
+                    "margin-mobile": "16px",
+                    "stack-sm": "8px",
+                    "stack-lg": "32px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Roboto Flex"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "title-lg": ["Inter"],
+                    "headline-lg-mobile": ["Roboto Flex"],
+                    "label-sm": ["Inter"],
+                    "display-lg": ["Roboto Flex"],
+                    "label-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0.5px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "title-lg": ["22px", {"lineHeight": "28px", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "label-sm": ["11px", {"lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "500"}],
+                    "display-lg": ["57px", {"lineHeight": "64px", "letterSpacing": "-0.25px", "fontWeight": "400"}],
+                    "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "500"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        /* Custom styles to handle dynamic selection via JS class toggling */
+        .chip-base {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .chip-unselected {
+            background-color: transparent;
+            border-color: theme('colors.outline-variant');
+            color: theme('colors.on-surface');
+        }
+        .chip-selected {
+            background-color: theme('colors.primary-container');
+            border-color: theme('colors.primary-container');
+            color: theme('colors.on-primary-container');
+            /* Liquid Glass subtle glow for active element */
+            box-shadow: 0 4px 20px -4px theme('colors.primary/20');
+        }
+
+        /* Atmospheric background blurs */
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col relative overflow-hidden font-body-lg">
+<!-- Liquid Glass Atmospheric Backgrounds -->
+<div class="bg-blob w-[60vw] h-[60vw] bg-secondary-container/60 top-[-20%] left-[-20%]"></div>
+<div class="bg-blob w-[50vw] h-[50vw] bg-primary-container/40 bottom-1/4 right-[-10%]"></div>
+<!-- Onboarding Header Canvas (No Nav Shell) -->
+<header class="px-margin-mobile pt-12 pb-4 relative z-10 w-full max-w-screen-md mx-auto md:px-margin-tablet">
+<!-- Top row: Back button & Step indicator -->
+<div class="flex items-center justify-between mb-6">
+<button id="back-button" class="w-12 h-12 rounded-full flex items-center justify-center hover:bg-surface-variant/50 transition-colors active:scale-95 text-on-surface group">
+<span class="material-symbols-outlined group-hover:-translate-x-1 transition-transform" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<div class="flex flex-col items-end">
+<span class="font-label-lg text-label-lg text-on-surface-variant uppercase tracking-wider">Step 4 of 6</span>
+</div>
+</div>
+<!-- Progress Ring / Bar (Linear for this view) -->
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-1000 ease-out" style="width: 66%;"></div>
+</div>
+</header>
+<!-- Main Interactive Canvas -->
+<main class="flex-1 flex flex-col px-margin-mobile relative z-10 w-full max-w-screen-md mx-auto md:px-margin-tablet pb-32">
+<div class="mt-8 mb-stack-lg">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-display-lg md:text-display-lg text-on-surface mb-2 tracking-tight">What do you prefer to eat?</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant opacity-80">Select all that apply to refine your AI nutritional analysis.</p>
+</div>
+<!-- Multi-select Chip Grid -->
+<div class="flex flex-wrap gap-3 md:gap-4" id="chip-container">
+<!-- Chips will be progressively enhanced by JS -->
+<button class="diet-chip chip-base chip-unselected border-2 rounded-full px-6 py-4 flex items-center gap-2 active:scale-[0.98] font-title-lg text-title-lg select-none" data-value="no_preference" type="button">
+                No preference
+            </button>
+<button class="diet-chip chip-base chip-unselected border-2 rounded-full px-6 py-4 flex items-center gap-2 active:scale-[0.98] font-title-lg text-title-lg select-none" data-value="vegetarian" type="button">
+                Vegetarian
+            </button>
+<button class="diet-chip chip-base chip-unselected border-2 rounded-full px-6 py-4 flex items-center gap-2 active:scale-[0.98] font-title-lg text-title-lg select-none" data-value="vegan" type="button">
+                Vegan
+            </button>
+<button class="diet-chip chip-base chip-unselected border-2 rounded-full px-6 py-4 flex items-center gap-2 active:scale-[0.98] font-title-lg text-title-lg select-none" data-value="high_protein" type="button">
+                High protein
+            </button>
+<button class="diet-chip chip-base chip-unselected border-2 rounded-full px-6 py-4 flex items-center gap-2 active:scale-[0.98] font-title-lg text-title-lg select-none" data-value="low_carb" type="button">
+                Low carb
+            </button>
+<button class="diet-chip chip-base chip-unselected border-2 rounded-full px-6 py-4 flex items-center gap-2 active:scale-[0.98] font-title-lg text-title-lg select-none" data-value="balanced" type="button">
+                Balanced
+            </button>
+<button class="diet-chip chip-base chip-unselected border-2 rounded-full px-6 py-4 flex items-center gap-2 active:scale-[0.98] font-title-lg text-title-lg select-none" data-value="mediterranean" type="button">
+                Mediterranean
+            </button>
+<button class="diet-chip chip-base chip-unselected border-2 rounded-full px-6 py-4 flex items-center gap-2 active:scale-[0.98] font-title-lg text-title-lg select-none" data-value="keto" type="button">
+                Keto
+            </button>
+<button class="diet-chip chip-base chip-unselected border-2 rounded-full px-6 py-4 flex items-center gap-2 active:scale-[0.98] font-title-lg text-title-lg select-none" data-value="pescatarian" type="button">
+                Pescatarian
+            </button>
+<!-- Skip Option -->
+<button class="diet-chip chip-base chip-unselected border-2 rounded-full px-6 py-4 flex items-center gap-2 active:scale-[0.98] font-title-lg text-title-lg select-none mt-2 w-full justify-center md:w-auto md:justify-start" data-value="skip" type="button">
+                Skip for now
+            </button>
+</div>
+</main>
+<!-- Fixed Bottom Action Area with Gradient Fade -->
+<footer class="fixed bottom-0 left-0 w-full z-50 pointer-events-none">
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-surface/90 to-transparent pointer-events-none"></div>
+<div class="w-full max-w-screen-md mx-auto px-margin-mobile md:px-margin-tablet pb-safe pt-8 pb-8 relative z-10 pointer-events-auto flex justify-end">
+<!-- Primary Action FAB/Button style -->
+<button id="next-button" class="bg-primary text-on-primary rounded-full px-8 py-4 font-title-lg text-title-lg flex items-center gap-3 shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-95 transition-all duration-200">
+                Next
+                <span class="material-symbols-outlined" style="font-variation-settings: 'wght' 600;">arrow_forward</span>
+</button>
+</div>
+</footer>
+<!-- Interaction Logic -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chips = document.querySelectorAll('.diet-chip');
+            const nextButton = document.getElementById('next-button');
+            const skipChip = document.querySelector('[data-value="skip"]');
+            const noPreferenceChip = document.querySelector('[data-value="no_preference"]');
+
+            chips.forEach(chip => {
+                chip.addEventListener('click', (e) => {
+                    const isSelected = chip.classList.contains('chip-selected');
+                    const isSkip = chip.dataset.value === 'skip';
+                    const isNoPreference = chip.dataset.value === 'no_preference';
+
+                    if (isSkip) {
+                        // If clicking "Skip for now", deselect all others
+                        if (!isSelected) {
+                            chips.forEach(c => {
+                                c.classList.remove('chip-selected');
+                                c.classList.add('chip-unselected');
+                            });
+                            chip.classList.remove('chip-unselected');
+                            chip.classList.add('chip-selected');
+                        } else {
+                            // Allow toggling off skip
+                            chip.classList.remove('chip-selected');
+                            chip.classList.add('chip-unselected');
+                        }
+                    } else if (isNoPreference) {
+                        // If clicking "No Preference", deselect all others (except skip)
+                        if (!isSelected) {
+                            chips.forEach(c => {
+                                if (c.dataset.value !== 'skip') {
+                                    c.classList.remove('chip-selected');
+                                    c.classList.add('chip-unselected');
+                                }
+                            });
+                            chip.classList.remove('chip-unselected');
+                            chip.classList.add('chip-selected');
+                        } else {
+                            chip.classList.remove('chip-selected');
+                            chip.classList.add('chip-unselected');
+                        }
+                    } else {
+                        // If clicking a specific diet preference, turn off "No Preference"
+                        if (noPreferenceChip.classList.contains('chip-selected')) {
+                            noPreferenceChip.classList.remove('chip-selected');
+                            noPreferenceChip.classList.add('chip-unselected');
+                        }
+
+                        // Toggle current chip
+                        if (isSelected) {
+                            chip.classList.remove('chip-selected');
+                            chip.classList.add('chip-unselected');
+                        } else {
+                            chip.classList.remove('chip-unselected');
+                            chip.classList.add('chip-selected');
+                        }
+                    }
+
+                    // Enable next button if any option is selected (including skip)
+                    const hasSelection = Array.from(chips).some(c => c.classList.contains('chip-selected'));
+                    nextButton.disabled = !hasSelection;
+
+                    // Optional haptic feedback simulation
+                    if (navigator.vibrate) {
+                        navigator.vibrate(50);
+                    }
+                });
+            });
+
+            // Handle back button
+            document.getElementById('back-button').addEventListener('click', () => {
+                window.history.back();
+            });
+
+            // Handle next button
+            nextButton.addEventListener('click', () => {
+                // Store selections in localStorage for persistence
+                const selectedChips = Array.from(chips)
+                    .filter(chip => chip.classList.contains('chip-selected'))
+                    .map(chip => chip.dataset.value);
+
+                if (selectedChips.length > 0) {
+                    localStorage.setItem('selectedDietPreferences', JSON.stringify(selectedChips));
+                    // Navigate to next screen (allergies)
+                    window.location.href = '../allergies/code.html';
+                }
+            });
+
+            // Restore selections from localStorage on page load
+            const savedDietPreferences = localStorage.getItem('selectedDietPreferences');
+            if (savedDietPreferences) {
+                try {
+                    const selectedValues = JSON.parse(savedDietPreferences);
+                    chips.forEach(chip => {
+                        if (selectedValues.includes(chip.dataset.value)) {
+                            chip.classList.remove('chip-unselected');
+                            chip.classList.add('chip-selected');
+                        } else {
+                            chip.classList.remove('chip-selected');
+                            chip.classList.add('chip-unselected');
+                        }
+                    });
+
+                    // Enable next button if there are saved selections
+                    nextButton.disabled = selectedValues.length === 0;
+                } catch (e) {
+                    console.error('Failed to parse saved diet preferences:', e);
+                }
+            }
+        });
+</script>
+</body></html>

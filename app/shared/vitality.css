@@ -1,0 +1,265 @@
+/* ==========================================================================
+   Vitality Flow — Phase 1 surface / glass / motion utilities.
+   Every rule below is lifted from an existing Phase 1 screen; the only change
+   is that Tailwind `theme('colors.x')` calls (which never resolved inside a
+   plain <style> block on the Play CDN) are written as the literal token hex.
+   ==========================================================================
+   Sources: welcome, goal_selection, diet_preferences, allergies,
+            permission_setup, calorie_target, goal_setting,
+            home_dashboard_normal_state, home_dashboard_empty_state,
+            splash_screen_refinement_mint_glow
+   ========================================================================== */
+
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.material-symbols-outlined.filled { font-variation-settings: 'FILL' 1; }
+
+body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* --- Liquid Glass surfaces ------------------------------------------------ */
+.liquid-glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(15, 82, 56, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
+}
+.liquid-glass:active { background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.2) 100%); transform: scale(0.98); }
+
+.glass-card {
+  background: rgba(248, 250, 249, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 24px rgba(15, 82, 56, 0.05);
+}
+.glass-effect {
+  background: rgba(248, 250, 249, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+.surface-glass { background-color: rgba(248, 250, 249, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.ai-glass {
+  background: rgba(236, 238, 237, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(189, 194, 255, 0.4);
+  box-shadow: 0 8px 32px rgba(49, 60, 159, 0.08);
+}
+.glass-ring {
+  background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.3);
+  box-shadow: 0 8px 32px 0 rgba(15, 82, 56, 0.05);
+}
+
+/* --- Atmospheric backgrounds --------------------------------------------- */
+.bg-mesh {
+  background-image:
+    radial-gradient(at 10% 20%, hsla(145,39%,85%,1) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(189,40%,90%,1) 0px, transparent 50%),
+    radial-gradient(at 90% 80%, hsla(145,50%,80%,1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(190,40%,90%,1) 0px, transparent 50%);
+  background-color: #f8faf9;
+}
+.gradient-bg {
+  background: linear-gradient(135deg, rgba(176, 241, 204, 0.1) 0%, rgba(189, 194, 255, 0.1) 100%);
+  position: absolute; inset: 0; z-index: -1;
+}
+.bg-blob { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.4; pointer-events: none; z-index: 0; }
+
+/* --- Progress rings ------------------------------------------------------ */
+.progress-ring, .progress-ring__circle, .progress-ring-circle {
+  transition: stroke-dashoffset 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+/* --- Chips (diet_preferences / allergies) -------------------------------- */
+.chip-base { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.chip-unselected { background-color: transparent; border-color: #bfc9c1; color: #191c1c; }
+.chip-selected { background-color: #2d6a4f; border-color: #2d6a4f; color: #a8e7c5; box-shadow: 0 4px 20px -4px rgba(15, 82, 56, 0.2); }
+.chip-base:active { transform: scale(0.98); }
+
+/* --- Material 3 outlined text field (personal_details) ------------------- */
+.m3-input-container { position: relative; padding-top: 8px; }
+.m3-input {
+  width: 100%; height: 56px; padding: 0 16px;
+  border: 1px solid #707973; border-radius: 0.25rem;
+  background: transparent; color: #191c1c;
+  font-family: Inter, sans-serif; font-size: 16px; line-height: 24px;
+  transition: border-color .2s, box-shadow .2s;
+}
+.m3-input:focus { outline: none; border-color: #0f5238; border-width: 2px; padding: 0 15px; }
+.m3-input::-webkit-outer-spin-button, .m3-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.m3-input[type=number] { -moz-appearance: textfield; }
+.m3-label {
+  position: absolute; left: 16px; top: 24px; color: #404943;
+  font-family: Inter, sans-serif; font-size: 16px; pointer-events: none;
+  transition: all .2s ease-out; background: #f8faf9; padding: 0 4px;
+}
+.m3-input:focus ~ .m3-label,
+.m3-input:not(:placeholder-shown) ~ .m3-label { top: 0; font-size: 12px; color: #0f5238; }
+.m3-input:not(:focus):not(:placeholder-shown) ~ .m3-label { color: #404943; }
+.m3-field.is-invalid .m3-input { border-color: #ba1a1a; border-width: 2px; }
+.m3-field.is-invalid .m3-label,
+.m3-field.is-invalid .m3-input:focus ~ .m3-label { color: #ba1a1a; }
+.m3-field.is-valid .m3-input { border-color: #2b694d; }
+.m3-field.is-valid .m3-label,
+.m3-field.is-valid .m3-input:focus ~ .m3-label { color: #2b694d; }
+
+/* Trailing status icon inside M3 input (check / error) */
+.m3-trail {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  pointer-events: none; display: flex; align-items: center;
+  transition: opacity .2s;
+}
+.m3-trail:empty { opacity: 0; }
+
+/* When trailing icon is visible, pad the input right side */
+.m3-input-container:has(.m3-trail:not(:empty)) .m3-input { padding-right: 44px; }
+.m3-input-container:has(.m3-trail:not(:empty)) .m3-input:focus { padding-right: 43px; }
+
+/* Error shake animation */
+.vf-shake { animation: vfShake .4s cubic-bezier(.36,.07,.19,.97); }
+@keyframes vfShake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-3px); }
+  40%, 60% { transform: translateX(3px); }
+}
+
+/* --- Range sliders (goal_setting) ---------------------------------------- */
+input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%;
+  background: #0f5238; cursor: pointer; margin-top: -10px;
+  box-shadow: 0 2px 6px rgba(15, 82, 56, 0.3);
+}
+input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #e1e3e2; border-radius: 2px; }
+input[type=range]::-moz-range-thumb { height: 24px; width: 24px; border: 0; border-radius: 50%; background: #0f5238; }
+input[type=range]::-moz-range-track { height: 4px; background: #e1e3e2; border-radius: 2px; }
+
+/* --- Motion (welcome / permission_setup / splash / calorie_target) ------- */
+.animate-float { animation: float 6s ease-in-out infinite; }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.ai-pulse { animation: pulse-soft 4s ease-in-out infinite; }
+@keyframes pulse-soft { 0%,100% { transform: scale(1); opacity: .8; } 50% { transform: scale(1.02); opacity: 1; } }
+.fade-in-up { animation: fadeInUp .6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
+@keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+.animate-entrance { animation: fade-in-up 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
+@keyframes fade-in-up { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+.animate-blob-center { animation: float-center 20s ease-in-out infinite; transform-origin: center center; }
+@keyframes float-center {
+  0%   { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  50%  { transform: translate(-50%, -50%) scale(1.08) rotate(8deg); }
+  100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+}
+.delay-100 { animation-delay: 100ms; } .delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; } .delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* --- Utilities ----------------------------------------------------------- */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+/* ==========================================================================
+   Phase 2 additions — only what the onboarding flow needs and Phase 1
+   did not already define. No new colours, radii, type or spacing.
+   ========================================================================== */
+
+/* Step transition: the same fade/slide easing Phase 1 already uses. */
+.vf-screen { animation: fadeInUp .32s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(12px); }
+.vf-leaving { opacity: 0; transform: translateY(-8px); transition: opacity .18s ease-in, transform .18s ease-in; }
+.vf-back .vf-screen { animation-name: fadeInDown; }
+@keyframes fadeInDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Cross-document shared element for the calorie ring (Chrome 126+). */
+@view-transition { navigation: auto; }
+.vf-ring-shared { view-transition-name: vf-calorie-ring; }
+
+/* Selection feedback for the goal / activity cards. */
+.vf-selectable { transition: transform .18s cubic-bezier(0.4,0,0.2,1), box-shadow .18s, border-color .18s, background-color .18s; }
+.vf-selectable:active { transform: scale(0.98); }
+.vf-selectable:disabled, .vf-selectable[aria-disabled='true'] { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+.vf-selected { border-color: #0f5238 !important; box-shadow: 0 6px 24px -6px rgba(15, 82, 56, 0.28), inset 0 0 0 1px #0f5238; }
+.vf-pop { animation: vfPop .28s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+@keyframes vfPop { 0% { transform: scale(1); } 45% { transform: scale(1.03); } 100% { transform: scale(1); } }
+
+/* Sticky footer action — collapses to inline when the keyboard is open so it
+   never covers the field being edited (Android soft-keyboard behaviour). */
+.vf-footer { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; pointer-events: none; }
+.vf-footer > * { pointer-events: auto; }
+body.kb-open .vf-footer { position: static; }
+body.kb-open .vf-kb-hide { display: none !important; }
+
+/* Disabled primary action (validation gate). */
+.vf-cta[disabled] { background-color: #e1e3e2 !important; color: #707973 !important; box-shadow: none !important; cursor: not-allowed; }
+.vf-cta[disabled] .material-symbols-outlined { color: #707973 !important; }
+
+/* Inline validation / helper text — body-md sized, never micro-copy. */
+.vf-help { font-family: Inter, sans-serif; font-size: 14px; line-height: 20px; color: #404943; }
+.vf-error { font-family: Inter, sans-serif; font-size: 14px; line-height: 20px; color: #ba1a1a; }
+
+/* Snackbar (Material 3 inverse surface). */
+.vf-snackbar {
+  position: fixed; left: 16px; right: 16px; bottom: 24px; z-index: 90;
+  max-width: 480px; margin: 0 auto; padding: 14px 16px; border-radius: 0.25rem;
+  background: #2e3131; color: #eff1f0; font-family: Inter, sans-serif; font-size: 14px; line-height: 20px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  transform: translateY(120%); transition: transform .28s cubic-bezier(0.16,1,0.3,1);
+  display: flex; gap: 12px; align-items: center;
+}
+.vf-snackbar.is-open { transform: translateY(0); }
+
+/* Skeleton shimmer for the target-calculation loading state. */
+.vf-skeleton { background: linear-gradient(90deg, #eceeed 25%, #f2f4f3 37%, #eceeed 63%); background-size: 400% 100%; animation: vfShimmer 1.4s ease infinite; }
+@keyframes vfShimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+/* Visible focus ring for keyboard / switch-access users. */
+:focus-visible { outline: 3px solid #313c9f; outline-offset: 2px; border-radius: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vf-screen, .fade-in-up, .animate-entrance, .vf-pop { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .animate-float, .ai-pulse, .animate-blob-center, .vf-skeleton { animation: none !important; }
+  .progress-ring, .progress-ring__circle, .progress-ring-circle { transition: none !important; }
+  @view-transition { navigation: none; }
+}
+
+/* --- Voice logging ------------------------------------------------------- */
+.voice-ring { animation: voicePulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+@keyframes voicePulse {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.15); opacity: 0; }
+  100% { transform: scale(0.9); opacity: 0; }
+}
+.voice-wave { display: flex; align-items: center; gap: 3px; height: 24px; }
+.voice-wave span { display: block; width: 3px; border-radius: 2px; background: #0f5238; animation: voiceBar 1s ease-in-out infinite; }
+.voice-wave span:nth-child(1) { animation-delay: 0s; }
+.voice-wave span:nth-child(2) { animation-delay: 0.15s; }
+.voice-wave span:nth-child(3) { animation-delay: 0.3s; }
+.voice-wave span:nth-child(4) { animation-delay: 0.45s; }
+.voice-wave span:nth-child(5) { animation-delay: 0.6s; }
+@keyframes voiceBar {
+  0%, 100% { height: 6px; }
+  50% { height: 20px; }
+}
+
+/* --- Barcode scanner ----------------------------------------------------- */
+.scanner-overlay { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
+.scanner-frame { position: relative; width: 80vw; max-width: 320px; aspect-ratio: 1 / 1; }
+.scanner-frame::before, .scanner-frame::after, .scanner-frame .corner::before, .scanner-frame .corner::after {
+  content: ''; position: absolute; width: 32px; height: 32px; border-color: #ffffff; border-style: solid; border-width: 0;
+}
+.scanner-frame::before { top: 0; left: 0; border-top-width: 3px; border-left-width: 3px; border-top-left-radius: 12px; }
+.scanner-frame::after { top: 0; right: 0; border-top-width: 3px; border-right-width: 3px; border-top-right-radius: 12px; }
+.scanner-frame .corner::before { bottom: 0; left: 0; border-bottom-width: 3px; border-left-width: 3px; border-bottom-left-radius: 12px; }
+.scanner-frame .corner::after { bottom: 0; right: 0; border-bottom-width: 3px; border-right-width: 3px; border-bottom-right-radius: 12px; }
+.scan-line { position: absolute; left: 5%; right: 5%; height: 2px; background: linear-gradient(90deg, transparent, #313c9f, transparent); box-shadow: 0 0 8px #313c9f; animation: scanline 3s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+@keyframes scanline { 0% { top: 5%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 95%; opacity: 0; } }
+
+/* --- AI food review ------------------------------------------------------ */
+.review-item { transition: background-color .2s, border-color .2s; }
+.review-item:hover { background-color: #f2f4f3; }
+

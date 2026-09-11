@@ -1,0 +1,307 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="#f8faf9" name="theme-color">
+<title>Search Food · Vitality</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="shared/theme.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Roboto+Flex:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="shared/vitality.css" rel="stylesheet">
+<script src="shared/store.js"></script>
+<script src="shared/nutrition.js"></script>
+<script src="shared/ui.js"></script>
+<script src="shared/diary.js"></script>
+</head>
+<!-- Food Search — Search, recent, favorites, custom foods, recipes, saved meals. -->
+<body class="bg-surface min-h-screen w-full flex flex-col font-body-lg text-on-background overflow-x-hidden antialiased pb-32">
+<div id="vf-header"></div>
+<main class="flex-1 flex flex-col px-container-padding pb-stack-lg relative z-10 max-w-md mx-auto w-full vf-screen">
+  <h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mt-stack-md mb-stack-sm tracking-tight">Add Food</h1>
+  <p class="font-body-md text-body-md text-on-surface-variant mb-stack-lg">Search foods, or pick from recent and favorites.</p>
+
+  <!-- Search Field -->
+  <div class="glass-card rounded-xl p-1 flex items-center gap-2 mb-stack-lg">
+    <span class="material-symbols-outlined text-on-surface-variant ml-3">search</span>
+    <input id="search-input" type="text" class="flex-1 bg-transparent border-none focus:ring-0 font-body-lg text-body-lg text-on-surface placeholder:text-outline py-3" placeholder="What did you eat?" autocomplete="off">
+    <button id="clear-search" class="hidden mr-2 p-2 rounded-full hover:bg-surface-container-high text-on-surface-variant transition-colors">
+      <span class="material-symbols-outlined text-[20px]">close</span>
+    </button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex gap-2 mb-stack-lg overflow-x-auto no-scrollbar">
+    <button class="search-tab font-label-lg text-label-lg px-4 py-2 rounded-full border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-high transition-colors whitespace-nowrap" data-tab="recent">Recent</button>
+    <button class="search-tab font-label-lg text-label-lg px-4 py-2 rounded-full border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-high transition-colors whitespace-nowrap" data-tab="favorites">Favorites</button>
+    <button class="search-tab font-label-lg text-label-lg px-4 py-2 rounded-full border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-high transition-colors whitespace-nowrap" data-tab="custom">Custom</button>
+    <button class="search-tab font-label-lg text-label-lg px-4 py-2 rounded-full border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-high transition-colors whitespace-nowrap" data-tab="recipes">Recipes</button>
+    <button class="search-tab font-label-lg text-label-lg px-4 py-2 rounded-full border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-high transition-colors whitespace-nowrap" data-tab="saved">Saved Meals</button>
+  </div>
+
+  <!-- Results -->
+  <div id="search-results" class="flex flex-col gap-2"></div>
+
+  <!-- No Results -->
+  <div id="no-results" class="hidden w-full flex flex-col items-center gap-3 py-8 text-center">
+    <span class="material-symbols-outlined text-on-surface-variant text-[40px]">search_off</span>
+    <p class="font-body-lg text-body-lg text-on-surface-variant">No foods found</p>
+    <p class="font-body-md text-body-md text-on-surface-variant/70">Try another search or create a custom food.</p>
+    <button id="create-custom-from-search" class="vf-cta w-full py-3 rounded-full bg-tertiary text-on-tertiary font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-tertiary/90 active:scale-95 transition-all shadow-md shadow-tertiary/20">
+      <span class="material-symbols-outlined text-[20px]">add</span> Create Custom Food
+    </button>
+  </div>
+
+  <!-- Empty State -->
+  <div id="search-empty" class="w-full flex flex-col items-center gap-3 py-8 text-center">
+    <span class="material-symbols-outlined text-on-surface-variant text-[40px]">history</span>
+    <p class="font-body-lg text-body-lg text-on-surface-variant">Recent foods will appear here</p>
+  </div>
+</main>
+
+<div class="vf-footer">
+  <div class="absolute inset-0 bg-gradient-to-t from-surface via-surface/90 to-transparent pointer-events-none"></div>
+  <div class="relative max-w-md mx-auto px-container-padding pt-8 pb-8 pb-safe flex flex-col gap-3">
+    <button id="back-btn" class="w-full py-3 rounded-full border-[1.5px] border-outline-variant/30 text-on-surface-variant font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-surface-container-high active:scale-95 transition-all">
+      Back
+    </button>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var state = VF.ui.initScreen('food_search', { title: 'Search Food', allowCompleted: true });
+    if (!state) return;
+
+    var mealType = VF.ui.qp('mealType') || VF.diary.suggestMealType();
+    var returnTo = VF.ui.qp('returnTo') || 'diary.html';
+    var searchInput = document.getElementById('search-input');
+    var clearBtn = document.getElementById('clear-search');
+    var resultsEl = document.getElementById('search-results');
+    var noResults = document.getElementById('no-results');
+    var searchEmpty = document.getElementById('search-empty');
+    var backBtn = document.getElementById('back-btn');
+    var createCustomBtn = document.getElementById('create-custom-from-search');
+    var tabs = document.querySelectorAll('.search-tab');
+    var currentTab = 'recent';
+    var query = '';
+
+    function showTab(tab) {
+      currentTab = tab;
+      tabs.forEach(function (t) {
+        var on = t.dataset.tab === tab;
+        t.className = 'search-tab font-label-lg text-label-lg px-4 py-2 rounded-full border transition-colors whitespace-nowrap ' + (on ? 'bg-primary text-on-primary border-primary' : 'border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-high');
+      });
+      render();
+    }
+
+    tabs.forEach(function (t) {
+      t.addEventListener('click', function () {
+        VF.ui.haptics.select();
+        showTab(t.dataset.tab);
+      });
+    });
+
+    function renderRecent() {
+      resultsEl.innerHTML = '';
+      var recent = VF.diary.getRecentFoods(20);
+      if (!recent.length) {
+        searchEmpty.classList.remove('hidden');
+        noResults.classList.add('hidden');
+        resultsEl.classList.add('hidden');
+        return;
+      }
+      searchEmpty.classList.add('hidden');
+      noResults.classList.add('hidden');
+      resultsEl.classList.remove('hidden');
+      recent.forEach(function (food) {
+        resultsEl.appendChild(createFoodCard(food));
+      });
+    }
+
+    function renderFavorites() {
+      resultsEl.innerHTML = '';
+      var favs = VF.diary.getFavorites().filter(function (f) { return f.type === 'food'; });
+      if (!favs.length) {
+        searchEmpty.classList.remove('hidden');
+        searchEmpty.querySelector('p').textContent = 'Your favorite foods will appear here.';
+        noResults.classList.add('hidden');
+        resultsEl.classList.add('hidden');
+        return;
+      }
+      searchEmpty.classList.add('hidden');
+      noResults.classList.add('hidden');
+      resultsEl.classList.remove('hidden');
+      favs.forEach(function (fav) {
+        resultsEl.appendChild(createFoodCard(fav));
+      });
+    }
+
+    function renderCustom() {
+      resultsEl.innerHTML = '';
+      var custom = VF.diary.getCustomFoods();
+      if (!custom.length) {
+        searchEmpty.classList.remove('hidden');
+        searchEmpty.querySelector('p').textContent = 'No custom foods yet.';
+        noResults.classList.add('hidden');
+        resultsEl.classList.add('hidden');
+        return;
+      }
+      searchEmpty.classList.add('hidden');
+      noResults.classList.add('hidden');
+      resultsEl.classList.remove('hidden');
+      custom.forEach(function (food) {
+        resultsEl.appendChild(createFoodCard(food));
+      });
+    }
+
+    function renderRecipes() {
+      resultsEl.innerHTML = '';
+      var recipes = VF.diary.getRecipes();
+      if (!recipes.length) {
+        searchEmpty.classList.remove('hidden');
+        searchEmpty.querySelector('p').textContent = 'No recipes yet.';
+        noResults.classList.add('hidden');
+        resultsEl.classList.add('hidden');
+        return;
+      }
+      searchEmpty.classList.add('hidden');
+      noResults.classList.add('hidden');
+      resultsEl.classList.remove('hidden');
+      recipes.forEach(function (recipe) {
+        var nut = VF.diary.recipeNutrition(recipe);
+        var card = document.createElement('div');
+        card.className = 'review-item bg-surface-container-low rounded-xl p-4 border border-outline-variant/20';
+        card.innerHTML =
+          '<div class="flex items-center justify-between">' +
+            '<div class="flex-1 min-w-0">' +
+              '<h3 class="font-title-lg text-title-lg text-on-surface truncate">' + recipe.name + '</h3>' +
+              '<p class="font-body-md text-body-md text-on-surface-variant">' + (recipe.servings || 1) + ' serving' + (recipe.servings > 1 ? 's' : '') + ' · ' + nut.perServing.calories + ' kcal/serving</p>' +
+            '</div>' +
+            '<div class="text-right flex-shrink-0">' +
+              '<p class="font-label-lg text-label-lg text-primary">' + VF.ui.fmt(nut.perServing.calories) + ' kcal</p>' +
+              '<button class="select-food font-label-sm text-label-sm text-primary hover:underline mt-1" data-id="' + recipe.id + '" data-type="recipe">Add</button>' +
+            '</div>' +
+          '</div>';
+        card.querySelector('.select-food').addEventListener('click', function () {
+          VF.ui.haptics.select();
+          VF.aiFood.saveExtraction({ source: 'recipe', items: [{ id: recipe.id, name: recipe.name, brand: '', serving: '1 serving (' + (recipe.servings || 1) + 'x)', servingGrams: (recipe.ingredients || []).reduce(function (s, i) { return s + (Number(i.servingGrams) || 0); }, 0), calories: nut.perServing.calories, protein: nut.perServing.protein, carbs: nut.perServing.carbs, fat: nut.perServing.fat }], totalCalories: nut.perServing.calories });
+          VF.ui.go('meal_confirm.html?mealType=' + mealType + '&returnTo=' + encodeURIComponent(returnTo));
+        });
+        resultsEl.appendChild(card);
+      });
+    }
+
+    function renderSavedMeals() {
+      resultsEl.innerHTML = '';
+      var saved = VF.diary.getSavedMeals();
+      if (!saved.length) {
+        searchEmpty.classList.remove('hidden');
+        searchEmpty.querySelector('p').textContent = 'Save a meal to reuse it later.';
+        noResults.classList.add('hidden');
+        resultsEl.classList.add('hidden');
+        return;
+      }
+      searchEmpty.classList.add('hidden');
+      noResults.classList.add('hidden');
+      resultsEl.classList.remove('hidden');
+      saved.forEach(function (meal) {
+        var card = document.createElement('div');
+        card.className = 'review-item bg-surface-container-low rounded-xl p-4 border border-outline-variant/20';
+        card.innerHTML =
+          '<div class="flex items-center justify-between">' +
+            '<div class="flex-1 min-w-0">' +
+              '<h3 class="font-title-lg text-title-lg text-on-surface truncate">' + meal.name + '</h3>' +
+              '<p class="font-body-md text-body-md text-on-surface-variant">' + meal.items.length + ' items · ' + VF.ui.fmt(meal.totalCalories) + ' kcal</p>' +
+            '</div>' +
+            '<div class="text-right flex-shrink-0">' +
+              '<button class="select-food font-label-sm text-label-sm text-primary hover:underline mt-1" data-id="' + meal.id + '" data-type="saved">Add</button>' +
+            '</div>' +
+          '</div>';
+        card.querySelector('.select-food').addEventListener('click', function () {
+          VF.ui.haptics.select();
+          VF.aiFood.saveExtraction({ source: 'saved_meal', items: meal.items.map(function (it) { return Object.assign({}, it); }), totalCalories: meal.totalCalories });
+          VF.ui.go('meal_confirm.html?mealType=' + meal.mealType + '&returnTo=' + encodeURIComponent(returnTo));
+        });
+        resultsEl.appendChild(card);
+      });
+    }
+
+    function renderSearch() {
+      resultsEl.innerHTML = '';
+      if (!query) { searchEmpty.classList.remove('hidden'); noResults.classList.add('hidden'); resultsEl.classList.add('hidden'); return; }
+      var results = VF.diary.searchFoods(query);
+      if (!results.length) {
+        searchEmpty.classList.add('hidden');
+        noResults.classList.remove('hidden');
+        resultsEl.classList.add('hidden');
+        return;
+      }
+      searchEmpty.classList.add('hidden');
+      noResults.classList.add('hidden');
+      resultsEl.classList.remove('hidden');
+      results.forEach(function (food) {
+        resultsEl.appendChild(createFoodCard(food));
+      });
+    }
+
+    function createFoodCard(food) {
+      var card = document.createElement('div');
+      card.className = 'review-item bg-surface-container-low rounded-xl p-4 border border-outline-variant/20';
+      var fav = VF.diary.isFavorite(food.id, 'food');
+      card.innerHTML =
+        '<div class="flex items-center justify-between">' +
+          '<div class="flex-1 min-w-0">' +
+            '<h3 class="font-title-lg text-title-lg text-on-surface truncate">' + food.name + '</h3>' +
+            '<p class="font-body-md text-body-md text-on-surface-variant">' + food.serving + ' · ' + (food.brand || 'Generic') + '</p>' +
+          '</div>' +
+          '<div class="text-right flex-shrink-0">' +
+            '<p class="font-label-lg text-label-lg text-primary">' + VF.ui.fmt(food.calories) + ' kcal</p>' +
+            '<div class="flex gap-2 mt-1 justify-end">' +
+              '<button class="fav-btn text-on-surface-variant hover:text-primary transition-colors" data-id="' + food.id + '" data-type="food" aria-label="Favorite">' +
+                '<span class="material-symbols-outlined text-[18px]" style="font-variation-settings:\'FILL\' ' + (fav ? '1' : '0') + ';">' + (fav ? 'star' : 'star_border') + '</span>' +
+              '</button>' +
+              '<button class="select-food font-label-sm text-label-sm text-primary hover:underline mt-1" data-id="' + food.id + '" data-type="food">Select</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      card.querySelector('.select-food').addEventListener('click', function () {
+        VF.ui.haptics.select();
+        VF.diary.addRecentFood(food);
+        VF.ui.go('food_detail.html?id=' + food.id + '&type=food&mealType=' + mealType + '&returnTo=' + encodeURIComponent(returnTo));
+      });
+      card.querySelector('.fav-btn').addEventListener('click', function () {
+        var isFav = VF.diary.toggleFavorite({ id: food.id, type: 'food', name: food.name });
+        var icon = card.querySelector('.fav-btn .material-symbols-outlined');
+        icon.textContent = isFav ? 'star' : 'star_border';
+        icon.style.fontVariationSettings = "'FILL' " + (isFav ? '1' : '0');
+        VF.ui.haptics.select();
+      });
+      return card;
+    }
+
+    function render() {
+      resultsEl.innerHTML = '';
+      searchEmpty.classList.add('hidden');
+      noResults.classList.add('hidden');
+      resultsEl.classList.add('hidden');
+      if (currentTab === 'recent') renderRecent();
+      else if (currentTab === 'favorites') renderFavorites();
+      else if (currentTab === 'custom') renderCustom();
+      else if (currentTab === 'recipes') renderRecipes();
+      else if (currentTab === 'saved') renderSavedMeals();
+    }
+
+    searchInput.addEventListener('input', function () {
+      query = searchInput.value.trim();
+      clearBtn.classList.toggle('hidden', !query);
+      if (query) { currentTab = 'search'; renderSearch(); }
+      else { render(); }
+    });
+    clearBtn.addEventListener('click', function () { searchInput.value = ''; query = ''; clearBtn.classList.add('hidden'); render(); });
+    backBtn.addEventListener('click', function () { VF.ui.haptics.select(); VF.ui.goBack('food_search'); });
+    createCustomBtn.addEventListener('click', function () { VF.ui.haptics.select(); VF.ui.go('custom_food.html?returnTo=' + encodeURIComponent(returnTo)); });
+
+    showTab('recent');
+  });
+</script>
+</body></html>

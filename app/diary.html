@@ -1,0 +1,303 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="#f8faf9" name="theme-color">
+<title>Diary · Vitality</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="shared/theme.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Roboto+Flex:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="shared/vitality.css" rel="stylesheet">
+<script src="shared/store.js"></script>
+<script src="shared/nutrition.js"></script>
+<script src="shared/ui.js"></script>
+<script src="shared/diary.js"></script>
+</head>
+<!-- Screen 12 — Enhanced Diary. Date navigation, meal timeline, add-food per meal,
+      daily nutrition summary. Uses VF.diary for all data operations. -->
+<body class="bg-background text-on-background min-h-screen flex flex-col items-center justify-start pb-24 relative overflow-x-hidden">
+<!-- Top App Bar -->
+<header class="w-full max-w-md mx-auto sticky top-0 z-50 glass-effect">
+<div class="flex items-center justify-between p-4 pb-2">
+<div class="flex items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">person</span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-medium" id="greeting">Good morning</p>
+<h2 class="font-title-lg text-[18px] text-on-surface font-bold leading-tight tracking-[-0.015em]">Diary</h2>
+</div>
+</div>
+<button class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+
+<main class="w-full max-w-md mx-auto flex-1 px-container-padding flex flex-col gap-4 pt-4">
+
+  <!-- Date Navigation -->
+  <section class="w-full">
+    <div class="flex items-center justify-between">
+      <button id="prev-day" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors active:scale-95">
+        <span class="material-symbols-outlined">chevron_left</span>
+      </button>
+      <div class="text-center">
+        <p id="diary-date" class="font-title-lg text-title-lg text-on-surface font-medium"></p>
+        <button id="today-btn" class="font-label-sm text-label-sm text-primary hover:underline mt-0.5 hidden">Today</button>
+      </div>
+      <button id="next-day" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors active:scale-95">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Daily Nutrition Summary -->
+  <section class="w-full">
+    <div class="glass-card rounded-xl p-4">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Calories</p>
+          <p class="font-headline-lg text-headline-lg text-primary"><span id="diary-consumed">0</span> <span class="font-body-md text-body-md text-on-surface-variant">kcal consumed</span></p>
+        </div>
+        <div class="text-right">
+          <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Remaining</p>
+          <p class="font-title-lg text-title-lg text-secondary"><span id="diary-remaining">0</span> <span class="font-body-md text-body-md text-on-surface-variant">kcal</span></p>
+        </div>
+      </div>
+      <div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden mb-3">
+        <div id="calorie-bar" class="h-full bg-primary rounded-full transition-all duration-500 ease-out" style="width:0%"></div>
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <div class="text-center">
+          <p id="diary-prot" class="font-headline-lg-mobile text-headline-lg-mobile text-secondary">0g</p>
+          <p class="font-label-sm text-label-sm text-on-surface-variant">Protein</p>
+        </div>
+        <div class="text-center">
+          <p id="diary-carbs" class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">0g</p>
+          <p class="font-label-sm text-label-sm text-on-surface-variant">Carbs</p>
+        </div>
+        <div class="text-center">
+          <p id="diary-fat" class="font-headline-lg-mobile text-headline-lg-mobile text-tertiary">0g</p>
+          <p class="font-label-sm text-label-sm text-on-surface-variant">Fat</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Meal Timeline -->
+  <section class="w-full flex flex-col gap-4" id="meal-sections"></section>
+
+  <!-- Empty State -->
+  <div id="diary-empty" class="hidden w-full flex flex-col items-center gap-3 py-8 text-center">
+    <span class="material-symbols-outlined text-on-surface-variant text-[40px]">restaurant</span>
+    <p class="font-body-lg text-body-lg text-on-surface-variant">No meals logged yet.</p>
+    <p class="font-body-md text-body-md text-on-surface-variant/70">Tap the Log button to add your first meal.</p>
+  </div>
+</main>
+
+<!-- Bottom Nav Bar -->
+<div class="fixed bottom-0 w-full max-w-md mx-auto z-40 bg-surface-bright pb-safe">
+<div class="flex gap-2 border-t border-surface-variant px-4 pb-3 pt-2">
+<a class="flex flex-1 flex-col items-center justify-end gap-1 rounded-full text-on-surface-variant" href="11_home.html">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">home</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Home</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 rounded-full text-on-surface" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">book</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Diary</p>
+</a>
+<div class="flex-1"></div>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-on-surface-variant" href="insights.html">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">bar_chart</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Insights</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-on-surface-variant" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">person</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Profile</p>
+</a>
+</div>
+</div>
+<!-- FAB -->
+<button class="fixed bottom-[4.5rem] left-1/2 transform -translate-x-1/2 z-50 flex items-center justify-center gap-2 bg-primary text-on-primary rounded-full px-5 py-4 shadow-lg hover:shadow-xl hover:bg-primary-container transition-all active:scale-95">
+<span class="material-symbols-outlined text-2xl">add</span>
+<span class="font-label-lg text-label-lg font-semibold tracking-wide pr-1">Log</span>
+</button>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var state = VF.store.get();
+    if (!state.completed) { location.replace('index.html'); return; }
+
+    var currentDate = today();
+    var targets = VF.store.targets();
+    var prevBtn = document.getElementById('prev-day');
+    var nextBtn = document.getElementById('next-day');
+    var todayBtn = document.getElementById('today-btn');
+    var dateEl = document.getElementById('diary-date');
+    var consumedEl = document.getElementById('diary-consumed');
+    var remainingEl = document.getElementById('diary-remaining');
+    var protEl = document.getElementById('diary-prot');
+    var carbsEl = document.getElementById('diary-carbs');
+    var fatEl = document.getElementById('diary-fat');
+    var calorieBar = document.getElementById('calorie-bar');
+    var sectionsEl = document.getElementById('meal-sections');
+    var emptyEl = document.getElementById('diary-empty');
+    var fab = document.querySelector('.fixed.bottom-\\[4\\.5rem\\]');
+    var h = new Date().getHours();
+    var greetEl = document.getElementById('greeting');
+    if (h < 12) greetEl.textContent = 'Good morning';
+    else if (h < 17) greetEl.textContent = 'Good afternoon';
+    else greetEl.textContent = 'Good evening';
+
+    function isFuture(dateStr) {
+      return dateStr > today();
+    }
+
+    function render() {
+      var totals = VF.diary.getDailyTotals(currentDate);
+      var meals = VF.diary.getMealsByDate(currentDate);
+      var targetCal = targets ? targets.calories : 2000;
+      var remaining = targetCal - totals.calories;
+      var pct = targetCal > 0 ? Math.min(1, totals.calories / targetCal) : 0;
+
+      dateEl.textContent = VF.diary.formatDate(currentDate);
+      consumedEl.textContent = VF.ui.fmt(totals.calories);
+      remainingEl.textContent = VF.ui.fmt(Math.max(0, remaining));
+      protEl.textContent = totals.protein.toFixed(1) + 'g';
+      carbsEl.textContent = totals.carbs.toFixed(1) + 'g';
+      fatEl.textContent = totals.fat.toFixed(1) + 'g';
+      calorieBar.style.width = (pct * 100) + '%';
+
+      if (currentDate === today()) {
+        todayBtn.classList.add('hidden');
+      } else {
+        todayBtn.classList.remove('hidden');
+      }
+
+      if (isFuture(currentDate)) {
+        sectionsEl.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        emptyEl.querySelector('p.font-body-lg').textContent = 'Future dates appear here for planning.';
+        return;
+      }
+
+      sectionsEl.innerHTML = '';
+      var types = ['breakfast','lunch','dinner','snack'];
+      var typeLabels = { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', snack: 'Snack' };
+      var typeIcons = { breakfast: 'wb_sunny', lunch: 'wb_sunny', dinner: 'nightlight', snack: 'cookie' };
+      var hasMeals = false;
+
+      types.forEach(function (type) {
+        var typeMeals = VF.diary.getMealsByType(currentDate, type);
+        var section = document.createElement('div');
+        section.className = 'w-full';
+        section.innerHTML = '<h3 class="font-title-lg text-title-lg font-semibold text-on-surface mb-2 flex items-center gap-2"><span class="material-symbols-outlined text-[20px] text-on-surface-variant" style="font-variation-settings:\'FILL\' 1;">' + typeIcons[type] + '</span> ' + typeLabels[type] + '</h3>';
+
+        if (!typeMeals.length) {
+          section.innerHTML += '<div class="bg-surface-container-lowest rounded-2xl p-4 border border-dashed border-outline-variant/40 flex flex-col items-center gap-2 text-center">' +
+            '<p class="font-body-md text-body-md text-on-surface-variant">No foods logged yet.</p>' +
+            '<button class="add-food-per-meal font-label-lg text-label-lg text-primary hover:underline" data-type="' + type + '">Add Food</button>' +
+          '</div>';
+        } else {
+          var list = document.createElement('div');
+          list.className = 'flex flex-col gap-2';
+          typeMeals.forEach(function (meal) {
+            var card = document.createElement('div');
+            card.className = 'bg-surface-container-lowest rounded-2xl p-4 shadow-sm border border-surface-variant';
+            card.innerHTML =
+              '<div class="flex items-start justify-between gap-2 mb-2">' +
+                '<div class="flex-1 min-w-0">' +
+                  '<h4 class="font-title-lg text-title-lg text-on-surface truncate">' + (meal.items[0] && meal.items[0].name ? meal.items[0].name : 'Meal') + (meal.items.length > 1 ? ' + ' + (meal.items.length - 1) + ' more' : '') + '</h4>' +
+                  '<p class="font-body-md text-body-md text-on-surface-variant">' + meal.items.map(function (it) { return it.serving; }).join(', ') + '</p>' +
+                '</div>' +
+                '<div class="text-right flex-shrink-0">' +
+                  '<p class="font-label-lg text-label-lg text-primary">' + VF.ui.fmt(meal.totalCalories) + ' kcal</p>' +
+                  '<div class="flex gap-2 mt-1 justify-end">' +
+                    '<button class="meal-action text-on-surface-variant hover:text-primary transition-colors" data-action="edit" data-id="' + meal.id + '" aria-label="Edit meal"><span class="material-symbols-outlined text-[18px]">edit</span></button>' +
+                    '<button class="meal-action text-on-surface-variant hover:text-error transition-colors" data-action="delete" data-id="' + meal.id + '" aria-label="Delete meal"><span class="material-symbols-outlined text-[18px]">delete</span></button>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="flex gap-3 text-on-surface-variant">' +
+                '<span class="font-label-sm text-label-sm">P ' + (meal.items.reduce(function (s, it) { return s + (Number(it.protein) || 0); }, 0)).toFixed(1) + 'g</span>' +
+                '<span class="font-label-sm text-label-sm">C ' + (meal.items.reduce(function (s, it) { return s + (Number(it.carbs) || 0); }, 0)).toFixed(1) + 'g</span>' +
+                '<span class="font-label-sm text-label-sm">F ' + (meal.items.reduce(function (s, it) { return s + (Number(it.fat) || 0); }, 0)).toFixed(1) + 'g</span>' +
+              '</div>';
+            list.appendChild(card);
+            hasMeals = true;
+          });
+          section.appendChild(list);
+        }
+        sectionsEl.appendChild(section);
+      });
+
+      if (hasMeals) {
+        emptyEl.classList.add('hidden');
+      } else if (!isFuture(currentDate)) {
+        emptyEl.classList.remove('hidden');
+        emptyEl.querySelector('p.font-body-lg').textContent = 'No meals logged yet.';
+      }
+    }
+
+    prevBtn.addEventListener('click', function () {
+      currentDate = VF.diary.dateOffset(currentDate, -1);
+      render();
+      VF.ui.haptics.select();
+    });
+    nextBtn.addEventListener('click', function () {
+      currentDate = VF.diary.dateOffset(currentDate, 1);
+      render();
+      VF.ui.haptics.select();
+    });
+    todayBtn.addEventListener('click', function () {
+      currentDate = today();
+      render();
+      VF.ui.haptics.select();
+    });
+
+    sectionsEl.addEventListener('click', function (e) {
+      var addBtn = e.target.closest('.add-food-per-meal');
+      if (addBtn) {
+        var mealType = addBtn.dataset.type;
+        VF.ui.haptics.select();
+        VF.ui.go('food_search.html?mealType=' + mealType + '&returnTo=diary.html');
+        return;
+      }
+      var actionBtn = e.target.closest('.meal-action');
+      if (actionBtn) {
+        var action = actionBtn.dataset.action;
+        var id = actionBtn.dataset.id;
+        if (action === 'delete') {
+          var meal = VF.diary.getMealById(id);
+          if (meal && confirm('Remove this meal?')) {
+            VF.diary.deleteMeal(id);
+            VF.ui.snackbar('Meal removed', 'info');
+            render();
+          }
+        } else if (action === 'edit') {
+          VF.ui.haptics.select();
+          VF.ui.go('meal_detail.html?id=' + id);
+        }
+      }
+    });
+
+    if (fab) {
+      fab.addEventListener('click', function () {
+        VF.ui.haptics.select();
+        VF.ui.go('add_food_sheet.html?sheet=open&returnTo=diary.html');
+      });
+    }
+
+    render();
+  });
+</script>
+</body></html>

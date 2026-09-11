@@ -1,0 +1,622 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Calorie Target - Vitality</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Roboto+Flex:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface": "#f8faf9",
+                      "surface-container-highest": "#e1e3e2",
+                      "on-secondary-container": "#327053",
+                      "on-tertiary-fixed": "#000866",
+                      "primary": "#0f5238",
+                      "secondary": "#2b694d",
+                      "on-primary-container": "#a8e7c5",
+                      "on-primary": "#ffffff",
+                      "primary-fixed-dim": "#95d4b3",
+                      "tertiary-fixed-dim": "#bdc2ff",
+                      "on-background": "#191c1c",
+                      "secondary-fixed-dim": "#94d4b1",
+                      "on-secondary-fixed-variant": "#0c5136",
+                      "outline-variant": "#bfc9c1",
+                      "surface-container-low": "#f2f4f3",
+                      "primary-fixed": "#b1f0ce",
+                      "surface-bright": "#f8faf9",
+                      "primary-container": "#2d6a4f",
+                      "secondary-container": "#b0f1cc",
+                      "surface-variant": "#e1e3e2",
+                      "surface-container-high": "#e6e9e8",
+                      "on-tertiary": "#ffffff",
+                      "on-tertiary-container": "#d5d7ff",
+                      "on-secondary-fixed": "#002113",
+                      "on-primary-fixed-variant": "#0e5138",
+                      "surface-container": "#eceeed",
+                      "on-error": "#ffffff",
+                      "on-primary-fixed": "#002114",
+                      "surface-container-lowest": "#ffffff",
+                      "inverse-primary": "#95d4b3",
+                      "on-surface": "#191c1c",
+                      "surface-tint": "#2c694e",
+                      "outline": "#707973",
+                      "on-error-container": "#93000a",
+                      "on-secondary": "#ffffff",
+                      "tertiary": "#313c9f",
+                      "error": "#ba1a1a",
+                      "tertiary-container": "#4a55b9",
+                      "inverse-on-surface": "#eff1f0",
+                      "secondary-fixed": "#b0f1cc",
+                      "error-container": "#ffdad6",
+                      "on-tertiary-fixed-variant": "#303b9f",
+                      "surface-dim": "#d8dada",
+                      "on-surface-variant": "#404943",
+                      "background": "#f8faf9",
+                      "tertiary-fixed": "#dfe0ff",
+                      "inverse-surface": "#2e3131"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-padding": "20px",
+                      "unit": "4px",
+                      "gutter": "16px",
+                      "margin-tablet": "24px",
+                      "stack-md": "16px",
+                      "margin-mobile": "16px",
+                      "stack-sm": "8px",
+                      "stack-lg": "32px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Roboto Flex"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "title-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Roboto Flex"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Roboto Flex"
+                      ],
+                      "label-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "0.5px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "title-lg": [
+                              "22px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-sm": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.5px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "57px",
+                              {
+                                      "lineHeight": "64px",
+                                      "letterSpacing": "-0.25px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-lg": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.1px",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+            }
+          }
+        }
+</script>
+<style>
+        .glass-ring {
+            background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.3);
+            box-shadow: 0 8px 32px 0 rgba(15, 82, 56, 0.05);
+        }
+
+        .glass-card {
+            background: rgba(248, 250, 249, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        @keyframes pulse-soft {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.02); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+        .ai-pulse {
+            animation: pulse-soft 4s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -1000px 0;
+            }
+            100% {
+                background-position: 1000px 0;
+            }
+        }
+
+        .skeleton {
+            background: linear-gradient(to right, theme('colors.surface-container-high') 8%, theme('colors.surface-container-highest') 18%, theme('colors.surface-container-high') 33%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear;
+            border-radius: theme('borderRadius.lg');
+        }
+
+        .skeleton-glass {
+            background: linear-gradient(to right, rgba(230, 233, 232, 0.4) 8%, rgba(225, 227, 226, 0.6) 18%, rgba(230, 233, 232, 0.4) 33%);
+            background-size: 1000px 100%;
+            animation: shimmer 2.5s infinite linear;
+            backdrop-filter: blur(8px);
+            border: 1px solid theme('colors.outline-variant');
+        }
+
+        .input-field {
+            @apply w-full px-4 py-3 rounded-lg border border-outline-variant/30 bg-surface-container-low focus:border-primary focus:ring-2 focus:ring-primary/20 text-on-background transition-all;
+        }
+
+        .input-label {
+            @apply block text-sm font-medium mb-2 text-on-surface-variant;
+        }
+
+        .validation-error {
+            @apply text-xs text-error mt-1 block min-h-[1.25rem];
+        }
+
+        .macro-relationship-info {
+            @apply text-xs text-on-surface-variant/60 mt-2 italic max-w-sm;
+        }
+
+        .action-button-secondary {
+            @apply w-full py-3 rounded-lg border border-outline-variant/30 bg-surface-container-low text-on-surface-variant hover:bg-surface-container transition-colors flex items-center justify-center gap-2 font-medium;
+        }
+</style>
+</head>
+<body class="bg-background text-on-background antialiased min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+<!-- Abstract Ambient Background -->
+<div class="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+<div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary-container opacity-[0.03] rounded-full blur-[120px] ai-pulse"></div>
+<div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-tertiary-container opacity-[0.04] rounded-full blur-[150px] ai-pulse" style="animation-delay: 2s;"></div>
+</div>
+<!-- Main Content Canvas -->
+<main class="w-full max-w-[480px] px-margin-mobile md:px-margin-tablet py-stack-lg z-10 flex flex-col flex-grow justify-between">
+<!-- Header / Progress -->
+<header class="w-full flex flex-col items-center gap-stack-sm mt-8">
+<div class="w-full flex items-center justify-between mb-4">
+<button id="back-button" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-wider">Step 6/6</span>
+</div>
+<div class="w-10 h-10"></div> <!-- Balancer -->
+</div>
+<div class="w-full h-1 bg-surface-variant rounded-full overflow-hidden mb-6">
+<div class="h-full bg-primary rounded-full w-full"></div>
+</div>
+</header>
+<!-- Central Display -->
+<section id="main-content" class="flex-grow flex flex-col items-center justify-center py-stack-lg relative w-full">
+<!-- CALCULATING STATE -->
+<div id="calculating-state">
+<div class="text-center">
+<div class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-tertiary-container/20 border border-tertiary/10 mb-3">
+<span class="material-symbols-outlined text-tertiary text-sm" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="font-label-sm text-label-sm text-tertiary">AI Calibrated</span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-background mb-2">Creating your personalized target...</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-sm mx-auto">
+We're calculating your optimal nutrition targets based on your profile.
+</p>
+<div class="mt-6">
+<div class="h-2 w-[50%] bg-surface-container-highest rounded-full overflow-hidden mx-auto">
+<div id="progress-bar" class="h-full bg-primary rounded-full transition-all duration-2000" style="width: 0%;"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer Actions -->
+<footer id="footer-actions" class="w-full pb-8 pt-4 bg-background">
+<!-- This will be populated dynamically based on state -->
+</footer>
+</main>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+const backButton = document.getElementById('back-button');
+const mainContent = document.getElementById('main-content');
+const footerActions = document.getElementById('footer-actions');
+const calculatingState = document.getElementById('calculating-state');
+
+// State management
+let state = 'calculating'; // calculating, success, customize
+let recommendedTargets = {};
+let customTargets = {};
+
+// Initialize the app
+function init() {
+setupEventListeners();
+// Simulate calculation process
+simulateCalculation();
+}
+
+function setupEventListeners() {
+backButton.addEventListener('click', () => {
+window.history.back();
+});
+}
+
+function simulateCalculation() {
+// Show progress bar animation
+const progressBar = document.getElementById('progress-bar');
+let width = 0;
+const interval = setInterval(() => {
+if (width >= 100) {
+clearInterval(interval);
+// Calculation complete - show success state
+showSuccessState();
+} else {
+width += Math.random() * 10 + 5;
+progressBar.style.width = Math.min(width, 100) + '%';
+}
+}, 100);
+
+// Auto-advance after 3 seconds (simulate calculation time)
+setTimeout(() => {
+// In a real app, this would be when calculation actually finishes
+showSuccessState();
+}, 3000);
+}
+
+function showSuccessState() {
+state = 'success';
+// Generate recommended targets based on typical values (in real app, this would come from API)
+const activityLevel = localStorage.getItem('selectedActivityLevel') || 'moderately_active';
+// Base calculation - simplified for demo
+let baseCalories = 2000;
+if (activityLevel === 'sedentary') baseCalories = 1800;
+else if (activityLevel === 'lightly_active') baseCalories = 2000;
+else if (activityLevel === 'moderately_active') baseCalories = 2200;
+else if (activityLevel === 'very_active') baseCalories = 2400;
+else if (activityLevel === 'extremely_active') baseCalories = 2600;
+
+// Macronutrient split (40% carbs, 30% protein, 30% fat)
+recommendedTargets = {
+calories: Math.round(baseCalories),
+protein: Math.round((baseCalories * 0.3) / 4), // 4 cal/g protein
+carbs: Math.round((baseCalories * 0.4) / 4),   // 4 cal/g carbs
+fat: Math.round((baseCalories * 0.3) / 9),     // 9 cal/g fat
+water: 2.5 // Liters
+};
+
+// Custom targets start as recommended
+customTargets = {...recommendedTargets};
+
+// Render success state
+renderSuccessState();
+}
+
+function renderSuccessState() {
+// Clear main content
+mainContent.innerHTML = `
+<div class="text-center">
+<div class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-tertiary-container/20 border border-tertiary/10 mb-3">
+<span class="material-symbols-outlined text-tertiary text-sm" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="font-label-sm text-label-sm text-tertiary">AI Calibrated</span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-background mb-2">Your daily target</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-sm mx-auto">
+These targets are estimates based on the information you provided. You can change them later.
+</p>
+</div>
+<!-- Central Display -->
+<section class="flex-grow flex flex-col items-center justify-center py-stack-lg relative w-full">
+<!-- Glass Ring Container -->
+<div class="relative w-64 h-64 md:w-80 md:h-80 rounded-full glass-ring flex flex-col items-center justify-center p-6 mx-auto">
+<!-- Decorative Progress SVG Ring -->
+<svg class="absolute inset-0 w-full h-full transform -rotate-90 pointer-events-none" viewBox="0 0 100 100">
+<circle class="text-surface-variant opacity-30" cx="50" cy="50" fill="none" r="46" stroke="currentColor" stroke-width="2"></circle>
+<circle class="text-primary" cx="50" cy="50" fill="none" r="46" stroke="currentColor" stroke-dasharray="289" stroke-dashoffset="0" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+<div class="text-center relative z-10 flex flex-col items-center">
+<span class="font-display-lg text-display-lg text-primary tracking-tight leading-none mb-1">${recommendedTargets.calories}</span>
+<span class="font-title-lg text-title-lg text-on-surface-variant">kcal / day</span>
+</div>
+<!-- Macro Breakdown mini-pills -->
+<div class="absolute bottom-6 left-0 w-full flex justify-center gap-3 px-4">
+<div class="flex items-center gap-1 bg-surface/80 rounded-full px-2 py-1 shadow-sm">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="font-label-sm text-label-sm text-on-surface">${recommendedTargets.protein}g P</span>
+</div>
+<div class="flex items-center gap-1 bg-surface/80 rounded-full px-2 py-1 shadow-sm">
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+<span class="font-label-sm text-label-sm text-on-surface">${recommendedTargets.carbs}g C</span>
+</div>
+<div class="flex items-center gap-1 bg-surface/80 rounded-full px-2 py-1 shadow-sm">
+<div class="w-2 h-2 rounded-full bg-primary-fixed-dim"></div>
+<span class="font-label-sm text-label-sm text-on-surface">${recommendedTargets.fat}g F</span>
+</div>
+</div>
+</div>
+<!-- Context Card -->
+<div class="mt-stack-lg w-full bg-surface-container-low rounded-xl p-4 border border-outline-variant/20 shadow-sm">
+<div class="flex items-start gap-3">
+<div class="mt-1 w-8 h-8 rounded-full bg-primary-container/20 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">insights</span>
+</div>
+<div>
+<h3 class="font-label-lg text-label-lg text-on-surface mb-1">AI recommendation</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+Your target is designed to support gradual progress toward your goal.
+</p>
+</div>
+</div>
+</div>
+</section>
+`;
+// Update footer actions
+footerActions.innerHTML = `
+<div class="space-y-4">
+<button id="use-targets-button" class="w-full py-4 rounded-full bg-primary text-on-primary font-label-lg text-label-lg shadow-md shadow-primary/20 hover:bg-primary/90 active:scale-95 transition-all flex items-center justify-center gap-2">
+Use these targets
+<span class="material-symbols-outlined text-lg">check</span>
+</button>
+<button id="customize-button" class="w-full py-4 rounded-full bg-tertiary text-on-tertiary font-label-lg text-label-lg shadow-md shadow-tertiary/20 hover:bg-tertiary/90 active:scale-95 transition-all flex items-center justify-center gap-2">
+Customize targets
+<span class="material-symbols-outlined text-lg">tune</span>
+</button>
+</div>
+`;
+// Add event listeners
+document.getElementById('use-targets-button').addEventListener('click', useTargets);
+document.getElementById('customize-button').addEventListener('click', showCustomizeState);
+}
+
+function useTargets() {
+// Save targets and proceed to permissions
+localStorage.setItem('recommendedCalories', recommendedTargets.calories);
+localStorage.setItem('recommendedProtein', recommendedTargets.protein);
+localStorage.setItem('recommendedCarbs', recommendedTargets.carbs);
+localStorage.setItem('recommendedFat', recommendedTargets.fat);
+localStorage.setItem('recommendedWater', recommendedTargets.water);
+// For now, use recommended as custom until changed
+localStorage.setItem('customCalories', customTargets.calories);
+localStorage.setItem('customProtein', customTargets.protein);
+localStorage.setItem('customCarbs', customTargets.carbs);
+localStorage.setItem('customFat', customTargets.fat);
+localStorage.setItem('customWater', customTargets.water);
+// Navigate to permissions
+window.location.href = '../permission_setup/code.html';
+}
+
+function showCustomizeState() {
+state = 'customize';
+// Render customize state
+renderCustomizeState();
+}
+
+function renderCustomizeState() {
+// Clear main content
+mainContent.innerHTML = `
+<form id="targets-form">
+<div class="space-y-6">
+<h2 class="font-title-lg text-title-lg text-on-surface mb-4">Customize Targets</h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-sm mx-auto mb-6">
+Adjust your daily nutrition targets below. Protein, carbs, and fat should align with your total calorie goal.
+</p>
+<!-- Calories Input -->
+<div>
+<label for="calories-input" class="input-label">Daily Calories</label>
+<input type="number" id="calories-input" class="input-field" min="800" max="5000" step="10" value="${customTargets.calories}">
+<div class="macro-relationship-info">
+Protein: ${customTargets.protein}g (${Math.round(customTargets.protein * 4)} cal) •
+Carbs: ${customTargets.carbs}g (${Math.round(customTargets.carbs * 4)} cal) •
+Fat: ${customTargets.fat}g (${Math.round(customTargets.fat * 9)} cal)
+</div>
+<div id="calories-error" class="validation-error"></div>
+</div>
+<!-- Protein Input -->
+<div>
+<label for="protein-input" class="input-label">Protein</label>
+<input type="number" id="protein-input" class="input-field" min="20" max="300" step="1" value="${customTargets.protein}">
+<div class="macro-relationship-info">
+${Math.round(customTargets.protein * 4)} calories from protein
+</div>
+<div id="protein-error" class="validation-error"></div>
+</div>
+<!-- Carbs Input -->
+<div>
+<label for="carbs-input" class="input-label">Carbohydrates</label>
+<input type="number" id="carbs-input" class="input-field" min="20" max="500" step="1" value="${customTargets.carbs}">
+<div class="macro-relationship-info">
+${Math.round(customTargets.carbs * 4)} calories from carbs
+</div>
+<div id="carbs-error" class="validation-error"></div>
+</div>
+<!-- Fat Input -->
+<div>
+<label for="fat-input" class="input-label">Fat</label>
+<input type="number" id="fat-input" class="input-field" min="10" max="200" step="1" value="${customTargets.fat}">
+<div class="macro-relationship-info">
+${Math.round(customTargets.fat * 9)} calories from fat
+</div>
+<div id="fat-error" class="validation-error"></div>
+</div>
+<!-- Water Input -->
+<div>
+<label for="water-input" class="input-label">Water</label>
+<input type="number" id="water-input" class="input-field" min="1" max="10" step="0.1" value="${customTargets.water}">
+<div class="macro-relationship-info">
+${customTargets.water} liters daily
+</div>
+<div id="water-error" class="validation-error"></div>
+</div>
+<div class="mt-6">
+<button id="reset-button" class="w-full py-3 rounded-lg border border-outline-variant/30 bg-surface-container-low text-on-surface-variant hover:bg-surface-container transition-colors flex items-center justify-center gap-2">
+Reset to recommended
+<span class="material-symbols-outlined text-lg">refresh</span>
+</button>
+</div>
+</div>
+</form>
+`;
+// Update footer actions
+footerActions.innerHTML = `
+<div class="space-y-4">
+<button id="save-targets-button" class="w-full py-4 rounded-full bg-primary text-on-primary font-label-lg text-label-lg shadow-md shadow-primary/20 hover:bg-primary/90 active:scale-95 transition-all flex items-center justify-center gap-2">
+Save targets
+<span class="material-symbols-outlined text-lg">save</span>
+</button>
+</div>
+`;
+// Add event listeners
+document.getElementById('targets-form').addEventListener('input', validateTargets);
+document.getElementById('reset-button').addEventListener('click', resetToRecommended);
+document.getElementById('save-targets-button').addEventListener('click', saveCustomTargets);
+// Initialize validation
+validateTargets();
+}
+
+function validateTargets() {
+const calories = parseInt(document.getElementById('calories-input').value) || 0;
+const protein = parseInt(document.getElementById('protein-input').value) || 0;
+const carbs = parseInt(document.getElementById('carbs-input').value) || 0;
+const fat = parseInt(document.getElementById('fat-input').value) || 0;
+const water = parseFloat(document.getElementById('water-input').value) || 0;
+
+// Calculate calories from macros
+const proteinCal = protein * 4;
+const carbsCal = carbs * 4;
+const fatCal = fat * 9;
+const totalFromMacros = proteinCal + carbsCal + fatCal;
+
+// Validation thresholds
+const calorieDiff = Math.abs(calories - totalFromMacros);
+const isValid = calorieDiff <= 100; // Allow ±100 cal difference
+
+// Update custom targets object
+customTargets = {calories, protein, carbs, fat, water};
+
+// Show/hide validation errors
+document.getElementById('calories-error').textContent = isValid ? '' :
+`Calories (${calories}) should match macro total (${totalFromMacros}) ±100 cal`;
+
+// Enable/disable save button
+const saveButton = document.getElementById('save-targets-button');
+if (saveButton) {
+saveButton.disabled = !isValid;
+}
+}
+
+function resetToRecommended() {
+document.getElementById('calories-input').value = recommendedTargets.calories;
+document.getElementById('protein-input').value = recommendedTargets.protein;
+document.getElementById('carbs-input').value = recommendedTargets.carbs;
+document.getElementById('fat-input').value = recommendedTargets.fat;
+document.getElementById('water-input').value = recommendedTargets.water;
+validateTargets();
+}
+
+function saveCustomTargets() {
+// Save both recommended and custom targets
+localStorage.setItem('recommendedCalories', recommendedTargets.calories);
+localStorage.setItem('recommendedProtein', recommendedTargets.protein);
+localStorage.setItem('recommendedCarbs', recommendedTargets.carbs);
+localStorage.setItem('recommendedFat', recommendedTargets.fat);
+localStorage.setItem('recommendedWater', recommendedTargets.water);
+
+localStorage.setItem('customCalories', customTargets.calories);
+localStorage.setItem('customProtein', customTargets.protein);
+localStorage.setItem('customCarbs', customTargets.carbs);
+localStorage.setItem('customFat', customTargets.fat);
+localStorage.setItem('customWater', customTargets.water);
+
+// Show success feedback
+const saveButton = document.getElementById('save-targets-button');
+const originalText = saveButton.innerHTML;
+saveButton.innerHTML = '<span>Saved!</span><span class="material-symbols-outlined text-lg">check</span>';
+saveButton.classList.add('bg-primary/90');
+
+setTimeout(() => {
+saveButton.innerHTML = originalText;
+saveButton.classList.remove('bg-primary/90');
+// Navigate to permissions after brief delay
+window.location.href = '../permission_setup/code.html';
+}, 1500);
+}
+
+// Handle back button navigation
+backButton.addEventListener('click', () => {
+window.history.back();
+});
+
+// Initialize the app
+init();
+});
+</script>
+</body></html>

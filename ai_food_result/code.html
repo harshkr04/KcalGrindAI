@@ -1,0 +1,260 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>AI Food Result - Vitality</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#f8faf9",
+                        "surface-container-highest": "#e1e3e2",
+                        "on-secondary-container": "#327053",
+                        "on-tertiary-fixed": "#000866",
+                        "primary": "#0f5238",
+                        "secondary": "#2b694d",
+                        "on-primary-container": "#a8e7c5",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#95d4b3",
+                        "tertiary-fixed-dim": "#bdc2ff",
+                        "on-background": "#191c1c",
+                        "secondary-fixed-dim": "#94d4b1",
+                        "on-secondary-fixed-variant": "#0c5136",
+                        "outline-variant": "#bfc9c1",
+                        "surface-container-low": "#f2f4f3",
+                        "primary-fixed": "#b1f0ce",
+                        "surface-bright": "#f8faf9",
+                        "primary-container": "#2d6a4f",
+                        "secondary-container": "#b0f1cc",
+                        "surface-variant": "#e1e3e2",
+                        "surface-container-high": "#e6e9e8",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-container": "#d5d7ff",
+                        "on-secondary-fixed": "#002113",
+                        "on-primary-fixed-variant": "#0e5138",
+                        "surface-container": "#eceeed",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#002114",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#95d4b3",
+                        "on-surface": "#191c1c",
+                        "surface-tint": "#2c694e",
+                        "outline": "#707973",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#313c9f",
+                        "error": "#ba1a1a",
+                        "tertiary-container": "#4a55b9",
+                        "inverse-on-surface": "#eff1f0",
+                        "secondary-fixed": "#b0f1cc",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#303b9f",
+                        "surface-dim": "#d8dada",
+                        "on-surface-variant": "#404943",
+                        "background": "#f8faf9",
+                        "tertiary-fixed": "#dfe0ff",
+                        "inverse-surface": "#2e3131"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding": "20px",
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "margin-tablet": "24px",
+                        "stack-md": "16px",
+                        "margin-mobile": "16px",
+                        "stack-sm": "8px",
+                        "stack-lg": "32px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Roboto Flex"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "headline-lg-mobile": ["Roboto Flex"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Roboto Flex"],
+                        "label-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0.5px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "title-lg": ["22px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "500" }],
+                        "display-lg": ["57px", { "lineHeight": "64px", "letterSpacing": "-0.25px", "fontWeight": "400" }],
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Roboto+Flex:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Liquid Glass / Blur utility classes */
+        .glass-panel {
+            background: rgba(248, 250, 249, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(191, 201, 193, 0.3);
+        }
+        
+        .ai-glow {
+            box-shadow: 0 8px 32px rgba(15, 82, 56, 0.12);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background antialiased min-h-screen flex flex-col pt-16 pb-24 md:pb-0">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-md flex items-center justify-between px-margin-mobile h-16 w-full max-w-screen-xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-surface-variant/50 transition-colors active:scale-95 transition-transform text-on-surface-variant">
+<span class="material-symbols-outlined">close</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-primary">Vitality</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-surface-variant/50 transition-colors active:scale-95 transition-transform text-on-surface-variant">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-grow w-full max-w-screen-md mx-auto px-margin-mobile md:px-margin-tablet py-6 flex flex-col">
+<!-- AI Analyzing State (simulated) -->
+<div class="flex items-center gap-2 mb-stack-md text-secondary animate-pulse px-2">
+<span class="material-symbols-outlined filled-icon">psychiatry</span>
+<span class="font-label-lg text-label-lg">Analysis Complete</span>
+</div>
+<!-- Main Card -->
+<div class="glass-panel rounded-2xl overflow-hidden ai-glow flex flex-col mb-stack-lg transition-transform duration-300">
+<!-- Hero Image Section -->
+<div class="relative h-64 w-full">
+<div class="bg-cover bg-center w-full h-full" data-alt="A top-down, high-quality photograph of avocado toast on artisan sourdough bread, topped with a perfectly poached egg. The scene is brightly lit with natural morning light streaming across a clean, light-colored marble kitchen counter. A subtle hint of microgreens and a sprinkle of red pepper flakes are visible. The overall aesthetic is fresh, vibrant, and appetizing, fitting a modern health and wellness app in light mode." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBzkD4_ZtiR6J4dBnh7z9FHtyzd2RQ_mBq4RxzcHudJQr5I8oMdyZMDnC5ilsIDnKfQdLDaIVyyvhpXWvYXIA37T41AWz6SdIlJsofsvNBuf9bAGyAC5ZN5ojTxTMhDaVObL8W2bOL7eSLH-IBdfGSPKmCsXEdmH2ZlSQFIui2W8MWoN-NmpBh2Mh7hF8bP1b1ivm4XUHW0L_l2_P9vr1y1XHWlwc0O5YCWElqJxcerAyc2hrtBPbVY')"></div>
+<!-- Gradient Overlay for text legibility -->
+<div class="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-surface to-transparent"></div>
+<!-- Floating Action / Edit Photo -->
+<button class="absolute top-4 right-4 p-2 bg-surface/80 backdrop-blur-md rounded-full shadow-sm text-on-surface active:scale-95 transition-transform">
+<span class="material-symbols-outlined">crop_free</span>
+</button>
+<div class="absolute bottom-4 left-6 pr-6">
+<h2 class="font-title-lg text-title-lg text-on-surface mb-1 drop-shadow-sm">Avocado Toast with Egg</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Identified with 94% confidence</p>
+</div>
+</div>
+<!-- Macros Section -->
+<div class="p-6 bg-surface">
+<!-- Macro Grid -->
+<div class="grid grid-cols-4 gap-4 mb-8">
+<!-- Calories -->
+<div class="flex flex-col items-center">
+<div class="relative w-16 h-16 flex items-center justify-center mb-2">
+<svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+<circle class="stroke-secondary-container" cx="18" cy="18" fill="none" r="14" stroke-width="4"></circle>
+<circle class="stroke-primary" cx="18" cy="18" fill="none" r="14" stroke-dasharray="88" stroke-dashoffset="20" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+<span class="absolute font-label-lg text-label-lg text-primary">420</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Kcal</span>
+</div>
+<!-- Protein -->
+<div class="flex flex-col items-center">
+<div class="relative w-16 h-16 flex items-center justify-center mb-2">
+<svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+<circle class="stroke-surface-variant" cx="18" cy="18" fill="none" r="14" stroke-width="4"></circle>
+<circle class="stroke-tertiary" cx="18" cy="18" fill="none" r="14" stroke-dasharray="88" stroke-dashoffset="50" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+<span class="absolute font-label-lg text-label-lg text-on-surface">18g</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Protein</span>
+</div>
+<!-- Carbs -->
+<div class="flex flex-col items-center">
+<div class="relative w-16 h-16 flex items-center justify-center mb-2">
+<svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+<circle class="stroke-surface-variant" cx="18" cy="18" fill="none" r="14" stroke-width="4"></circle>
+<circle class="stroke-[#0f5238]" cx="18" cy="18" fill="none" r="14" stroke-dasharray="88" stroke-dashoffset="40" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+<span class="absolute font-label-lg text-label-lg text-on-surface">32g</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Carbs</span>
+</div>
+<!-- Fats -->
+<div class="flex flex-col items-center">
+<div class="relative w-16 h-16 flex items-center justify-center mb-2">
+<svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+<circle class="stroke-surface-variant" cx="18" cy="18" fill="none" r="14" stroke-width="4"></circle>
+<circle class="stroke-[#a8e7c5]" cx="18" cy="18" fill="none" r="14" stroke-dasharray="88" stroke-dashoffset="60" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+<span class="absolute font-label-lg text-label-lg text-on-surface">22g</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Fats</span>
+</div>
+</div>
+<div class="h-px w-full bg-outline-variant/30 mb-6"></div>
+<!-- AI Insights / Breakdowns -->
+<div class="bg-surface-container-low rounded-xl p-4 mb-6 border border-outline-variant/20">
+<h3 class="font-label-lg text-label-lg text-on-surface mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-sm">info</span>
+                        Portion Estimate
+                    </h3>
+<ul class="space-y-2">
+<li class="flex justify-between items-center font-body-md text-body-md text-on-surface-variant">
+<span>Sourdough Bread (2 slices)</span>
+<span class="text-on-surface">180 kcal</span>
+</li>
+<li class="flex justify-between items-center font-body-md text-body-md text-on-surface-variant">
+<span>Avocado (1/2 medium)</span>
+<span class="text-on-surface">160 kcal</span>
+</li>
+<li class="flex justify-between items-center font-body-md text-body-md text-on-surface-variant">
+<span>Poached Egg (1 large)</span>
+<span class="text-on-surface">70 kcal</span>
+</li>
+<li class="flex justify-between items-center font-body-md text-body-md text-on-surface-variant">
+<span>Olive Oil Drizzle (~1 tsp)</span>
+<span class="text-on-surface">40 kcal</span>
+</li>
+</ul>
+</div>
+<!-- Prompt & Actions -->
+<div class="flex flex-col items-center">
+<p class="font-title-lg text-title-lg text-on-surface mb-6">Does this look right?</p>
+<div class="flex w-full gap-4">
+<button class="flex-1 py-3 px-4 rounded-full border-[1.5px] border-primary text-primary font-label-lg text-label-lg hover:bg-primary-container/10 active:scale-95 transition-all">
+                            Edit Details
+                        </button>
+<button class="flex-1 py-3 px-4 rounded-full bg-tertiary text-on-tertiary font-label-lg text-label-lg shadow-md hover:bg-tertiary-container hover:text-on-tertiary-container active:scale-95 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">check_circle</span>
+                            Confirm Log
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Hidden on desktop, shown on mobile) -->
+<!-- Suppressed based on semantic rule: This is a task-focused screen (result/confirmation) not a top level nav -->
+</body></html>

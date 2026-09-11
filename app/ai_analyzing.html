@@ -1,0 +1,449 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<meta content="#f8faf9" name="theme-color">
+<title>Analyzing · Vitality</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="shared/theme.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Flex:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="shared/vitality.css" rel="stylesheet">
+<script src="shared/store.js"></script>
+<script src="shared/nutrition.js"></script>
+<script src="shared/ui.js"></script>
+<script src="shared/ai_service.js"></script>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col overflow-hidden relative">
+<!-- Atmospheric Background -->
+<div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+<div class="absolute -top-1/4 -right-1/4 w-[150%] h-[150%] bg-gradient-to-br from-tertiary-fixed/30 via-transparent to-primary-fixed/20 blur-[100px] rounded-full opacity-60"></div>
+</div>
+
+<!-- Main Content -->
+<main class="flex-1 flex flex-col items-center justify-center p-margin-mobile md:p-margin-tablet z-10 relative min-h-screen">
+<!-- Captured Image Preview -->
+<div id="image-preview" class="hidden w-full max-w-[360px] aspect-[4/5] rounded-2xl overflow-hidden mb-stack-lg shadow-xl">
+<img id="preview-img" src="" alt="Captured meal photo" class="w-full h-full object-cover">
+</div>
+
+<!-- AI Orb Section -->
+<div id="orb-section" class="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center mb-stack-lg ai-pulse">
+<!-- Central Glass Orb -->
+<div class="glass-orb w-48 h-48 md:w-64 md:h-64 rounded-full flex items-center justify-center border border-white/40 z-10 animate-spin" style="animation-duration: 8s; animation-timing-function: linear;">
+<span class="material-symbols-outlined text-tertiary text-[64px] opacity-80" data-weight="fill" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<!-- Sparkles -->
+<div class="absolute inset-0 pointer-events-none">
+<span class="material-symbols-outlined text-secondary absolute top-10 left-10 animate-bounce delay-75">temp_preferences_custom</span>
+<span class="material-symbols-outlined text-primary absolute bottom-12 right-12 animate-bounce delay-150">nutrition</span>
+<span class="material-symbols-outlined text-tertiary-container absolute top-1/2 right-4 animate-bounce delay-300">spa</span>
+</div>
+</div>
+
+<!-- Status Text -->
+<div id="status-section" class="text-center mb-stack-md w-full max-w-sm">
+<h1 id="headline" class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-primary mb-stack-sm">
+Analyzing your meal...
+</h1>
+<p id="subtext" class="font-body-md text-body-md text-on-surface-variant">
+Our AI is identifying foods and estimating portions.
+</p>
+</div>
+
+<!-- Progress Stages -->
+<div id="progress-stages" class="w-full max-w-sm bg-surface/60 backdrop-blur-md rounded-xl border border-white/50 p-stack-md shadow-sm hidden">
+<ul class="flex flex-col gap-stack-sm" id="stages-list"></ul>
+</div>
+
+<!-- Error State -->
+<div id="error-state" class="hidden w-full max-w-sm text-center">
+<div class="w-24 h-24 mx-auto mb-stack-md rounded-full bg-error-container/30 flex items-center justify-center">
+<span id="error-icon" class="material-symbols-outlined text-error text-4xl">error</span>
+</div>
+<h2 id="error-title" class="font-title-lg text-title-lg text-on-surface mb-stack-sm">Analysis Failed</h2>
+<p id="error-message" class="font-body-md text-body-md text-on-surface-variant mb-stack-lg"></p>
+<div class="flex flex-col sm:flex-row gap-3 justify-center">
+<button id="retry-btn" class="bg-primary text-on-primary font-label-lg text-label-lg rounded-full py-3 px-6 flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors active:scale-[0.98] shadow-lg shadow-primary/30">
+Try Again
+</button>
+<button id="manual-btn" class="bg-white/10 backdrop-blur-sm text-white font-label-lg text-label-lg rounded-full py-3 px-6 flex items-center justify-center gap-2 hover:bg-white/20 transition-colors active:scale-[0.98] border border-white/20">
+Log Manually
+</button>
+</div>
+</div>
+
+<!-- No Food Detected State -->
+<div id="no-food-state" class="hidden w-full max-w-sm text-center">
+<div class="w-24 h-24 mx-auto mb-stack-md rounded-full bg-warning-container/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-warning text-4xl">search_off</span>
+</div>
+<h2 class="font-title-lg text-title-lg text-on-surface mb-stack-sm">No Food Detected</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-stack-lg">We couldn't identify a food in this photo. Try a clearer shot or use another method.</p>
+<div class="flex flex-col sm:flex-row gap-3 justify-center">
+<button id="retake-btn" class="bg-primary text-on-primary font-label-lg text-label-lg rounded-full py-3 px-6 flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors active:scale-[0.98] shadow-lg shadow-primary/30">
+<span class="material-symbols-outlined">camera_alt</span>
+Retake Photo
+</button>
+<button id="gallery-btn" class="bg-surface-container-high/60 backdrop-blur-sm text-on-surface font-label-lg text-label-lg rounded-full py-3 px-6 flex items-center justify-center gap-2 hover:bg-surface-variant/80 transition-colors active:scale-[0.98] border border-outline-variant/30">
+<span class="material-symbols-outlined">photo_library</span>
+Choose Another
+</button>
+<button id="search-btn" class="bg-tertiary text-on-tertiary font-label-lg text-label-lg rounded-full py-3 px-6 flex items-center justify-center gap-2 hover:bg-tertiary/90 transition-colors active:scale-[0.98] shadow-lg shadow-tertiary/30">
+<span class="material-symbols-outlined">search</span>
+Search Food
+</button>
+</div>
+</div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  var imageUrl = null;
+  var analysisMode = 'photo';
+  var currentState = VF.ai.AI_STATES.IDLE;
+
+  var elements = {
+    imagePreview: document.getElementById('image-preview'),
+    previewImg: document.getElementById('preview-img'),
+    orbSection: document.getElementById('orb-section'),
+    headline: document.getElementById('headline'),
+    subtext: document.getElementById('subtext'),
+    progressStages: document.getElementById('progress-stages'),
+    stagesList: document.getElementById('stages-list'),
+    errorState: document.getElementById('error-state'),
+    errorIcon: document.getElementById('error-icon'),
+    errorTitle: document.getElementById('error-title'),
+    errorMessage: document.getElementById('error-message'),
+    retryBtn: document.getElementById('retry-btn'),
+    manualBtn: document.getElementById('manual-btn'),
+    noFoodState: document.getElementById('no-food-state'),
+    retakeBtn: document.getElementById('retake-btn'),
+    galleryBtn: document.getElementById('gallery-btn'),
+    searchBtn: document.getElementById('search-btn')
+  };
+
+  var stages = [
+    { key: 'preparing', label: 'Preparing image', icon: 'image' },
+    { key: 'uploading', label: 'Uploading to AI', icon: 'cloud_upload' },
+    { key: 'analyzing', label: 'Identifying foods', icon: 'auto_awesome' },
+    { key: 'estimating_portions', label: 'Estimating portions', icon: 'straighten' },
+    { key: 'calculating_nutrition', label: 'Calculating nutrition', icon: 'functions' }
+  ];
+
+  var stageElements = {};
+
+  function init() {
+    imageUrl = sessionStorage.getItem('vf.capturedPhoto');
+    var textInput = sessionStorage.getItem('vf.aiMealText');
+
+    if (textInput) {
+      analysisMode = 'text';
+      sessionStorage.removeItem('vf.aiMealText');
+    } else if (imageUrl) {
+      analysisMode = 'photo';
+      sessionStorage.removeItem('vf.capturedPhoto');
+    }
+
+    if (imageUrl) {
+      elements.previewImg.src = imageUrl;
+      elements.imagePreview.hidden = false;
+    }
+
+    buildStages();
+    startAnalysis();
+  }
+
+  function buildStages() {
+    elements.stagesList.innerHTML = '';
+    stages.forEach(function (stage) {
+      var li = document.createElement('li');
+      li.className = 'flex items-center gap-gutter font-body-lg text-body-lg text-on-surface';
+      li.id = 'stage-' + stage.key;
+      li.innerHTML =
+        '<span class="material-symbols-outlined text-outline" id="stage-icon-' + stage.key + '">radio_button_unchecked</span>' +
+        '<span id="stage-label-' + stage.key + '">' + stage.label + '</span>';
+      elements.stagesList.appendChild(li);
+      stageElements[stage.key] = {
+        li: li,
+        icon: document.getElementById('stage-icon-' + stage.key),
+        label: document.getElementById('stage-label-' + stage.key)
+      };
+    });
+  }
+
+  function updateStage(stageKey, status) {
+    var el = stageElements[stageKey];
+    if (!el) return;
+
+    el.li.classList.remove('text-on-surface', 'text-tertiary', 'text-primary', 'text-outline');
+    el.icon.classList.remove('text-primary', 'text-tertiary', 'text-outline', 'animate-spin', 'filled');
+
+    switch (status) {
+      case 'pending':
+        el.li.classList.add('text-outline');
+        el.icon.textContent = 'radio_button_unchecked';
+        el.icon.classList.add('text-outline');
+        break;
+      case 'active':
+        el.li.classList.add('text-tertiary');
+        el.icon.textContent = 'sync';
+        el.icon.classList.add('text-tertiary', 'animate-spin');
+        break;
+      case 'done':
+        el.li.classList.add('text-primary');
+        el.icon.textContent = 'check_circle';
+        el.icon.classList.add('text-primary', 'filled');
+        break;
+    }
+    el.label.textContent = stages.find(function (s) { return s.key === stageKey; }).label;
+  }
+
+  function showAnalyzingUI() {
+    elements.orbSection.hidden = false;
+    elements.progressStages.hidden = false;
+    elements.errorState.hidden = true;
+    elements.noFoodState.hidden = true;
+  }
+
+  function showErrorState(error) {
+    elements.orbSection.hidden = true;
+    elements.progressStages.hidden = true;
+    elements.errorState.hidden = false;
+    elements.noFoodState.hidden = true;
+
+    var isNetwork = error.code === 'NETWORK_ERROR' || error.code === 'TIMEOUT';
+    var isAI = error.code === 'AI_ERROR';
+
+    elements.errorIcon.textContent = isNetwork ? 'wifi_off' : (isAI ? 'psychiatry' : 'error');
+    elements.errorIcon.className = 'material-symbols-outlined ' + (isNetwork ? 'text-warning' : 'text-error') + ' text-4xl';
+    elements.errorTitle.textContent = isNetwork ? 'Connection Error' : (isAI ? 'AI Error' : 'Analysis Failed');
+    elements.errorMessage.textContent = error.message || 'Something went wrong. Please try again.';
+  }
+
+  function showNoFoodState() {
+    elements.orbSection.hidden = true;
+    elements.progressStages.hidden = true;
+    elements.errorState.hidden = true;
+    elements.noFoodState.hidden = false;
+  }
+
+  function handleStateChange(state) {
+    currentState = state;
+    VF.ui.announce('AI state: ' + state);
+
+    switch (state) {
+      case VF.ai.AI_STATES.PREPARING:
+        elements.headline.textContent = 'Preparing image...';
+        elements.subtext.textContent = 'Getting your photo ready for analysis.';
+        updateStage('preparing', 'active');
+        break;
+      case VF.ai.AI_STATES.UPLOADING:
+        elements.headline.textContent = 'Uploading to AI...';
+        elements.subtext.textContent = 'Sending image to our nutrition engine.';
+        updateStage('preparing', 'done');
+        updateStage('uploading', 'active');
+        break;
+      case VF.ai.AI_STATES.ANALYZING:
+        elements.headline.textContent = 'Identifying foods...';
+        elements.subtext.textContent = 'AI is detecting ingredients in your meal.';
+        updateStage('uploading', 'done');
+        updateStage('analyzing', 'active');
+        break;
+      case VF.ai.AI_STATES.ESTIMATING_PORTIONS:
+        elements.headline.textContent = 'Estimating portions...';
+        elements.subtext.textContent = 'Calculating serving sizes for each item.';
+        updateStage('analyzing', 'done');
+        updateStage('estimating_portions', 'active');
+        break;
+      case VF.ai.AI_STATES.CALCULATING_NUTRITION:
+        elements.headline.textContent = 'Calculating nutrition...';
+        elements.subtext.textContent = 'Computing calories, protein, carbs, and fat.';
+        updateStage('estimating_portions', 'done');
+        updateStage('calculating_nutrition', 'active');
+        break;
+      case VF.ai.AI_STATES.SUCCESS:
+        updateStage('calculating_nutrition', 'done');
+        break;
+      case VF.ai.AI_STATES.TIMEOUT:
+      case VF.ai.AI_STATES.NETWORK_ERROR:
+      case VF.ai.AI_STATES.AI_ERROR:
+        showErrorState({ code: state, message: getErrorMessage(state) });
+        VF.ui.haptics.warn();
+        break;
+      case VF.ai.AI_STATES.NO_FOOD_DETECTED:
+        showNoFoodState();
+        VF.ui.haptics.warn();
+        break;
+      case VF.ai.AI_STATES.PARTIAL_RECOGNITION:
+      case VF.ai.AI_STATES.UNSUPPORTED_IMAGE:
+        break;
+    }
+  }
+
+  function handleProgress(data) {
+    var stageEl = stageElements[data.stage];
+    if (stageEl && data.progress > 0 && data.progress < 1) {
+      stageEl.label.textContent = stages.find(function (s) { return s.key === data.stage; }).label + ' ' + Math.round(data.progress * 100) + '%';
+    }
+  }
+
+  function getErrorMessage(code) {
+    switch (code) {
+      case VF.ai.AI_STATES.TIMEOUT: return 'Analysis took too long. Please check your connection and try again.';
+      case VF.ai.AI_STATES.NETWORK_ERROR: return 'Network error. Please check your internet connection and try again.';
+      case VF.ai.AI_STATES.AI_ERROR: return 'Our AI service encountered an error. Please try again in a moment.';
+      case VF.ai.AI_STATES.UNSUPPORTED_IMAGE: return 'This image format is not supported. Please try a different photo.';
+      default: return 'Something went wrong. Please try again.';
+    }
+  }
+
+  function startAnalysis() {
+    if (analysisMode === 'text') {
+      var text = sessionStorage.getItem('vf.aiMealText') || '';
+      sessionStorage.removeItem('vf.aiMealText');
+      analyzeText(text);
+    } else {
+      var blob = null;
+      try {
+        var stored = sessionStorage.getItem('vf.capturedPhotoBlob');
+        if (stored) {
+          blob = JSON.parse(stored);
+          sessionStorage.removeItem('vf.capturedPhotoBlob');
+        }
+      } catch (e) {}
+
+      if (!blob && imageUrl) {
+        fetch(imageUrl)
+          .then(function (res) { return res.blob(); })
+          .then(function (b) { analyzeImage(b); })
+          .catch(function () { analyzeImage(null); });
+      } else if (blob) {
+        analyzeImage(blob);
+      } else {
+        showErrorState({ code: 'MISSING_IMAGE', message: 'No image found. Please try again.' });
+      }
+    }
+  }
+
+  function analyzeImage(blob) {
+    showAnalyzingUI();
+
+    VF.ai.analyzeImage(blob || new Blob(), {
+      onStateChange: handleStateChange,
+      onProgress: handleProgress
+    }).then(function (result) {
+      if (result.error) {
+        handleStateChange(result.code);
+        return;
+      }
+      VF.ui.haptics.success();
+      sessionStorage.setItem('vf.aiResult', JSON.stringify(result));
+      routeToResultPage(result);
+    }).catch(function (err) {
+      if (err.error) {
+        handleStateChange(err.code);
+      } else {
+        handleStateChange(VF.ai.AI_STATES.AI_ERROR);
+      }
+    });
+  }
+
+  function analyzeText(text) {
+    showAnalyzingUI();
+    elements.headline.textContent = 'Analyzing description...';
+    elements.subtext.textContent = 'Processing your meal description.';
+
+    VF.ai.analyzeText(text, {
+      onStateChange: handleStateChange,
+      onProgress: handleProgress
+    }).then(function (result) {
+      VF.ui.haptics.success();
+      sessionStorage.setItem('vf.aiResult', JSON.stringify(result));
+      routeToResultPage(result);
+    }).catch(function (err) {
+      if (err.error) {
+        handleStateChange(err.code);
+      } else {
+        handleStateChange(VF.ai.AI_STATES.AI_ERROR);
+      }
+    });
+  }
+
+  function routeToResultPage(result) {
+    if (!result.foods || result.foods.length === 0) {
+      VF.ui.go('food_error.html');
+      return;
+    }
+
+    var hasLowConfidence = result.foods.some(function (f) {
+      return (f.confidence || result.overallConfidence) === VF.ai.CONFIDENCE_LEVELS.LOW;
+    });
+
+    if (hasLowConfidence && result.foods.length <= 2) {
+      VF.ui.go('food_clarify.html');
+      return;
+    }
+
+    if (result.foods.length > 1) {
+      VF.ui.go('food_result_multi.html');
+      return;
+    }
+
+    VF.ui.go('food_result.html');
+  }
+
+  function retry() {
+    VF.ui.haptics.select();
+    elements.errorState.hidden = true;
+    elements.noFoodState.hidden = true;
+    showAnalyzingUI();
+    stages.forEach(function (s) { updateStage(s.key, 'pending'); });
+    startAnalysis();
+  }
+
+  function goManual() {
+    VF.ui.haptics.select();
+    VF.ui.go('ai_chat.html');
+  }
+
+  function retakePhoto() {
+    VF.ui.haptics.select();
+    VF.ui.go('camera.html');
+  }
+
+  function chooseAnother() {
+    VF.ui.haptics.select();
+    VF.ui.go('photo_review.html');
+  }
+
+  function searchFood() {
+    VF.ui.haptics.select();
+    VF.ui.go('nutrition_library.html');
+  }
+
+  elements.retryBtn.addEventListener('click', retry);
+  elements.manualBtn.addEventListener('click', goManual);
+  elements.retakeBtn.addEventListener('click', retakePhoto);
+  elements.galleryBtn.addEventListener('click', chooseAnother);
+  elements.searchBtn.addEventListener('click', searchFood);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      if (!elements.errorState.hidden || !elements.noFoodState.hidden) {
+        VF.ui.goBack('ai_analyzing');
+      }
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+<style>
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin, .animate-bounce, .animate-pulse { animation: none; }
+  .animate-spin { opacity: 0.5; }
+}
+</style>
+</body></html>

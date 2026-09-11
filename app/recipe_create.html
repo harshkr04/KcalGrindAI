@@ -1,0 +1,150 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="#f8faf9" name="theme-color">
+<title>Create Recipe · Vitality</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="shared/theme.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Roboto+Flex:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="shared/vitality.css" rel="stylesheet">
+<script src="shared/store.js"></script>
+<script src="shared/nutrition.js"></script>
+<script src="shared/ui.js"></script>
+<script src="shared/diary.js"></script>
+</head>
+<!-- Recipe Creation — Name, servings, ingredients, auto-calculated nutrition. -->
+<body class="bg-surface min-h-screen w-full flex flex-col font-body-lg text-on-background overflow-x-hidden antialiased pb-32">
+<div id="vf-header"></div>
+<main class="flex-1 flex flex-col px-container-padding pb-stack-lg relative z-10 max-w-md mx-auto w-full vf-screen">
+  <h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mt-stack-md mb-stack-sm tracking-tight">Create Recipe</h1>
+  <p class="font-body-md text-body-md text-on-surface-variant mb-stack-lg">Build a recipe and calculate its nutrition.</p>
+
+  <div class="flex flex-col gap-stack-lg">
+    <div class="m3-field">
+      <div class="m3-input-container">
+        <input class="m3-input" id="recipe-name" placeholder=" " autocomplete="off" aria-required="true">
+        <label class="m3-label" for="recipe-name">Recipe name</label>
+      </div>
+    </div>
+    <div class="m3-field">
+      <div class="m3-input-container">
+        <input class="m3-input" id="recipe-servings" inputmode="numeric" type="number" placeholder=" " value="1" min="1" autocomplete="off" aria-required="true">
+        <label class="m3-label" for="recipe-servings">Servings</label>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between">
+      <h2 class="font-title-lg text-title-lg text-on-surface font-semibold">Ingredients</h2>
+      <button id="add-ingredient" class="font-label-lg text-label-lg text-primary hover:underline flex items-center gap-1">
+        <span class="material-symbols-outlined text-[18px]">add</span> Add Ingredient
+      </button>
+    </div>
+
+    <div id="ingredients-list" class="flex flex-col gap-2"></div>
+
+    <div id="recipe-summary" class="hidden glass-card rounded-xl p-4">
+      <h3 class="font-label-lg text-label-lg text-on-surface mb-2">Nutrition per serving</h3>
+      <div class="grid grid-cols-2 gap-2">
+        <div><span id="recipe-cal" class="font-headline-lg-mobile text-headline-lg-mobile text-primary">0</span><span class="font-label-sm text-label-sm text-on-surface-variant"> kcal</span></div>
+        <div><span id="recipe-prot" class="font-headline-lg-mobile text-headline-lg-mobile text-secondary">0g</span><span class="font-label-sm text-label-sm text-on-surface-variant"> Protein</span></div>
+        <div><span id="recipe-carbs" class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">0g</span><span class="font-label-sm text-label-sm text-on-surface-variant"> Carbs</span></div>
+        <div><span id="recipe-fat" class="font-headline-lg-mobile text-headline-lg-mobile text-tertiary">0g</span><span class="font-label-sm text-label-sm text-on-surface-variant"> Fat</span></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="vf-footer">
+  <div class="absolute inset-0 bg-gradient-to-t from-surface via-surface/90 to-transparent pointer-events-none"></div>
+  <div class="relative max-w-md mx-auto px-container-padding pt-8 pb-8 pb-safe flex flex-col gap-3">
+    <button id="save-recipe" class="vf-cta w-full py-4 rounded-full bg-tertiary text-on-tertiary font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-tertiary/90 active:scale-95 transition-all shadow-md shadow-tertiary/20" disabled>
+      <span class="material-symbols-outlined text-[20px]">save</span> Save Recipe
+    </button>
+    <button id="back-btn" class="w-full py-3 rounded-full border-[1.5px] border-outline-variant/30 text-on-surface-variant font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-surface-container-high active:scale-95 transition-all">
+      Cancel
+    </button>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var state = VF.ui.initScreen('recipe_create', { title: 'Create Recipe', allowCompleted: true });
+    if (!state) return;
+
+    var ingredients = [];
+    var listEl = document.getElementById('ingredients-list');
+    var summaryEl = document.getElementById('recipe-summary');
+    var saveBtn = document.getElementById('save-recipe');
+    var backBtn = document.getElementById('back-btn');
+    var nameEl = document.getElementById('recipe-name');
+    var servingsEl = document.getElementById('recipe-servings');
+
+    function renderIngredients() {
+      listEl.innerHTML = '';
+      ingredients.forEach(function (ing, idx) {
+        var row = document.createElement('div');
+        row.className = 'bg-surface-container-low rounded-xl p-3 border border-outline-variant/20';
+        row.innerHTML =
+          '<div class="flex items-center justify-between mb-2">' +
+            '<span class="font-label-lg text-label-lg text-on-surface">' + (ing.name || 'Ingredient ' + (idx + 1)) + '</span>' +
+            '<button class="remove-ing text-on-surface-variant hover:text-error transition-colors" data-idx="' + idx + '"><span class="material-symbols-outlined text-[20px]">delete</span></button>' +
+          '</div>' +
+          '<div class="grid grid-cols-3 gap-2">' +
+            '<div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">Food</label><input class="ing-name w-full bg-surface-container-highest/50 rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface border border-outline-variant/20 focus:border-primary focus:outline-none" value="' + (ing.name || '') + '"></div>' +
+            '<div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">Grams</label><input type="number" inputmode="decimal" class="ing-grams w-full bg-surface-container-highest/50 rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface border border-outline-variant/20 focus:border-primary focus:outline-none" value="' + (ing.servingGrams || '') + '"></div>' +
+            '<div><label class="font-label-sm text-label-sm text-on-surface-variant block mb-1">Cal</label><input type="number" inputmode="numeric" class="ing-cal w-full bg-surface-container-highest/50 rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface border border-outline-variant/20 focus:border-primary focus:outline-none" value="' + (ing.calories || '') + '"></div>' +
+          '</div>';
+        row.querySelector('.remove-ing').addEventListener('click', function () {
+          ingredients.splice(idx, 1);
+          renderIngredients();
+          updateSummary();
+          VF.ui.haptics.select();
+        });
+        row.querySelector('.ing-name').addEventListener('input', function () { ing.name = row.querySelector('.ing-name').value; updateSummary(); });
+        row.querySelector('.ing-grams').addEventListener('input', function () { ing.servingGrams = parseFloat(row.querySelector('.ing-grams').value) || 0; updateSummary(); });
+        row.querySelector('.ing-cal').addEventListener('input', function () { ing.calories = parseFloat(row.querySelector('.ing-cal').value) || 0; updateSummary(); });
+        listEl.appendChild(row);
+      });
+      saveBtn.disabled = ingredients.length === 0;
+    }
+
+    function updateSummary() {
+      var nut = VF.diary.recipeNutrition({ ingredients: ingredients, servings: parseFloat(servingsEl.value) || 1 });
+      if (ingredients.length > 0) {
+        summaryEl.classList.remove('hidden');
+        document.getElementById('recipe-cal').textContent = nut.perServing.calories;
+        document.getElementById('recipe-prot').textContent = nut.perServing.protein + 'g';
+        document.getElementById('recipe-carbs').textContent = nut.perServing.carbs + 'g';
+        document.getElementById('recipe-fat').textContent = nut.perServing.fat + 'g';
+      } else {
+        summaryEl.classList.add('hidden');
+      }
+    }
+
+    document.getElementById('add-ingredient').addEventListener('click', function () {
+      ingredients.push({ name: '', servingGrams: 0, calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
+      renderIngredients();
+      updateSummary();
+      VF.ui.haptics.select();
+    });
+
+    saveBtn.addEventListener('click', function () {
+      if (!nameEl.value.trim() || !ingredients.length) return;
+      var recipe = {
+        name: nameEl.value.trim(),
+        servings: parseFloat(servingsEl.value) || 1,
+        ingredients: ingredients,
+        createdAt: new Date().toISOString()
+      };
+      VF.diary.saveRecipe(recipe);
+      VF.ui.haptics.success();
+      VF.ui.snackbar('Recipe saved', 'check_circle');
+      VF.ui.go('food_search.html');
+    });
+
+    backBtn.addEventListener('click', function () { VF.ui.haptics.select(); VF.ui.goBack('recipe_create'); });
+    renderIngredients();
+  });
+</script>
+</body></html>

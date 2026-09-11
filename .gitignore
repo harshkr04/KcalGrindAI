@@ -1,0 +1,48 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android / IntelliJ
+*.iml
+.idea/
+/local.properties
+local.properties
+/captures
+.externalNativeBuild/
+.cxx/
+.DS_Store
+app/google-services.json
+
+# JVM heap dumps
+*.hprof
+*.hprof.p0
+
+# SQLite databases (emulator/test snapshots — never commit device data)
+*.db
+*.db-shm
+*.db-wal
+
+# Render artifacts (Blender / animation frames)
+render_frames/
+
+# Backend and API keys
+.env
+*.env
+backend/.env
+backend/node_modules/
+backend/*.log
+
+# Release Keystores & Signing Secrets
+keystore.properties
+*.jks
+*.keystore
+
+# OS junk
+Thumbs.db
+*.DS_Store
+
+# Kotlin
+.kotlin/
+
+app/google-services.json
