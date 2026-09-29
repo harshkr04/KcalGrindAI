@@ -45,7 +45,7 @@ function getLatestPhotoAnalyzeLogLine() {
         return lines[i];
       }
     }
-  } catch (e) {}
+  } catch (e) { }
   return null;
 }
 
@@ -108,7 +108,7 @@ async function runCalibration() {
 
   // 3. Obtain genuine Firebase Auth emulator token
   const idToken = await getFirebaseAuthEmulatorToken();
-  log(`[AUTH] Successfully acquired genuine Firebase token from emulator: ${idToken.substring(0, 30)}...`);
+  log('[AUTH] Firebase emulator token acquired');
 
   const testCases = [
     { name: 'Solid Black (1024x1024)', buffer: blackBuffer, expectNoFood: true },
