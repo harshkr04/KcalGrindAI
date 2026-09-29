@@ -1,19 +1,19 @@
-# Lumina Nutrition — Monetization & Google Play Billing Architecture
+# Kcal Grind AI — Monetization & Google Play Billing Architecture
 
-This document defines the monetization strategy, tier structure, feature gating architecture, and Google Play Billing integration roadmap for Lumina Nutrition.
+This document defines the monetization strategy, tier structure, feature gating architecture, and Google Play Billing integration roadmap for Kcal Grind AI.
 
 ---
 
 ## 1. Product Tiers
 
-| Feature | Lumina Free (Default / Guest) | Lumina Pro ($4.99/mo or $39.99/yr) |
+| Feature | Kcal Grind AI Free (Default / Guest) | Kcal Grind AI Pro ($4.99/mo or $39.99/yr) |
 |---|---|---|
 | **Manual Food Logging & Barcode Scan** | Unlimited (USDA & OFF) | Unlimited |
 | **Water Logging & Weight Tracking** | Unlimited | Unlimited |
 | **Health Connect Step Sync** | Included | Included |
 | **AI Meal Photo Recognition** | 5 scans / day | Unlimited high-res scans |
 | **AI Natural Language Text Meal Parsing** | 10 queries / day | Unlimited natural language logging |
-| **AI Coach Conversational Assistant** | Standard coaching (Rate-limited: 30 calls/hr) | Priority coaching with deep weekly trends & micronutrient feedback |
+| **AI Coach Conversational Assistant** | 5 messages / day (Resets 12:00 AM local time) | 50 messages / day (Priority coaching with deep weekly trends & micronutrient feedback) |
 | **Nutritional Insights & Export** | Last 7 days history | Full history, 30/90-day macro trend graphs, PDF export |
 
 ---

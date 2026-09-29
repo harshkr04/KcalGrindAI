@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Lumina"
+rootProject.name = "KcalGrindAI"
 include(":app")

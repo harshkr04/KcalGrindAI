@@ -1,4 +1,4 @@
-# Lumina — Development Workflow
+# Kcal Grind AI — Development Workflow
 
 ## 1. Phase gating
 

@@ -10,8 +10,8 @@ Run the following command using JDK `keytool` to generate a secure RSA 4096-bit 
 
 ```bash
 keytool -genkey -v \
-  -keystore lumina-release-key.jks \
-  -alias lumina-release-alias \
+  -keystore kcalgrindai-release-key.jks \
+  -alias kcalgrindai-release-alias \
   -keyalg RSA \
   -keysize 4096 \
   -validity 10000
@@ -29,9 +29,9 @@ Store this `.jks` file in a secure backup location (e.g. 1Password / Google Secr
    ```
 2. Populate the real values:
    ```properties
-   storeFile=/absolute/path/to/lumina-release-key.jks
+   storeFile=/absolute/path/to/kcalgrindai-release-key.jks
    storePassword=YourKeystorePassword
-   keyAlias=lumina-release-alias
+   keyAlias=kcalgrindai-release-alias
    keyPassword=YourKeyPassword
    ```
 

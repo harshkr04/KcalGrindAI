@@ -1,4 +1,4 @@
-# Lumina — Production & Deployment
+# Kcal Grind AI — Production & Deployment
 
 ## 1. Environments
 

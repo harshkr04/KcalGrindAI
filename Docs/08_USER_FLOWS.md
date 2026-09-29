@@ -1,9 +1,9 @@
-# Lumina — User Flows
+# Kcal Grind AI — User Flows
 
 ## 1. Core loop (the one that must work perfectly)
 
 ```
-User eats → opens Lumina → taps AI/Add → picks photo/voice/text/barcode/search
+User eats → opens Kcal Grind AI → taps AI/Add → picks photo/voice/text/barcode/search
    → AI analyzes → user reviews/edits/confirms → logged
    → Home + Diary + Insights update instantly (same Room data)
 ```

@@ -1,4 +1,4 @@
-# Lumina — AI Integration
+# Kcal Grind AI — AI Integration
 
 ## 1. Non-negotiable rule
 

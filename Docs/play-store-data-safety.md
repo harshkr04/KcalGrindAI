@@ -1,6 +1,6 @@
 # Google Play Store — Data Safety Form Response Guide
 
-This document provides exact answers to enter into the Google Play Console **Data Safety** questionnaire for Lumina Nutrition.
+This document provides exact answers to enter into the Google Play Console **Data Safety** questionnaire for Kcal Grind AI.
 
 ---
 
@@ -67,5 +67,5 @@ This document provides exact answers to enter into the Google Play Console **Dat
 ## 3. Data Deletion Mechanism
 
 - **In-App Account Deletion:** Located under **Profile &rarr; Account Settings &rarr; Delete Account**.
-- **Data Deletion URL for Play Store Listing:** `https://luminanutrition.app/delete-data`
+- **Data Deletion URL for Play Store Listing:** `https://kcalgrind.ai/delete-data`
 - **Data Retention Policy:** When a user deletes their account, all local database tables are purged immediately and Firebase Authentication records are removed.

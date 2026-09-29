@@ -1,11 +1,11 @@
-# Lumina — App Architecture
+# Kcal Grind AI — App Architecture
 
 ## 1. Style: Clean Architecture + MVVM, single module to start
 
 Don't multi-module this on day one — it adds build overhead you don't need until the team or codebase actually grows. Structure packages so a future multi-module split is a mechanical move, not a rewrite.
 
 ```
-com.lumina.nutrition
+com.kcalgrindai.app
 ├── app/                     # Application class, DI graph roots, MainActivity
 ├── core/
 │   ├── designsystem/        # Colors, type, spacing — ported from vitality.css/DESIGN.md

@@ -1,8 +1,8 @@
-# Privacy Policy for Lumina Nutrition
+# Privacy Policy for Kcal Grind AI
 
-**Last Updated: September 5, 2026**
+**Last Updated: September 13, 2026**
 
-Lumina Nutrition ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how our mobile application collects, uses, stores, and safeguards your personal and health information when you use Lumina Nutrition.
+Kcal Grind AI ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how our mobile application collects, uses, stores, and safeguards your personal and health information when you use Kcal Grind AI.
 
 ---
 
@@ -15,7 +15,7 @@ Lumina Nutrition ("we", "our", or "us") is committed to protecting your privacy.
 ### B. Device Permissions & Sensor Data
 - **Camera (Optional):** Used exclusively when you choose to photograph a meal for nutritional recognition. Photos are processed in real-time and are never stored on public servers or used for marketing.
 - **Microphone / Audio (Optional):** Used exclusively while you press and hold the voice logging button to transcribe spoken meal descriptions into text. Audio recordings are discarded immediately after transcription.
-- **Health Connect by Android (Optional):** If you grant read permissions, Lumina reads daily step counts and active calories burned to adjust your remaining daily calorie budget. Lumina never writes to or modifies your Health Connect data.
+- **Health Connect by Android (Optional):** If you grant read permissions, Kcal Grind AI reads daily step counts and active calories burned to adjust your remaining daily calorie budget. Kcal Grind AI never writes to or modifies your Health Connect data.
 
 ---
 
@@ -24,20 +24,20 @@ Lumina Nutrition ("we", "our", or "us") is committed to protecting your privacy.
 We use the collected information strictly for:
 - Calculating your Basal Metabolic Rate (BMR) and personalized Total Daily Energy Expenditure (TDEE).
 - Providing automated visual and natural language food logging and nutritional estimates.
-- Generating empathetic, contextual coaching insights via the Lumina AI Coach.
+- Generating empathetic, contextual coaching insights via the Kcal Grind AI Coach.
 - Monitoring application performance and stability via crash reporting (Firebase Crashlytics).
 
 ---
 
 ## 3. AI Processing & Third-Party Providers
 
-Lumina employs advanced AI models (Google Gemini 2.5 Flash) via a secure, authenticated proxy backend to analyze meal photos and text:
+Kcal Grind AI employs advanced AI models (Google Gemini 2.5 Flash) via a secure, authenticated proxy backend to analyze meal photos and text:
 - **Ephemeral Processing:** Food photos and meal descriptions sent to the AI proxy are processed in memory and are **not** stored permanently on the inference servers.
 - **No Model Training:** Your food photos and private meal logs are **never** sold or used to train public foundation models.
 - **Third-Party Service Providers:**
   - **Google Firebase:** Authentication, Crashlytics diagnostics, and rate-limiting enforcement.
   - **Google Gemini API:** Real-time multimodal food analysis and nutrition coaching inference.
-  - **USDA FoodData Central & OpenFoodFacts:** Nutritional database verification.
+  - **USDA FoodData Central, ICMR-NIN IFCT 2017 & OpenFoodFacts:** Nutritional database verification.
 
 ---
 
@@ -51,7 +51,7 @@ Lumina employs advanced AI models (Google Gemini 2.5 Flash) via a secure, authen
 
 ## 5. Children's Privacy
 
-Lumina Nutrition is not directed to individuals under the age of 13. We do not knowingly collect personal information from children.
+Kcal Grind AI is not directed to individuals under the age of 13. We do not knowingly collect personal information from children.
 
 ---
 
@@ -60,5 +60,5 @@ Lumina Nutrition is not directed to individuals under the age of 13. We do not k
 Under applicable data protection laws (including GDPR and CCPA), you have the right to access, export, rectify, or delete your personal data. 
 
 For questions, feedback, or data deletion requests, contact our privacy team at:
-- **Email:** privacy@luminanutrition.app
-- **Website:** https://luminanutrition.app/privacy
+- **Email:** privacy@kcalgrind.ai
+- **Website:** https://kcalgrind.ai/privacy

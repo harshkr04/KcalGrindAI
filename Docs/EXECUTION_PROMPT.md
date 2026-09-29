@@ -1,4 +1,4 @@
-# Lumina — Execution Prompts (for Claude Code)
+# Kcal Grind AI — Execution Prompts (for Claude Code)
 
 Run these in order. Each assumes the docs in this folder (`00_MASTER_PLAN.md` through `09_COMPETITOR_ANALYSIS.md`) are present in the repo — point Claude Code at them explicitly so it doesn't improvise decisions already made here.
 
@@ -35,7 +35,7 @@ Do not redesign anything. This is extraction only.
 ```
 Using 01_ARCHITECTURE.md and 02_TECH_STACK.md in this repo, bootstrap a new
 Android project:
-- Kotlin + Jetpack Compose + Material 3, package com.lumina.nutrition
+- Kotlin + Jetpack Compose + Material 3, package com.kcalgrindai.app
 - minSdk 26, targetSdk 34
 - Hilt for DI, Navigation Compose, Room, Retrofit + OkHttp + kotlinx.serialization,
   Coil, CameraX, ML Kit Barcode Scanning

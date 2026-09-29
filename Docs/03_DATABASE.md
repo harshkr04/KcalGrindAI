@@ -1,4 +1,4 @@
-# Lumina — Database Design
+# Kcal Grind AI — Database Design
 
 ## 1. Source of truth rule
 
@@ -22,7 +22,7 @@ waterLiters, waterGlasses, bmr, tdee, isCustom, updatedAt
 
 ### FoodEntity  (local cache of food DB lookups + custom foods)
 ```
-id (PK), source (usda|openfoodfacts|nutritionix|custom),
+id (PK), source (usda|openfoodfacts|nutritionix|custom|ifct),
 externalId, name, brand, servingDescription, servingGrams,
 calories, proteinG, carbsG, fatG, fiberG, barcodeUpc (nullable),
 isUserCreated (Bool), createdAt
@@ -31,7 +31,7 @@ isUserCreated (Bool), createdAt
 ### MealLogEntity  (was "Meal" in the prototype)
 ```
 id (PK), date, mealType (breakfast|lunch|dinner|snack),
-totalCalories, loggedAt, source (manual|ai_photo|ai_voice|ai_text|barcode|search),
+totalCalories, loggedAt, source (manual|ai_photo|ai_voice|ai_text|barcode|search|recipe|curated_recipe),
 synced (Bool)
 ```
 
@@ -40,8 +40,16 @@ synced (Bool)
 id (PK), mealLogId (FK), foodId (FK, nullable if ad-hoc AI item),
 name, brand, servingDescription, servingGrams,
 calories, proteinG, carbsG, fatG, fiberG,
-source (manual|ai|verified), confidence (0.0–1.0, nullable),
+source (manual|ai|verified|recipe|curated_recipe), confidence (0.0–1.0, nullable),
 confirmed (Bool)
+```
+
+### RecipeEntity (curated recipe catalog, added in v4)
+```
+id (PK text), name, description, emoji, mealType (breakfast|lunch|dinner|snack|dessert),
+prepTimeMinutes, totalCalories, proteinG, carbsG, fatG, fiberG,
+dietTags (List<String>), ingredients (List<RecipeIngredient>), instructions (List<String>),
+popularityScore, isFavorite (Bool), createdAt
 ```
 This is the critical "AI must not be source of truth" enforcement point: every line item carries its own `source` and `confidence`, independent of the meal-level source, so a user can mix a verified barcode item and an AI-estimated item in the same meal and the UI can distinguish them.
 

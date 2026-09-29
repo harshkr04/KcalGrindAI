@@ -1,4 +1,4 @@
-# Lumina — UI / Design System Extraction
+# Kcal Grind AI — UI / Design System Extraction
 
 ## 1. The rule
 

@@ -1,4 +1,4 @@
-# Lumina — Master Implementation Plan
+# Kcal Grind AI — Master Implementation Plan
 
 ## 0. Where we actually are (confirmed by codebase audit)
 

@@ -31,7 +31,12 @@ render_frames/
 *.env
 backend/.env
 backend/node_modules/
-backend/*.log
+backend/data/
+backend/data/ai_coach_usage.json
+backend/data/user_timezones.json
+data/ai_coach_usage.json
+data/user_timezones.json
+
 
 # Release Keystores & Signing Secrets
 keystore.properties
@@ -46,3 +51,10 @@ Thumbs.db
 .kotlin/
 
 app/google-services.json
+
+# Agents & build artifacts
+.agents/
+skills-lock.json
+firebase-debug.log
+backend/calibration-*.txt
+backend/*.log

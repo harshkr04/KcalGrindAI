@@ -1,4 +1,4 @@
-# Lumina — Tech Stack
+# Kcal Grind AI — Tech Stack
 
 ## Client (Android)
 
