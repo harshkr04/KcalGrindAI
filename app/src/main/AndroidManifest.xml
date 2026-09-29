@@ -13,14 +13,18 @@
     </queries>
 
     <application
-        android:name=".app.LuminaApplication"
+        android:name=".app.KcalGrindApplication"
         android:allowBackup="true"
-        android:label="Lumina"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
-        android:theme="@style/Theme.Lumina">
+        android:enableOnBackInvokedCallback="true"
+        android:theme="@style/Theme.KcalGrindAI">
         <activity
             android:name=".app.MainActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -1,0 +1,18 @@
+# Lumina / Vitality Flow AI Nutrition & Calorie Tracking System
+
+> Evidence-based calorie counting, macro adherence, and AI-powered meal recognition designed for healthy weight management, muscle gain, and nutritional vitality.
+
+## Core Capabilities
+- **Precision Calorie & Macro Tracking**: Automatic calculation of basal metabolic rate (BMR), total daily energy expenditure (TDEE), and goal-aligned calorie deficits/surpluses.
+- **Multimodal AI Food Recognition**: Real-time logging via photo analysis, barcode scanning, natural language text, and voice input.
+- **Comprehensive Food & Recipe Database**: Over 300,000 verified foods and 40+ dietitian-crafted Indian and international recipes with granular macro and micronutrient breakdowns.
+- **Hydration Tracking**: Visual water logs with custom ounce and milliliter tracking.
+- **Weekly Insights & Adherence Trends**: 7-day calorie trends, macro distribution graphs, and weight milestone analytics.
+- **Offline Reliability**: Full local Room and IndexedDB persistence ensuring tracking works without network connectivity.
+
+## Documentation & Primary Routes
+- [Dashboard](/11_home.html): Primary daily calorie summary, remaining macros, timeline, and hydration.
+- [Food Diary](/diary.html): Day-by-day meal chronology with edit, delete, and undo capabilities.
+- [Insights & Trends](/insights.html): Weekly averages, adherence score, and curated recipe library.
+- [Food Search](/food_search.html): Instant food query engine across USDA and global dishes.
+- [AI Nutrition Coach](/ai_chat.html): Conversational nutrition guidance with direct meal proposal extraction.

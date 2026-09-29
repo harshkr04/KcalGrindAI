@@ -21,11 +21,11 @@ val localProperties = Properties().apply {
 val usdaApiKey = localProperties.getProperty("USDA_API_KEY") ?: "DEMO_KEY"
 
 android {
-    namespace = "com.lumina.nutrition"
+    namespace = "com.kcalgrindai.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.lumina.nutrition"
+        applicationId = "com.kcalgrindai.app"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
@@ -67,7 +67,12 @@ android {
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
+            isReturnDefaultValues = true
         }
+    }
+
+    sourceSets {
+        getByName("test").assets.srcDirs("$projectDir/schemas")
     }
 }
 
@@ -83,6 +88,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -107,6 +113,7 @@ dependencies {
     implementation(libs.firebase.crashlytics)
     implementation(libs.play.services.auth)
     implementation(libs.hilt.android)
+    implementation("dev.chrisbanes.haze:haze:1.1.1")
     ksp(libs.hilt.compiler)
     ksp(libs.androidx.room.compiler)
     debugImplementation(libs.androidx.compose.ui.tooling)
