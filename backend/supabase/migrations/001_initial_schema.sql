@@ -1,5 +1,5 @@
 -- =============================================================
--- Lumina Nutrition — Supabase Schema (mirrors Room/SQLite)
+-- Kcal Grind AI — Supabase Schema (mirrors Room/SQLite)
 -- Phase 10: Cloud Sync
 -- =============================================================
 -- Run this migration via: supabase db push

@@ -1,4 +1,4 @@
-# Production Dockerfile for Lumina AI Proxy Backend
+# Production Dockerfile for Kcal Grind AI Proxy Backend
 # Multi-stage build on Alpine Linux for minimal attack surface and image size (<150MB)
 
 FROM node:22-alpine AS builder

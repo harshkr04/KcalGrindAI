@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
@@ -21,6 +23,22 @@ const fastify = Fastify({
 
 await fastify.register(cors, {
   origin: '*'
+});
+
+fastify.setErrorHandler((error, request, reply) => {
+  if (error.code === 'FST_ERR_CTP_BODY_TOO_LARGE' || error.statusCode === 413) {
+    return reply.code(413).send({
+      error: 'PayloadTooLarge',
+      message: 'Request payload exceeds the 4 MB limit.'
+    });
+  }
+  if (error.statusCode === 400 || error.code === 'FST_ERR_CTP_INVALID_MEDIA_TYPE') {
+    return reply.code(400).send({
+      error: 'BadRequest',
+      message: error.message
+    });
+  }
+  reply.send(error);
 });
 
 // Provider Configuration
@@ -213,7 +231,15 @@ function extractJsonFromContent(content) {
 // -------------------------------------------------------------
 // Firebase Admin & Rate Limiter
 // -------------------------------------------------------------
-const projectId = process.env.FIREBASE_PROJECT_ID || 'lumina-nutrition-app';
+if (process.env.NODE_ENV === 'production' && process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+  throw new Error('FATAL: FIREBASE_AUTH_EMULATOR_HOST cannot be set in production (emulator tokens are unsigned).');
+}
+
+const projectId = process.env.FIREBASE_PROJECT_ID;
+if (!projectId || !projectId.trim()) {
+  throw new Error('FATAL: FIREBASE_PROJECT_ID environment variable is missing or empty. A valid Firebase Project ID is required.');
+}
+
 if (!getApps().length) {
   initializeApp({
     projectId
@@ -242,6 +268,7 @@ function checkRateLimit(uid) {
 }
 
 // Global preHandler hook: gate all AI routes with Firebase Token verification
+// Security: no ALLOW_DEV_TOKENS / NODE_ENV=test bypass exists here by design.
 fastify.addHook('preHandler', async (request, reply) => {
   if (request.url === '/health' || request.url === '/') {
     return;
@@ -261,6 +288,19 @@ fastify.addHook('preHandler', async (request, reply) => {
 
   const idToken = authHeader.split('Bearer ')[1].trim();
 
+  // Security (auth bypass hardening): no test-token bypass in ANY NODE_ENV.
+  // Past regressions reintroduced `ALLOW_DEV_TOKENS` / `NODE_ENV=test` branches
+  // that accepted `test-token-<anything>`. Such tokens must always 401 here —
+  // only Firebase verifyIdToken may authenticate. See attack test cases A/B/C.
+  if (idToken.startsWith('test-token-')) {
+    appendBackendLog(`401 UNAUTHORIZED on ${request.method} ${request.url} - Reason: test-token prefix is never accepted (NODE_ENV=${process.env.NODE_ENV || 'unset'})`);
+    fastify.log.warn({ url: request.url, nodeEnv: process.env.NODE_ENV || 'unset' }, 'Rejected request: test-token prefix is never accepted');
+    return reply.code(401).send({
+      error: 'Unauthorized',
+      message: 'Invalid or expired Firebase ID token.',
+      details: 'Test tokens are never accepted. A valid Firebase ID token is required.'
+    });
+  }
 
   try {
     const decodedToken = await getAuth().verifyIdToken(idToken);
@@ -301,7 +341,7 @@ fastify.addHook('onResponse', async (request, reply) => {
 fastify.get('/health', async () => {
   return {
     status: 'ok',
-    service: 'lumina-ai-backend',
+    service: 'kcalgrindai-backend',
     provider: geminiClient ? 'gemini' : (NVIDIA_API_KEY ? 'nvidia' : 'unconfigured'),
     visionModel: VISION_MODEL,
     chatModel: CHAT_MODEL,
@@ -312,118 +352,162 @@ fastify.get('/health', async () => {
 // -------------------------------------------------------------
 // 2. POST /ai/analyze-photo
 // -------------------------------------------------------------
-fastify.post('/ai/analyze-photo', async (request, reply) => {
+fastify.post('/ai/analyze-photo', { bodyLimit: 4 * 1024 * 1024 }, async (request, reply) => {
   const { imageBase64, dietTags = [], allergies = [] } = request.body || {};
 
-  if (!imageBase64) {
-    return reply.code(400).send({ error: 'imageBase64 is required' });
+  const validateTagList = (arr) => {
+    if (!Array.isArray(arr)) return false;
+    if (arr.length > 20) return false;
+    for (const item of arr) {
+      if (typeof item !== 'string' || item.length > 50) return false;
+    }
+    return true;
+  };
+
+  if (!validateTagList(dietTags) || !validateTagList(allergies)) {
+    return reply.code(400).send({
+      error: 'InvalidRequest',
+      message: 'dietTags and allergies must be arrays of strings, max 20 items, max 50 chars each'
+    });
   }
 
-  fastify.log.info({ tags: dietTags, allergiesCount: allergies.length, provider: geminiClient ? 'gemini' : 'nvidia' }, 'Analyzing photo');
+  if (!imageBase64 || typeof imageBase64 !== 'string' || !imageBase64.trim()) {
+    return reply.code(400).send({ error: 'InvalidImage', message: 'imageBase64 is required and must be a non-empty string' });
+  }
 
-  // Attempt with Gemini 2.5 Flash if client is active
-  if (geminiClient) {
-    try {
-      let mimeType = 'image/jpeg';
-      let cleanBase64 = imageBase64;
-      if (imageBase64.startsWith('data:')) {
-        const match = imageBase64.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
-        if (match) {
-          mimeType = match[1];
-          cleanBase64 = match[2];
-        } else {
-          cleanBase64 = imageBase64.split(';base64,')[1] || imageBase64;
-        }
-      }
+  // Accept optional data:image/...;base64, prefix by stripping it before decoding
+  let cleanBase64 = imageBase64.trim();
+  if (cleanBase64.startsWith('data:')) {
+    const commaIdx = cleanBase64.indexOf(',');
+    if (commaIdx !== -1) {
+      cleanBase64 = cleanBase64.substring(commaIdx + 1).trim();
+    }
+  }
 
-      const prompt = `You are Lumina Nutrition Vision AI.
+  // Decode buffer
+  let imageBuffer;
+  try {
+    imageBuffer = Buffer.from(cleanBase64, 'base64');
+    if (!imageBuffer || imageBuffer.length === 0) {
+      return reply.code(400).send({ error: 'InvalidImage', message: 'Failed to decode base64 image data' });
+    }
+  } catch (e) {
+    return reply.code(400).send({ error: 'InvalidImage', message: 'Invalid base64 payload' });
+  }
+
+  // Reject if the decoded size exceeds the route limit (4 MB)
+  const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+  if (imageBuffer.length > MAX_IMAGE_BYTES) {
+    return reply.code(413).send({
+      error: 'PayloadTooLarge',
+      message: `Decoded image size (${imageBuffer.length} bytes) exceeds the 4 MB limit.`
+    });
+  }
+
+  // MimeType passed to the provider must come from magic bytes, never from the client
+  let detectedMime = null;
+  if (imageBuffer.length >= 3 && imageBuffer[0] === 0xFF && imageBuffer[1] === 0xD8 && imageBuffer[2] === 0xFF) {
+    detectedMime = 'image/jpeg';
+  } else if (imageBuffer.length >= 8 &&
+             imageBuffer[0] === 0x89 && imageBuffer[1] === 0x50 && imageBuffer[2] === 0x4E && imageBuffer[3] === 0x47 &&
+             imageBuffer[4] === 0x0D && imageBuffer[5] === 0x0A && imageBuffer[6] === 0x1A && imageBuffer[7] === 0x0A) {
+    detectedMime = 'image/png';
+  } else if (imageBuffer.length >= 12 &&
+             imageBuffer[0] === 0x52 && imageBuffer[1] === 0x49 && imageBuffer[2] === 0x46 && imageBuffer[3] === 0x46 &&
+             imageBuffer[8] === 0x57 && imageBuffer[9] === 0x45 && imageBuffer[10] === 0x42 && imageBuffer[11] === 0x50) {
+    detectedMime = 'image/webp';
+  }
+
+  if (!detectedMime) {
+    return reply.code(400).send({
+      error: 'InvalidImage',
+      message: 'Unsupported image format. Only valid JPEG, PNG, or WEBP images with valid magic bytes are accepted.'
+    });
+  }
+
+  if (!geminiClient || !GEMINI_API_KEY) {
+    fastify.log.error('Gemini vision provider is unconfigured (missing GEMINI_API_KEY)');
+    appendBackendLog('GEMINI_CONFIG_ERROR: missing GEMINI_API_KEY');
+    return reply.code(500).send({
+      error: 'InternalServerError',
+      message: 'AI analysis service is temporarily unavailable.'
+    });
+  }
+
+  fastify.log.info({
+    payloadBytes: imageBuffer.length,
+    mime: detectedMime,
+    provider: 'gemini',
+    model: VISION_MODEL
+  }, 'Analyzing photo payload');
+  appendBackendLog(`PHOTO_ANALYZE: bytes=${imageBuffer.length} mime=${detectedMime} provider=gemini model=${VISION_MODEL}`);
+
+  try {
+    const prompt = `You are Kcal Grind Nutrition Vision AI.
 Analyze this meal image.
 Identify each food/ingredient, estimate grams (estimatedGrams), calories (rounded to nearest 5-10 kcal), and macros (protein, carbs, fat in grams).
 Assign an honest confidence score (0.0 to 1.0) per food item reflecting visual certainty. For ambiguous food, assign lower confidence (0.35-0.70). For clear identifiable food, assign higher confidence (0.85-0.98).
 Compute overallConfidence (0.0 to 1.0).
+If the image does not clearly show edible food or drink (blank or very dark image, screens, objects, people, empty plates), return foods as an empty array and overallConfidence 0. Never return placeholder items such as 'No Food' or 'Empty Plate'. Every item must be real food with estimatedGrams > 0.
 User dietary tags: ${dietTags.join(', ') || 'None'}. Allergies: ${allergies.join(', ') || 'None'}.`;
 
-      const response = await geminiClient.models.generateContent({
-        model: VISION_MODEL,
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { text: prompt },
-              {
-                inlineData: {
-                  data: cleanBase64,
-                  mimeType
-                }
-              }
-            ]
-          }
-        ],
-        config: {
-          temperature: 0.1,
-          responseMimeType: 'application/json',
-          responseSchema: FOOD_ANALYSIS_SCHEMA
-        }
-      });
-
-      const parsed = JSON.parse(response.text);
-      if (parsed && Array.isArray(parsed.foods)) {
-        return parsed;
-      }
-    } catch (geminiError) {
-      fastify.log.warn({ err: geminiError.message }, 'Gemini vision failed, attempting fallback');
-    }
-  }
-
-  // Fallback to NVIDIA Vision
-  if (NVIDIA_API_KEY) {
-    try {
-      const formattedImage = imageBase64.startsWith('data:') 
-        ? imageBase64 
-        : `data:image/jpeg;base64,${imageBase64}`;
-
-      const systemPrompt = `You are Lumina Nutrition Vision AI.
-Analyze the user's meal image and output a structured JSON object.
-Rules:
-- Identify each distinct food/ingredient.
-- Estimate realistic weight in grams (estimatedGrams).
-- Estimate calories rounded to nearest 5-10 kcal.
-- Estimate macros (protein, carbs, fat) in grams.
-- Assign an honest confidence score (0.0 to 1.0) per food item.
-- Compute overallConfidence (0.0 to 1.0).
-- Output ONLY valid JSON:
-{
-  "foods": [{ "name": "Food", "estimatedGrams": 150, "calories": 250, "macros": { "protein": 25, "carbs": 10, "fat": 12 }, "confidence": 0.90 }],
-  "overallConfidence": 0.88
-}`;
-
-      const messages = [
-        { role: 'system', content: systemPrompt },
+    const response = await geminiClient.models.generateContent({
+      model: VISION_MODEL,
+      contents: [
         {
           role: 'user',
-          content: [
-            { type: 'text', text: 'Identify the foods and estimate nutrition in this meal.' },
-            { type: 'image_url', image_url: { url: formattedImage } }
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                data: cleanBase64,
+                mimeType: detectedMime
+              }
+            }
           ]
         }
-      ];
-
-      const result = await callNvidiaChat(messages, 'meta/llama-3.2-11b-vision-instruct', 0.1);
-      if (result && result.choices && result.choices[0]?.message?.content) {
-        const rawText = result.choices[0].message.content;
-        const parsed = extractJsonFromContent(rawText);
-        if (parsed && Array.isArray(parsed.foods) && parsed.foods.length > 0) {
-          return parsed;
-        }
+      ],
+      config: {
+        temperature: 0.1,
+        responseMimeType: 'application/json',
+        responseSchema: FOOD_ANALYSIS_SCHEMA
       }
-    } catch (error) {
-      fastify.log.error(error?.response?.data || error.message);
-    }
-  }
+    });
 
-  return reply.code(502).send({
-    error: 'AI vision model unavailable. Please check API key configuration.'
-  });
+    const parsed = JSON.parse(response.text);
+    if (parsed && Array.isArray(parsed.foods)) {
+      parsed.foods = parsed.foods.filter(item => {
+        const grams = Number(item.estimatedGrams) || 0;
+        const cals = Number(item.calories) || 0;
+        return !(grams <= 0 && cals <= 0);
+      });
+      if (parsed.foods.length === 0) {
+        return { foods: [], overallConfidence: 0 };
+      }
+      return parsed;
+    }
+
+    throw new Error('Invalid response structure from Gemini vision');
+  } catch (geminiError) {
+    fastify.log.error({ err: geminiError.message }, 'Gemini vision analysis failed');
+    appendBackendLog(`GEMINI_VISION_FAILED: ${geminiError.message}`);
+
+    let retryAfter = 60;
+    const retryMatch = geminiError.message?.match(/retry(?:Delay)?["':\s]+([0-9.]+)s?/i);
+    if (retryMatch && retryMatch[1]) {
+      const parsedSec = Math.ceil(parseFloat(retryMatch[1]));
+      if (!isNaN(parsedSec) && parsedSec > 0) {
+        retryAfter = parsedSec;
+      }
+    }
+    reply.header('Retry-After', retryAfter);
+
+    return reply.code(503).send({
+      error: 'AiUnavailable',
+      message: 'Meal analysis is busy right now. Please try again in a minute.',
+      retryable: true
+    });
+  }
 });
 
 // -------------------------------------------------------------
@@ -441,7 +525,7 @@ fastify.post('/ai/analyze-text', async (request, reply) => {
   // Attempt with Gemini 2.5 Flash
   if (geminiClient) {
     try {
-      const prompt = `You are Lumina Nutrition Text Parser AI.
+      const prompt = `You are Kcal Grind Nutrition Text Parser AI.
 Analyze the user's meal description: "${text}".
 Identify each food item mentioned with portion sizes.
 Estimate reasonable grams, calories (rounded to nearest 5-10 kcal), and macros (protein, carbs, fat in grams).
@@ -479,7 +563,7 @@ User dietary tags: ${dietTags.join(', ') || 'None'}. Allergies: ${allergies.join
   // Fallback to NVIDIA
   if (NVIDIA_API_KEY) {
     try {
-      const systemPrompt = `You are Lumina Nutrition Text Parser AI.
+      const systemPrompt = `You are Kcal Grind Nutrition Text Parser AI.
 Analyze the user's meal description and output a structured JSON object.
 Rules:
 - Extract all food items mentioned with quantity/portions.
@@ -654,18 +738,285 @@ function buildDefaultReply(fnName, toolOutput, mealType, items) {
 }
 
 // -------------------------------------------------------------
+// AI Coach Daily Usage, Persistence & Quota Enforcement
+// Free: EXACTLY 5 messages/day (Configurable via FREE_AI_COACH_DAILY_LIMIT)
+// Pro:  EXACTLY 50 messages/day (Configurable via PRO_AI_COACH_DAILY_LIMIT)
+// Resets automatically at 12:00 AM in user's validated local timezone.
+// Persisted outside git in backend/data/
+// -------------------------------------------------------------
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DATA_DIR = process.env.DATA_DIR || path.resolve(__dirname, '..', 'data');
+const USAGE_FILE = path.join(DATA_DIR, 'ai_coach_usage.json');
+const TIMEZONES_FILE = path.join(DATA_DIR, 'user_timezones.json');
+
+export const FREE_AI_COACH_DAILY_LIMIT = parseInt(process.env.FREE_AI_COACH_DAILY_LIMIT || '5', 10);
+export const PRO_AI_COACH_DAILY_LIMIT = parseInt(process.env.PRO_AI_COACH_DAILY_LIMIT || '50', 10);
+
+export const aiCoachDailyUsage = new Map(); // key: `${uid}:${localDay}` -> count
+export const userTimezones = new Map(); // key: uid -> validated IANA timezone string
+export const inFlightAiCoachReservations = new Map(); // key: `${uid}:${localDay}` -> in-flight count
+
+function saveJsonAtomic(filePath, data) {
+  try {
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    const tmpPath = `${filePath}.tmp.${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf8');
+    fs.renameSync(tmpPath, filePath);
+  } catch (err) {
+    fastify.log.error({ err: err.message, filePath }, 'Failed to persist JSON to disk');
+  }
+}
+
+function loadJsonSafe(filePath, defaultValue) {
+  try {
+    if (fs.existsSync(filePath)) {
+      const raw = fs.readFileSync(filePath, 'utf8');
+      return JSON.parse(raw);
+    }
+  } catch (err) {
+    fastify.log.warn({ err: err.message, filePath }, 'Failed to load JSON file, using default');
+  }
+  return defaultValue;
+}
+
+export function persistUsageToDisk() {
+  const obj = Object.fromEntries(aiCoachDailyUsage);
+  saveJsonAtomic(USAGE_FILE, obj);
+}
+
+export function persistTimezonesToDisk() {
+  const obj = Object.fromEntries(userTimezones);
+  saveJsonAtomic(TIMEZONES_FILE, obj);
+}
+
+export function initPersistence() {
+  const loadedUsage = loadJsonSafe(USAGE_FILE, {});
+  aiCoachDailyUsage.clear();
+  for (const [key, count] of Object.entries(loadedUsage)) {
+    if (typeof count === 'number') {
+      aiCoachDailyUsage.set(key, count);
+    }
+  }
+
+  const loadedTimezones = loadJsonSafe(TIMEZONES_FILE, {});
+  userTimezones.clear();
+  for (const [uid, tz] of Object.entries(loadedTimezones)) {
+    if (isValidIanaTimezone(tz)) {
+      userTimezones.set(uid, tz);
+    }
+  }
+}
+
+// Initialize persistence on module load
+initPersistence();
+
+export function isValidIanaTimezone(tz) {
+  if (!tz || typeof tz !== 'string') return false;
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function resolveUserTimezone(uid, requestedTimezone) {
+  const existing = uid ? userTimezones.get(uid) : null;
+  if (existing) {
+    // Once associated, use stored validated IANA timezone consistently.
+    // Do not allow arbitrary client headers or 'UTC' fallback to overwrite an existing verified timezone.
+    if (isValidIanaTimezone(requestedTimezone) && requestedTimezone !== 'UTC' && requestedTimezone !== existing) {
+      userTimezones.set(uid, requestedTimezone);
+      persistTimezonesToDisk();
+      return requestedTimezone;
+    }
+    return existing;
+  }
+
+  if (isValidIanaTimezone(requestedTimezone)) {
+    if (uid && uid !== 'anonymous') {
+      userTimezones.set(uid, requestedTimezone);
+      persistTimezonesToDisk();
+    }
+    return requestedTimezone;
+  }
+
+  const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (isValidIanaTimezone(systemTz)) {
+    return systemTz;
+  }
+  return 'UTC';
+}
+
+export function getUserLocalDate(timezone) {
+  try {
+    if (timezone) {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    }
+  } catch (e) {
+    // Fallback if invalid timezone identifier
+  }
+  return new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+}
+
+export function determineUserIsPro(request) {
+  // Production Pro entitlement must come from verified subscription / token claims
+  if (request.user?.isPro === true || request.user?.claims?.isPro === true || request.user?.subscription === 'pro') {
+    return true;
+  }
+  // Development / Test environment only: allow test header if not in production
+  if (process.env.NODE_ENV !== 'production') {
+    if (request.headers['x-test-pro'] === 'true' || request.headers['x-user-pro'] === 'true') {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function getAiCoachUsage(uid, timezone, isPro) {
+  const localDay = getUserLocalDate(timezone);
+  const key = `${uid}:${localDay}`;
+  const used = aiCoachDailyUsage.get(key) || 0;
+  const inFlight = inFlightAiCoachReservations.get(key) || 0;
+  const limit = isPro ? PRO_AI_COACH_DAILY_LIMIT : FREE_AI_COACH_DAILY_LIMIT;
+  return {
+    usedToday: used,
+    inFlight,
+    dailyLimit: limit,
+    remaining: Math.max(0, limit - used),
+    isLimitReached: used >= limit,
+    isPro,
+    localDay
+  };
+}
+
+export function tryReserveAiCoachQuota(uid, timezone, isPro) {
+  const localDay = getUserLocalDate(timezone);
+  const key = `${uid}:${localDay}`;
+  const used = aiCoachDailyUsage.get(key) || 0;
+  const inFlight = inFlightAiCoachReservations.get(key) || 0;
+  const limit = isPro ? PRO_AI_COACH_DAILY_LIMIT : FREE_AI_COACH_DAILY_LIMIT;
+
+  if (used + inFlight >= limit) {
+    return {
+      allowed: false,
+      usedToday: used,
+      inFlight,
+      dailyLimit: limit,
+      remaining: Math.max(0, limit - used),
+      isLimitReached: true,
+      isPro,
+      localDay
+    };
+  }
+
+  inFlightAiCoachReservations.set(key, inFlight + 1);
+  return {
+    allowed: true,
+    usedToday: used,
+    inFlight: inFlight + 1,
+    dailyLimit: limit,
+    remaining: Math.max(0, limit - (used + inFlight + 1)),
+    isLimitReached: false,
+    isPro,
+    localDay
+  };
+}
+
+export function commitAiCoachQuota(uid, timezone) {
+  const localDay = getUserLocalDate(timezone);
+  const key = `${uid}:${localDay}`;
+  const inFlight = inFlightAiCoachReservations.get(key) || 1;
+  if (inFlight <= 1) {
+    inFlightAiCoachReservations.delete(key);
+  } else {
+    inFlightAiCoachReservations.set(key, inFlight - 1);
+  }
+
+  const current = aiCoachDailyUsage.get(key) || 0;
+  aiCoachDailyUsage.set(key, current + 1);
+  persistUsageToDisk();
+  return current + 1;
+}
+
+export function releaseAiCoachReservation(uid, timezone) {
+  const localDay = getUserLocalDate(timezone);
+  const key = `${uid}:${localDay}`;
+  const inFlight = inFlightAiCoachReservations.get(key) || 0;
+  if (inFlight <= 1) {
+    inFlightAiCoachReservations.delete(key);
+  } else {
+    inFlightAiCoachReservations.set(key, inFlight - 1);
+  }
+}
+
+export function recordAiCoachMessageSent(uid, timezone) {
+  const localDay = getUserLocalDate(timezone);
+  const key = `${uid}:${localDay}`;
+  const current = aiCoachDailyUsage.get(key) || 0;
+  aiCoachDailyUsage.set(key, current + 1);
+  persistUsageToDisk();
+  return current + 1;
+}
+
+export function resetAiCoachUsageForTesting(uid, localDay) {
+  if (localDay) {
+    aiCoachDailyUsage.delete(`${uid}:${localDay}`);
+    inFlightAiCoachReservations.delete(`${uid}:${localDay}`);
+  } else {
+    for (const key of aiCoachDailyUsage.keys()) {
+      if (key.startsWith(`${uid}:`)) {
+        aiCoachDailyUsage.delete(key);
+      }
+    }
+    for (const key of inFlightAiCoachReservations.keys()) {
+      if (key.startsWith(`${uid}:`)) {
+        inFlightAiCoachReservations.delete(key);
+      }
+    }
+  }
+  persistUsageToDisk();
+}
+
+// -------------------------------------------------------------
 // 5. POST /ai/chat
 // -------------------------------------------------------------
-fastify.post('/ai/chat', async (request, reply) => {
+fastify.post('/ai/chat', { bodyLimit: 4 * 1024 * 1024 }, async (request, reply) => {
   const { messages = [], userContext = {} } = request.body || {};
 
   if (!messages || messages.length === 0) {
     return reply.code(400).send({ error: 'messages array is required' });
   }
 
-  fastify.log.info({ messageCount: messages.length, provider: geminiClient ? 'gemini' : 'nvidia' }, 'Processing AI Coach Chat');
+  const uid = request.user?.uid || 'anonymous';
+  const rawTz = request.headers['x-user-timezone'] || userContext?.timezone;
+  const timezone = resolveUserTimezone(uid, rawTz);
+  const isPro = determineUserIsPro(request);
 
-  const systemInstruction = `You are Lumina Nutrition AI Coach.
+  // 1. Atomic Quota Reservation: Free limit = 5/day, Pro limit = 50/day
+  // Concurrency-safe: checks (usedToday + inFlight) < limit and reserves slot
+  const reservation = tryReserveAiCoachQuota(uid, timezone, isPro);
+  if (!reservation.allowed) {
+    fastify.log.warn({ uid, isPro, usedToday: reservation.usedToday, dailyLimit: reservation.dailyLimit }, 'AI Coach daily quota reached');
+    return reply.code(429).send({
+      error: 'QuotaExceeded',
+      message: isPro 
+        ? "You've reached today's Pro AI Coach limit." 
+        : "You've reached today's free AI Coach limit. Your messages reset tomorrow.",
+      usedToday: reservation.usedToday,
+      dailyLimit: reservation.dailyLimit,
+      remaining: 0,
+      isPro,
+      localDay: reservation.localDay
+    });
+  }
+
+  let committed = false;
+  try {
+    fastify.log.info({ messageCount: messages.length, provider: geminiClient ? 'gemini' : 'nvidia', quotaRemaining: reservation.remaining }, 'Processing AI Coach Chat');
+
+    const systemInstruction = `You are Kcal Grind AI Coach.
 You provide intelligent, empathetic, evidence-based nutrition coaching.
 User Context:
 - Goal: ${userContext?.goal || userContext?.profile?.goal || 'Maintain'}
@@ -682,190 +1033,255 @@ Guidelines:
 - Answer warmly, concisely, and practically.
 - Ground your answers strictly in the tool data.`;
 
-  // 1. Attempt with Gemini 2.5 Flash
-  if (geminiClient) {
-    try {
-      // Format messages for Gemini (role 'user' | 'model')
-      const contents = messages.map(m => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.content || '' }]
-      }));
+    // 1. Attempt with Gemini 2.5 Flash
+    if (geminiClient) {
+      try {
+        // Format messages for Gemini (role 'user' | 'model')
+        const contents = messages.map(m => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content || '' }]
+        }));
 
-      const geminiResponse = await geminiClient.models.generateContent({
-        model: CHAT_MODEL,
-        contents,
-        config: {
-          systemInstruction,
-          temperature: 0.3,
-          tools: GEMINI_TOOLS
+        const geminiResponse = await geminiClient.models.generateContent({
+          model: CHAT_MODEL,
+          contents,
+          config: {
+            systemInstruction,
+            temperature: 0.3,
+            tools: GEMINI_TOOLS
+          }
+        });
+
+        const functionCalls = geminiResponse.functionCalls;
+        if (functionCalls && functionCalls.length > 0) {
+          const call = functionCalls[0];
+          const fnName = call.name;
+          const fnArgs = call.args || {};
+          fastify.log.info({ fnName, fnArgs }, 'Gemini triggered function call');
+
+          const { toolOutput, suggestedAction, items, mealType } = executeTool(fnName, fnArgs, userContext);
+          const finalReply = buildDefaultReply(fnName, toolOutput, mealType, items);
+
+          // Success: atomically commit quota reservation & write to disk
+          commitAiCoachQuota(uid, timezone);
+          committed = true;
+
+          return {
+            reply: finalReply,
+            toolInvoked: fnName,
+            toolData: toolOutput,
+            suggestedAction
+          };
         }
-      });
 
-      const functionCalls = geminiResponse.functionCalls;
-      if (functionCalls && functionCalls.length > 0) {
-        const call = functionCalls[0];
-        const fnName = call.name;
-        const fnArgs = call.args || {};
-        fastify.log.info({ fnName, fnArgs }, 'Gemini triggered function call');
+        if (geminiResponse.text) {
+          // Success: atomically commit quota reservation & write to disk
+          commitAiCoachQuota(uid, timezone);
+          committed = true;
 
-        const { toolOutput, suggestedAction, items, mealType } = executeTool(fnName, fnArgs, userContext);
-        const finalReply = buildDefaultReply(fnName, toolOutput, mealType, items);
-
-        return {
-          reply: finalReply,
-          toolInvoked: fnName,
-          toolData: toolOutput,
-          suggestedAction
-        };
+          return {
+            reply: geminiResponse.text.trim(),
+            suggestedAction: null
+          };
+        }
+      } catch (geminiError) {
+        fastify.log.warn({ err: geminiError.message }, 'Gemini chat call failed, attempting fallback');
       }
-
-      if (geminiResponse.text) {
-        return {
-          reply: geminiResponse.text.trim(),
-          suggestedAction: null
-        };
-      }
-    } catch (geminiError) {
-      fastify.log.warn({ err: geminiError.message }, 'Gemini chat call failed, attempting fallback');
     }
-  }
 
-  // 2. Fallback to NVIDIA Chat
-  if (NVIDIA_API_KEY) {
-    const tools = [
-      {
-        type: 'function',
-        function: {
-          name: 'get_today_diary',
-          description: 'Get meals logged today, consumed calories, and remaining calorie allowance',
-          parameters: { type: 'object', properties: {} }
-        }
-      },
-      {
-        type: 'function',
-        function: {
-          name: 'get_user_profile',
-          description: 'Get user nutrition goals, target calories, weight, dietary tags, and allergies',
-          parameters: { type: 'object', properties: {} }
-        }
-      },
-      {
-        type: 'function',
-        function: {
-          name: 'get_recent_trends',
-          description: 'Get recent 7-day average calories, target, tracking rate percentage, and weight changes',
-          parameters: { type: 'object', properties: {} }
-        }
-      },
-      {
-        type: 'function',
-        function: {
-          name: 'create_food_log',
-          description: 'Propose logging food items into the user meal diary. Requires user confirmation.',
-          parameters: {
-            type: 'object',
-            properties: {
-              mealType: { type: 'string', enum: ['breakfast', 'lunch', 'dinner', 'snack'] },
-              items: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    name: { type: 'string' },
-                    estimatedGrams: { type: 'number' },
-                    calories: { type: 'number' },
-                    proteinG: { type: 'number' },
-                    carbsG: { type: 'number' },
-                    fatG: { type: 'number' }
-                  },
-                  required: ['name', 'calories']
-                }
-              }
-            },
-            required: ['items']
+    // 2. Fallback to NVIDIA Chat
+    if (NVIDIA_API_KEY) {
+      const tools = [
+        {
+          type: 'function',
+          function: {
+            name: 'get_today_diary',
+            description: 'Get meals logged today, consumed calories, and remaining calorie allowance',
+            parameters: { type: 'object', properties: {} }
           }
-        }
-      },
-      {
-        type: 'function',
-        function: {
-          name: 'log_water',
-          description: 'Log water intake in milliliters directly to the daily diary',
-          parameters: {
-            type: 'object',
-            properties: {
-              amountMl: { type: 'number', description: 'Amount of water in milliliters, e.g. 250 for 1 glass' }
-            },
-            required: ['amountMl']
+        },
+        {
+          type: 'function',
+          function: {
+            name: 'get_user_profile',
+            description: 'Get user nutrition goals, target calories, weight, dietary tags, and allergies',
+            parameters: { type: 'object', properties: {} }
           }
-        }
-      }
-    ];
-
-    const chatMessages = [
-      { role: 'system', content: systemInstruction },
-      ...messages
-    ];
-
-    try {
-      const turn1Result = await callNvidiaChat(chatMessages, 'meta/llama-3.2-11b-vision-instruct', 0.4, tools);
-      const choice = turn1Result?.choices?.[0];
-      
-      let toolCall = choice?.message?.tool_calls?.[0];
-      if (!toolCall && choice?.message?.content) {
-        try {
-          const rawContent = choice.message.content.trim();
-          if (rawContent.startsWith('{') && (rawContent.includes('"name"') || rawContent.includes('"function"'))) {
-            const parsedTool = JSON.parse(rawContent);
-            const fnName = parsedTool.name || parsedTool.function;
-            if (fnName) {
-              toolCall = {
-                id: 'call_synth_' + Date.now(),
-                function: {
-                  name: fnName,
-                  arguments: JSON.stringify(parsedTool.parameters || parsedTool.arguments || {})
-                }
-              };
+        },
+        {
+          type: 'function',
+          function: {
+            name: 'get_recent_trends',
+            description: 'Get recent 7-day average calories, target, tracking rate percentage, and weight changes',
+            parameters: { type: 'object', properties: {} }
+          }
+        },
+        {
+          type: 'function',
+          function: {
+            name: 'search_food',
+            description: 'Look up nutritional information when user asks "how many calories in X" without wanting to log it.',
+            parameters: {
+              type: 'object',
+              properties: { query: { type: 'string', description: 'Food name to search' } },
+              required: ['query']
             }
           }
-        } catch (e) {}
-      }
+        },
+        {
+          type: 'function',
+          function: {
+            name: 'create_food_log',
+            description: 'Log or add food/meal to the user daily diary. Call this whenever user asks to log, track, record, or add food or meal.',
+            parameters: {
+              type: 'object',
+              properties: {
+                mealType: { type: 'string', description: 'Meal type: breakfast, lunch, dinner, or snack' },
+                items: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string' },
+                      estimatedGrams: { type: 'number' },
+                      calories: { type: 'number' },
+                      proteinG: { type: 'number' },
+                      carbsG: { type: 'number' },
+                      fatG: { type: 'number' }
+                    },
+                    required: ['name', 'calories']
+                  }
+                }
+              },
+              required: ['items']
+            }
+          }
+        },
+        {
+          type: 'function',
+          function: {
+            name: 'log_water',
+            description: 'Log water intake in milliliters directly to the daily diary',
+            parameters: {
+              type: 'object',
+              properties: {
+                amountMl: { type: 'number', description: 'Amount of water in milliliters, e.g. 250 for 1 glass' }
+              },
+              required: ['amountMl']
+            }
+          }
+        }
+      ];
 
-      if (toolCall) {
-        const fnName = toolCall.function.name;
-        let fnArgs = {};
-        try {
-          fnArgs = JSON.parse(toolCall.function.arguments || '{}');
-        } catch {
-          fnArgs = {};
+      const chatMessages = [
+        { role: 'system', content: systemInstruction },
+        ...messages
+      ];
+
+      try {
+        const turn1Result = await callNvidiaChat(chatMessages, 'meta/llama-3.2-11b-vision-instruct', 0.4, tools);
+        const choice = turn1Result?.choices?.[0];
+
+        let toolCall = null;
+        if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
+          toolCall = choice.message.tool_calls[0];
+        } else if (choice?.message?.content) {
+          const content = choice.message.content.trim();
+          if (content.startsWith('{') && content.endsWith('}')) {
+            try {
+              const parsed = JSON.parse(content);
+              if (parsed.name && (parsed.arguments || parsed.parameters)) {
+                toolCall = {
+                  function: {
+                    name: parsed.name,
+                    arguments: JSON.stringify(parsed.arguments || parsed.parameters)
+                  }
+                };
+              }
+            } catch (e) {}
+          }
         }
 
-        const { toolOutput, suggestedAction, items, mealType } = executeTool(fnName, fnArgs, userContext);
-        const finalReply = buildDefaultReply(fnName, toolOutput, mealType, items);
+        if (toolCall) {
+          const fnName = toolCall.function.name;
+          let fnArgs = {};
+          try {
+            fnArgs = JSON.parse(toolCall.function.arguments || '{}');
+          } catch {
+            fnArgs = {};
+          }
 
-        return {
-          reply: finalReply,
-          toolInvoked: fnName,
-          toolData: toolOutput,
-          suggestedAction
-        };
-      }
+          const { toolOutput, suggestedAction, items, mealType } = executeTool(fnName, fnArgs, userContext);
+          const finalReply = buildDefaultReply(fnName, toolOutput, mealType, items);
 
-      if (choice?.message?.content) {
-        return {
-          reply: choice.message.content.trim(),
-          suggestedAction: null
-        };
+          // Success: atomically commit quota reservation & write to disk
+          commitAiCoachQuota(uid, timezone);
+          committed = true;
+
+          return {
+            reply: finalReply,
+            toolInvoked: fnName,
+            toolData: toolOutput,
+            suggestedAction
+          };
+        }
+
+        if (choice?.message?.content) {
+          // Success: atomically commit quota reservation & write to disk
+          commitAiCoachQuota(uid, timezone);
+          committed = true;
+
+          return {
+            reply: choice.message.content.trim(),
+            suggestedAction: null
+          };
+        }
+      } catch (error) {
+        fastify.log.error(error?.response?.data || error.message);
       }
-    } catch (error) {
-      fastify.log.error(error?.response?.data || error.message);
     }
-  }
 
-  return reply.code(502).send({
-    error: 'AI Coach service unavailable. Please check API key configuration.'
-  });
+    // Both failed: release reservation so quota is NOT consumed
+    releaseAiCoachReservation(uid, timezone);
+    return reply.code(502).send({
+      error: 'AI Coach service unavailable. Please check API key configuration.'
+    });
+  } catch (chatError) {
+    if (!committed) {
+      releaseAiCoachReservation(uid, timezone);
+    }
+    throw chatError;
+  }
 });
+
+// Non-production test/diagnostic endpoints for AI Coach quota verification
+if (process.env.NODE_ENV !== 'production') {
+  fastify.get('/ai/coach-usage', async (request, reply) => {
+    const uid = request.user?.uid || 'test-user';
+    const rawTz = request.headers['x-user-timezone'];
+    const timezone = resolveUserTimezone(uid, rawTz);
+    const isPro = determineUserIsPro(request);
+    return getAiCoachUsage(uid, timezone, isPro);
+  });
+
+  fastify.post('/ai/coach-usage/reset', async (request, reply) => {
+    const uid = request.user?.uid || 'test-user';
+    const { localDay } = request.body || {};
+    resetAiCoachUsageForTesting(uid, localDay);
+    return { success: true, message: `Reset AI Coach usage for ${uid}` };
+  });
+
+  fastify.post('/ai/coach-usage/set', async (request, reply) => {
+    const uid = request.user?.uid || 'test-user';
+    const rawTz = request.headers['x-user-timezone'];
+    const timezone = resolveUserTimezone(uid, rawTz);
+    const { count = 0, date } = request.body || {};
+    const localDay = date || getUserLocalDate(timezone);
+    aiCoachDailyUsage.set(`${uid}:${localDay}`, count);
+    persistUsageToDisk();
+    return { success: true, key: `${uid}:${localDay}`, count };
+  });
+}
 
 // -------------------------------------------------------------
 // Supabase Client (Phase 10 — Cloud Sync)
@@ -1353,11 +1769,15 @@ const start = async () => {
     const port = parseInt(process.env.PORT || '8000', 10);
     const host = process.env.HOST || '0.0.0.0';
     await fastify.listen({ port, host });
-    console.log(`Lumina AI Proxy Backend running on http://${host}:${port} (Provider: ${geminiClient ? 'gemini' : (NVIDIA_API_KEY ? 'nvidia' : 'unconfigured')})`);
+    console.log(`Kcal Grind AI Proxy Backend running on http://${host}:${port} (Provider: ${geminiClient ? 'gemini' : (NVIDIA_API_KEY ? 'nvidia' : 'unconfigured')})`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
   }
 };
 
-start();
+export { fastify };
+
+if (process.env.TEST !== 'true') {
+  start();
+}

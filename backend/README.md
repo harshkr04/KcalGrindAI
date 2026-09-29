@@ -1,4 +1,4 @@
-# Lumina AI Proxy Backend
+# Kcal Grind AI Proxy Backend
 
 A local Node.js + Fastify service that securely proxies AI nutrition analysis and chat requests to NVIDIA's OpenAI-compatible API (`https://integrate.api.nvidia.com/v1`).
 
@@ -6,7 +6,7 @@ A local Node.js + Fastify service that securely proxies AI nutrition analysis an
 
 ## 1. Setup & Installation
 
-From the `LuminaAndroid/backend/` directory:
+From the `backend/` directory:
 
 ```bash
 npm install

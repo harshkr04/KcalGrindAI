@@ -1,8 +1,8 @@
 {
-  "name": "lumina-ai-backend",
+  "name": "kcalgrindai-backend",
   "version": "1.0.0",
   "type": "module",
-  "description": "Lumina AI Proxy Backend for NVIDIA API",
+  "description": "Kcal Grind AI Proxy Backend for Gemini & NVIDIA API",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

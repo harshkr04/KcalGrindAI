@@ -2,9 +2,10 @@
  * Phase 10 — Supabase Cloud Sync Integration Tests
  *
  * Tests the /sync/push and /sync/pull routes end-to-end.
- * Uses the test token bypass (NODE_ENV=test).
+ * Auth uses a genuine Firebase token from the Auth emulator.
+ * There is NO NODE_ENV=test / test-token bypass in src/server.js by design.
  *
- * Run: NODE_ENV=test node test-sync-routes.js
+ * Run: firebase emulators:start --only auth & BASE_URL=http://localhost:8000 node test-sync-routes.js
  */
 
 import { readFileSync, readdirSync, existsSync } from 'fs';
@@ -71,7 +72,7 @@ async function testSyncPush() {
   const now = Date.now();
   const pushPayload = {
     user_profile: {
-      email: 'test@lumina.test',
+      email: 'test@kcalgrindai.test',
       goal: 'lose_weight',
       units: 'metric',
       age: 28,

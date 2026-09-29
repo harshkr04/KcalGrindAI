@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Lumina AI Backend — Google Cloud Run Automated Deployment Script
+# Kcal Grind AI Backend — Google Cloud Run Automated Deployment Script
 # ==============================================================================
 # Usage:
 #   chmod +x deploy-cloud-run.sh
@@ -13,13 +13,19 @@
 
 set -euo pipefail
 
-PROJECT_ID="${1:-lumina-nutrition-app}"
+if [ -z "${1:-}" ]; then
+  echo "Error: PROJECT_ID is required as the first argument."
+  echo "Usage: ./deploy-cloud-run.sh <PROJECT_ID> [REGION]"
+  exit 1
+fi
+
+PROJECT_ID="$1"
 REGION="${2:-us-central1}"
-SERVICE_NAME="lumina-ai-backend"
+SERVICE_NAME="kcal-grind-ai-backend"
 IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}:latest"
 
 echo "=========================================================="
-echo " Deploying Lumina AI Proxy Backend to Google Cloud Run"
+echo " Deploying Kcal Grind AI Proxy Backend to Google Cloud Run"
 echo " Project: ${PROJECT_ID}"
 echo " Region:  ${REGION}"
 echo " Service: ${SERVICE_NAME}"
@@ -52,8 +58,8 @@ create_secret_if_missing() {
   fi
 }
 
-create_secret_if_missing "lumina-gemini-api-key"
-create_secret_if_missing "lumina-nvidia-api-key"
+create_secret_if_missing "kcal-grind-gemini-api-key"
+create_secret_if_missing "kcal-grind-nvidia-api-key"
 
 # 4. Build and submit container image via Cloud Build
 echo "--> Building container image via Google Cloud Build..."
@@ -64,12 +70,12 @@ PROJECT_NUMBER=$(gcloud projects describe "${PROJECT_ID}" --format="value(projec
 CLOUD_RUN_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
 
 echo "--> Granting Secret Accessor permission to Cloud Run Service Account (${CLOUD_RUN_SA})..."
-gcloud secrets add-iam-policy-binding "lumina-gemini-api-key" \
+gcloud secrets add-iam-policy-binding "kcal-grind-gemini-api-key" \
   --member="serviceAccount:${CLOUD_RUN_SA}" \
   --role="roles/secretmanager.secretAccessor" \
   --project="${PROJECT_ID}" >/dev/null
 
-gcloud secrets add-iam-policy-binding "lumina-nvidia-api-key" \
+gcloud secrets add-iam-policy-binding "kcal-grind-nvidia-api-key" \
   --member="serviceAccount:${CLOUD_RUN_SA}" \
   --role="roles/secretmanager.secretAccessor" \
   --project="${PROJECT_ID}" >/dev/null
@@ -88,7 +94,7 @@ gcloud run deploy "${SERVICE_NAME}" \
   --concurrency=80 \
   --timeout="60s" \
   --set-env-vars="AI_PROVIDER=gemini,GEMINI_MODEL=gemini-2.5-flash,FIREBASE_PROJECT_ID=${PROJECT_ID},NODE_ENV=production" \
-  --set-secrets="GEMINI_API_KEY=lumina-gemini-api-key:latest,NVIDIA_API_KEY=lumina-nvidia-api-key:latest"
+  --set-secrets="GEMINI_API_KEY=kcal-grind-gemini-api-key:latest,NVIDIA_API_KEY=kcal-grind-nvidia-api-key:latest"
 
 # 7. Print output service URL
 SERVICE_URL=$(gcloud run services describe "${SERVICE_NAME}" --platform="managed" --region="${REGION}" --format="value(status.url)")

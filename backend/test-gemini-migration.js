@@ -6,7 +6,24 @@ import { spawn } from 'child_process';
 
 const PORT = 8009;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
-const AUTH_HEADER = { Authorization: 'Bearer test-token-migrator-user' };
+// Security: no test-token bypass exists in src/server.js in ANY NODE_ENV.
+// Auth must use a genuine Firebase token (emulator or TEST_ID_TOKEN env).
+let AUTH_HEADER = {};
+
+async function setupAuth() {
+  if (process.env.TEST_ID_TOKEN) {
+    AUTH_HEADER = { Authorization: `Bearer ${process.env.TEST_ID_TOKEN}` };
+    console.log('Using TEST_ID_TOKEN from environment for auth.');
+    return;
+  }
+  const emulatorHost = process.env.FIREBASE_AUTH_EMULATOR_HOST || '127.0.0.1:9099';
+  const res = await axios.post(
+    `http://${emulatorHost}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=anything`,
+    { returnSecureToken: true }
+  );
+  AUTH_HEADER = { Authorization: `Bearer ${res.data.idToken}` };
+  console.log(`Acquired genuine Firebase token from emulator (UID: ${res.data.localId})`);
+}
 
 console.log('--- Starting Gemini Migration Test Suite ---');
 
@@ -58,6 +75,7 @@ async function runTests() {
     console.log(`Starting backend server on port ${PORT}...`);
     await startTestServer();
     console.log('Backend server started successfully.');
+    await setupAuth();
 
     // 1. Health Check
     console.log('\n[Test 1] Testing /health endpoint...');
@@ -80,6 +98,23 @@ async function runTests() {
     } catch (err) {
       if (err.response && err.response.status === 401) {
         console.log('✓ Expected 401 received:', err.response.data);
+      } else {
+        throw err;
+      }
+    }
+
+    // 2b. No test-token bypass (regression gate): must also 401.
+    console.log('\n[Test 2b] Verifying test-token-* is rejected with 401 (no bypass)...');
+    try {
+      await axios.post(
+        `${BASE_URL}/ai/analyze-text`,
+        { text: 'attack probe' },
+        { headers: { Authorization: 'Bearer test-token-migrator-user' } }
+      );
+      throw new Error('Expected 401 for test-token but request succeeded — BYPASS REGRESSION');
+    } catch (err) {
+      if (err.response && err.response.status === 401) {
+        console.log('✓ test-token correctly rejected with 401:', err.response.data);
       } else {
         throw err;
       }
