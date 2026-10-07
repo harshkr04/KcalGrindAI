@@ -23,8 +23,8 @@ This document defines the monetization strategy, tier structure, feature gating 
 ### A. Client-Side Integration (`com.android.billingclient:billing-ktx:7.0.0`)
 - **BillingClient Lifecycle:** Managed inside a dedicated `BillingRepository` singleton.
 - **Product IDs:**
-  - `lumina_pro_monthly`: Auto-renewing subscription ($4.99/month, 7-day free trial).
-  - `lumina_pro_annual`: Auto-renewing subscription ($39.99/year, 33% discount).
+  - `kcal_grind_pro_monthly`: Auto-renewing subscription ($4.99/month, 7-day free trial).
+  - `kcal_grind_pro_annual`: Auto-renewing subscription ($39.99/year, 33% discount).
 - **Subscription Status Verification:**
   - Upon purchase or app start, `BillingClient.queryPurchasesAsync()` checks active entitlement tokens.
   - Purchases are cryptographically acknowledged via `BillingClient.acknowledgePurchase()`.

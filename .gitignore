@@ -58,3 +58,4 @@ skills-lock.json
 firebase-debug.log
 backend/calibration-*.txt
 backend/*.log
+docs-private/

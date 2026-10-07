@@ -2,7 +2,7 @@
 
 ## 0. Where we actually are (confirmed by codebase audit)
 
-- The existing workspace (`stitch_lumina_ai_nutrition/`) is a **42-screen HTML/CSS/Tailwind/vanilla-JS prototype**, not an Android app. Zero Kotlin, zero Gradle.
+- The existing workspace (`stitch_kcal_grind_ai_nutrition/`) is a **42-screen HTML/CSS/Tailwind/vanilla-JS prototype**, not an Android app. Zero Kotlin, zero Gradle.
 - It is a genuinely useful **design + behavior spec**: onboarding math (BMR/TDEE), diary CRUD, insights logic, and the "Vitality Flow" design system (colors, type, spacing) are all real and correct.
 - All "AI" in the prototype (photo/voice/text/barcode analysis, chat) is **mocked** — random data, regex, `setTimeout`. No network calls exist anywhere.
 - No auth, no backend, no real food database.
@@ -81,4 +81,4 @@ Each phase should end with a working, demoable build — not partial screens wit
 
 ## 4. Immediate next action
 
-Run the Phase 0 prompt in `EXECUTION_PROMPT.md` against the actual `stitch_lumina_ai_nutrition/` repo to produce the screen inventory. Everything else in this plan depends on that inventory existing and being accurate — don't skip it.
+Run the Phase 0 prompt in `EXECUTION_PROMPT.md` against the actual `stitch_kcal_grind_ai_nutrition/` repo to produce the screen inventory. Everything else in this plan depends on that inventory existing and being accurate — don't skip it.

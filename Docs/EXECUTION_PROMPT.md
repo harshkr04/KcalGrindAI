@@ -59,7 +59,7 @@ Using 03_DATABASE.md in this repo, implement:
   WeightEntryEntity, AIAnalysisEntity, ConversationEntity, MessageEntity)
 - Repository interfaces in domain/repository, implementations in data/repository
 - Port the BMR/TDEE and macro-split calculation logic from
-  stitch_lumina_ai_nutrition/app/shared/nutrition.js into a Kotlin domain use case —
+  stitch_kcal_grind_ai_nutrition/app/shared/nutrition.js into a Kotlin domain use case —
   this logic is already validated, translate it faithfully, do not redesign the formulas
 - Room DAO tests using an in-memory database for every entity
 
