@@ -41,11 +41,9 @@ android {
         getByName("release") {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Production Cloud Run deployment is pending. If PROD_BACKEND_URL is defined in local.properties,
-            // use it; otherwise fallback to local development backend URL so local builds remain functional without dummy URLs.
             val releaseBackendUrl = localProperties.getProperty("PROD_BACKEND_URL")
-                ?: localProperties.getProperty("BACKEND_URL")
-                ?: "http://10.0.2.2:8000/"
+                ?: System.getenv("PROD_BACKEND_URL")
+                ?: ""
             buildConfigField("String", "BACKEND_URL", "\"$releaseBackendUrl\"")
         }
     }
@@ -127,3 +125,19 @@ dependencies {
     testImplementation(libs.turbine)
 }
 
+tasks.register("validateReleaseBackendUrl") {
+    doLast {
+        val prodUrl = localProperties.getProperty("PROD_BACKEND_URL")
+            ?: System.getenv("PROD_BACKEND_URL")
+            ?: ""
+        if (prodUrl.isBlank() || !prodUrl.startsWith("https://")) {
+            throw GradleException(
+                "Release build failed: PROD_BACKEND_URL is missing or does not start with 'https://'. Provided: '$prodUrl'"
+            )
+        }
+    }
+}
+
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    dependsOn("validateReleaseBackendUrl")
+}
