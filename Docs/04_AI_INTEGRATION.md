@@ -57,8 +57,8 @@ This mirrors the structure already designed in the product spec — implement it
   - Strict JSON schema enforcement (`FOOD_ANALYSIS_SCHEMA`).
   - Native function calling tool declarations (`GEMINI_TOOLS`).
   - Token-cost efficiency: ~$0.045/user/month at standard active usage.
-- **Fallback Provider:** **`meta/llama-3.2-11b-vision-instruct`** on NVIDIA integrate API.
-- All model choices remain config-driven (`.env` / Secret Manager: `AI_PROVIDER`, `GEMINI_MODEL`, `GEMINI_API_KEY`).
+- **Circuit Breaker:** Rate-limiting or transient upstream errors trigger HTTP 503 `AiUnavailable` with standard `Retry-After` backoff.
+- All model choices remain config-driven (`.env` / Secret Manager: `GEMINI_MODEL`, `GEMINI_API_KEY`).
 
 > [!NOTE]
 > **Known Prompt-Tuning Item (Chat Function-Calling Macros):**
@@ -77,7 +77,7 @@ This mirrors the structure already designed in the product spec — implement it
 > [!WARNING]
 > **The AI coach's "read" tools do NOT independently query any authoritative data source.**
 
-When the Gemini or NVIDIA model invokes a function-calling tool during `/ai/chat`, the backend's `executeTool()` handler (in `server.js`) resolves each tool entirely from the `userContext` object that the Android client included in the request body:
+When the Gemini model invokes a function-calling tool during `/ai/chat`, the backend's `executeTool()` handler (in `server.js`) resolves each tool entirely from the `userContext` object that the Android client included in the request body:
 
 | Tool | Actual data source |
 |---|---|

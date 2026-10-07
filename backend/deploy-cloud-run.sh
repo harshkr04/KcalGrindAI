@@ -59,7 +59,6 @@ create_secret_if_missing() {
 }
 
 create_secret_if_missing "kcal-grind-gemini-api-key"
-create_secret_if_missing "kcal-grind-nvidia-api-key"
 
 # 4. Build and submit container image via Cloud Build
 echo "--> Building container image via Google Cloud Build..."
@@ -71,11 +70,6 @@ CLOUD_RUN_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
 
 echo "--> Granting Secret Accessor permission to Cloud Run Service Account (${CLOUD_RUN_SA})..."
 gcloud secrets add-iam-policy-binding "kcal-grind-gemini-api-key" \
-  --member="serviceAccount:${CLOUD_RUN_SA}" \
-  --role="roles/secretmanager.secretAccessor" \
-  --project="${PROJECT_ID}" >/dev/null
-
-gcloud secrets add-iam-policy-binding "kcal-grind-nvidia-api-key" \
   --member="serviceAccount:${CLOUD_RUN_SA}" \
   --role="roles/secretmanager.secretAccessor" \
   --project="${PROJECT_ID}" >/dev/null
@@ -93,8 +87,8 @@ gcloud run deploy "${SERVICE_NAME}" \
   --max-instances=10 \
   --concurrency=80 \
   --timeout="60s" \
-  --set-env-vars="AI_PROVIDER=gemini,GEMINI_MODEL=gemini-2.5-flash,FIREBASE_PROJECT_ID=${PROJECT_ID},NODE_ENV=production" \
-  --set-secrets="GEMINI_API_KEY=kcal-grind-gemini-api-key:latest,NVIDIA_API_KEY=kcal-grind-nvidia-api-key:latest"
+  --set-env-vars="GEMINI_MODEL=gemini-2.5-flash,FIREBASE_PROJECT_ID=${PROJECT_ID},NODE_ENV=production" \
+  --set-secrets="GEMINI_API_KEY=kcal-grind-gemini-api-key:latest"
 
 # 7. Print output service URL
 SERVICE_URL=$(gcloud run services describe "${SERVICE_NAME}" --platform="managed" --region="${REGION}" --format="value(status.url)")

@@ -27,15 +27,12 @@
 |---|---|---|
 | Runtime | Node.js (Fastify/Express) or Python (FastAPI) — pick whichever you're more fluent in | Thin proxy, logic is not heavy |
 | Hosting | Cloud Run, Fly.io, or Supabase Edge Functions | Serverless, scales to zero, cheap at low volume |
-| AI model — vision (photo analysis) | NVIDIA Llama 3.2 Vision (`meta/llama-3.2-11b-vision-instruct`), Gemini 2.x, or GPT-4o | Handles multimodal food-photo identification and structured JSON |
-| AI model — text/chat | Same provider as vision, function-calling enabled (`meta/llama-3.2-11b-vision-instruct`) | Single provider, unified proxy |
-| AI model — speech-to-text | Provider's native STT, or Whisper API if you want provider independence | |
-| Auth | Firebase Auth or Supabase Auth | Handles email/password + Google/Apple sign-in without building it yourself |
-| Backend DB (if any server-side data needed — e.g., cross-device sync) | Postgres (Supabase/Neon) | Only needed once you support multi-device sync; local-only can defer this |
-| Secrets | Cloud provider's secret manager (never `.env` committed, never in APK) | |
-
-> **Note on Model Volatility & Deprecations (Revisit before Phase 9):**
-> NVIDIA free-tier model catalog names on `integrate.api.nvidia.com` are volatile and experience abrupt end-of-life deprecations (e.g., `meta/llama-3.3-70b-instruct` and `nvidia/nemotron-3.5-lightning-30b-a3b` returned HTTP 410 Gone with little notice). For long-term production stability, keep backend model identifiers purely environment-variable driven (`VISION_MODEL`, `TEXT_MODEL`, `CHAT_MODEL`) and consider transitioning to standard Google Gemini (Vertex AI / AI Studio) or OpenAI endpoints before Phase 9 production hardening.
+| AI model — vision (photo analysis) | Google Gemini 2.5 Flash (`gemini-2.5-flash`) | Handles multimodal food-photo identification and structured JSON |
+| AI model — text/chat | Google Gemini 2.5 Flash (`gemini-2.5-flash`) | Unified multimodal foundation model with function calling |
+| AI model — speech-to-text | Android SpeechRecognizer / Gemini text analysis | Free on-device speech-to-text with AI text structuring |
+| Auth | Firebase Auth | Handles email/password + Google sign-in and anonymous accounts |
+| Backend DB (cross-device sync) | Supabase Postgres | Encrypted cloud sync for profiles and meal history |
+| Secrets | Google Cloud Secret Manager (never `.env` committed, never in APK) | |
 
 ## Food & nutrition data
 

@@ -196,7 +196,7 @@ async function runAiCoachQuotaTests() {
   assert.strictEqual(reserveForFail.allowed, true);
   assert.strictEqual(getAiCoachUsage(failUid, 'Asia/Kolkata', false).inFlight, 1);
 
-  // Simulate API failure (NVIDIA / Gemini returns 502 / timeout)
+  // Simulate API failure (Gemini returns 503 / timeout)
   releaseAiCoachReservation(failUid, 'Asia/Kolkata');
 
   const afterFailUsage = getAiCoachUsage(failUid, 'Asia/Kolkata', false);

@@ -41,31 +41,25 @@ fastify.setErrorHandler((error, request, reply) => {
   reply.send(error);
 });
 
-// Provider Configuration
-const AI_PROVIDER = process.env.AI_PROVIDER || (process.env.GEMINI_API_KEY ? 'gemini' : 'nvidia');
+// Provider Configuration & Model Defaults
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-const NVIDIA_BASE_URL = 'https://integrate.api.nvidia.com/v1';
-const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY || '';
-
-// Model Defaults
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-const NVIDIA_DEFAULT_MODEL = 'meta/llama-3.2-11b-vision-instruct';
 
-const VISION_MODEL = AI_PROVIDER === 'gemini' ? GEMINI_MODEL : (process.env.VISION_MODEL || NVIDIA_DEFAULT_MODEL);
-const TEXT_MODEL = AI_PROVIDER === 'gemini' ? GEMINI_MODEL : (process.env.TEXT_MODEL || NVIDIA_DEFAULT_MODEL);
-const CHAT_MODEL = AI_PROVIDER === 'gemini' ? GEMINI_MODEL : (process.env.CHAT_MODEL || NVIDIA_DEFAULT_MODEL);
+const VISION_MODEL = GEMINI_MODEL;
+const TEXT_MODEL = GEMINI_MODEL;
+const CHAT_MODEL = GEMINI_MODEL;
 
 // Initialize Google GenAI client if key is present
 let geminiClient = null;
 if (GEMINI_API_KEY) {
   try {
     geminiClient = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-    fastify.log.info({ provider: 'gemini', model: VISION_MODEL }, 'Google GenAI (Gemini 2.5 Flash) initialized');
+    fastify.log.info({ provider: 'gemini', model: GEMINI_MODEL }, `Google GenAI (${GEMINI_MODEL}) initialized`);
   } catch (err) {
     fastify.log.error({ err: err.message }, 'Failed to initialize Google GenAI');
   }
 } else {
-  fastify.log.info('GEMINI_API_KEY not provided, Gemini provider will use NVIDIA fallback if needed');
+  fastify.log.warn('GEMINI_API_KEY not provided, AI features will be unconfigured');
 }
 
 // -------------------------------------------------------------
@@ -181,51 +175,25 @@ const GEMINI_TOOLS = [
 ];
 
 // -------------------------------------------------------------
-// NVIDIA Helper (Fallback & Multi-Provider Support)
+// AI Circuit Breaker & Error Formatting Helper
 // -------------------------------------------------------------
-async function callNvidiaChat(messages, model, temperature = 0.2, tools = null) {
-  if (!NVIDIA_API_KEY) {
-    throw new Error('NVIDIA_API_KEY is not configured in backend/.env');
-  }
-
-  const payload = {
-    model,
-    messages,
-    temperature,
-    max_tokens: 1024,
-    response_format: { type: 'json_object' }
-  };
-
-  if (tools && tools.length > 0) {
-    payload.tools = tools;
-  }
-
-  const response = await axios.post(`${NVIDIA_BASE_URL}/chat/completions`, payload, {
-    headers: {
-      'Authorization': `Bearer ${NVIDIA_API_KEY}`,
-      'Content-Type': 'application/json'
-    },
-    timeout: 60000
-  });
-
-  return response.data;
-}
-
-function extractJsonFromContent(content) {
-  if (!content) return null;
-  try {
-    return JSON.parse(content);
-  } catch {
-    const match = content.match(/\{[\s\S]*\}/);
-    if (match) {
-      try {
-        return JSON.parse(match[0]);
-      } catch {
-        return null;
-      }
+export function sendAiUnavailable(reply, err, customMessage = 'Meal analysis is busy right now. Please try again in a minute.') {
+  let retryAfter = 60;
+  const retryMatch = err?.message?.match(/retry(?:Delay)?["':\s]+([0-9.]+)s?/i);
+  if (retryMatch && retryMatch[1]) {
+    const parsedSec = Math.ceil(parseFloat(retryMatch[1]));
+    if (!isNaN(parsedSec) && parsedSec > 0) {
+      retryAfter = parsedSec;
     }
-    return null;
   }
+
+  reply.header('Retry-After', retryAfter.toString());
+  return reply.code(503).send({
+    error: 'AiUnavailable',
+    message: customMessage,
+    retryable: true,
+    retryAfter
+  });
 }
 
 // -------------------------------------------------------------
@@ -342,7 +310,8 @@ fastify.get('/health', async () => {
   return {
     status: 'ok',
     service: 'kcalgrindai-backend',
-    provider: geminiClient ? 'gemini' : (NVIDIA_API_KEY ? 'nvidia' : 'unconfigured'),
+    provider: geminiClient ? 'gemini' : 'unconfigured',
+    model: GEMINI_MODEL,
     visionModel: VISION_MODEL,
     chatModel: CHAT_MODEL,
     timestamp: new Date().toISOString()
@@ -491,22 +460,7 @@ User dietary tags: ${dietTags.join(', ') || 'None'}. Allergies: ${allergies.join
   } catch (geminiError) {
     fastify.log.error({ err: geminiError.message }, 'Gemini vision analysis failed');
     appendBackendLog(`GEMINI_VISION_FAILED: ${geminiError.message}`);
-
-    let retryAfter = 60;
-    const retryMatch = geminiError.message?.match(/retry(?:Delay)?["':\s]+([0-9.]+)s?/i);
-    if (retryMatch && retryMatch[1]) {
-      const parsedSec = Math.ceil(parseFloat(retryMatch[1]));
-      if (!isNaN(parsedSec) && parsedSec > 0) {
-        retryAfter = parsedSec;
-      }
-    }
-    reply.header('Retry-After', retryAfter);
-
-    return reply.code(503).send({
-      error: 'AiUnavailable',
-      message: 'Meal analysis is busy right now. Please try again in a minute.',
-      retryable: true
-    });
+    return sendAiUnavailable(reply, geminiError);
   }
 });
 
@@ -520,12 +474,18 @@ fastify.post('/ai/analyze-text', async (request, reply) => {
     return reply.code(400).send({ error: 'text is required' });
   }
 
-  fastify.log.info({ text, provider: geminiClient ? 'gemini' : 'nvidia' }, 'Analyzing text meal description');
+  if (!geminiClient || !GEMINI_API_KEY) {
+    appendBackendLog('GEMINI_CONFIG_ERROR: missing GEMINI_API_KEY in text analysis');
+    return reply.code(500).send({
+      error: 'InternalServerError',
+      message: 'AI analysis service is temporarily unavailable.'
+    });
+  }
 
-  // Attempt with Gemini 2.5 Flash
-  if (geminiClient) {
-    try {
-      const prompt = `You are Kcal Grind Nutrition Text Parser AI.
+  fastify.log.info({ text, provider: 'gemini', model: TEXT_MODEL }, 'Analyzing text meal description');
+
+  try {
+    const prompt = `You are Kcal Grind Nutrition Text Parser AI.
 Analyze the user's meal description: "${text}".
 Identify each food item mentioned with portion sizes.
 Estimate reasonable grams, calories (rounded to nearest 5-10 kcal), and macros (protein, carbs, fat in grams).
@@ -536,68 +496,32 @@ Assign an honest confidence score (0.0 to 1.0) per item:
 Compute overallConfidence as the average confidence.
 User dietary tags: ${dietTags.join(', ') || 'None'}. Allergies: ${allergies.join(', ') || 'None'}.`;
 
-      const response = await geminiClient.models.generateContent({
-        model: TEXT_MODEL,
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: prompt }]
-          }
-        ],
-        config: {
-          temperature: 0.1,
-          responseMimeType: 'application/json',
-          responseSchema: FOOD_ANALYSIS_SCHEMA
+    const response = await geminiClient.models.generateContent({
+      model: TEXT_MODEL,
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: prompt }]
         }
-      });
-
-      const parsed = JSON.parse(response.text);
-      if (parsed && Array.isArray(parsed.foods) && parsed.foods.length > 0) {
-        return parsed;
+      ],
+      config: {
+        temperature: 0.1,
+        responseMimeType: 'application/json',
+        responseSchema: FOOD_ANALYSIS_SCHEMA
       }
-    } catch (geminiError) {
-      fastify.log.warn({ err: geminiError.message }, 'Gemini text parser failed, attempting fallback');
+    });
+
+    const parsed = JSON.parse(response.text);
+    if (parsed && Array.isArray(parsed.foods) && parsed.foods.length > 0) {
+      return parsed;
     }
+
+    throw new Error('Invalid response structure from Gemini text parser');
+  } catch (geminiError) {
+    fastify.log.error({ err: geminiError.message }, 'Gemini text parser failed');
+    appendBackendLog(`GEMINI_TEXT_FAILED: ${geminiError.message}`);
+    return sendAiUnavailable(reply, geminiError);
   }
-
-  // Fallback to NVIDIA
-  if (NVIDIA_API_KEY) {
-    try {
-      const systemPrompt = `You are Kcal Grind Nutrition Text Parser AI.
-Analyze the user's meal description and output a structured JSON object.
-Rules:
-- Extract all food items mentioned with quantity/portions.
-- Estimate reasonable grams (estimatedGrams).
-- Estimate calories rounded to nearest 5-10 kcal.
-- Estimate macros (protein, carbs, fat) in grams.
-- Assign an honest confidence score (0.0 to 1.0) per item.
-- Compute overallConfidence.
-- Output ONLY valid JSON matching:
-{
-  "foods": [{ "name": "Food", "estimatedGrams": 100, "calories": 150, "macros": { "protein": 12, "carbs": 15, "fat": 5 }, "confidence": 0.92 }],
-  "overallConfidence": 0.90
-}`;
-
-      const messages = [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Meal description: "${text}"` }
-      ];
-
-      const result = await callNvidiaChat(messages, 'meta/llama-3.2-11b-vision-instruct', 0.1);
-      if (result && result.choices && result.choices[0]?.message?.content) {
-        const parsed = extractJsonFromContent(result.choices[0].message.content);
-        if (parsed && Array.isArray(parsed.foods) && parsed.foods.length > 0) {
-          return parsed;
-        }
-      }
-    } catch (error) {
-      fastify.log.error(error?.response?.data || error.message);
-    }
-  }
-
-  return reply.code(502).send({
-    error: 'AI text analysis unavailable. Please check API key configuration.'
-  });
 });
 
 // -------------------------------------------------------------
@@ -1012,9 +936,18 @@ fastify.post('/ai/chat', { bodyLimit: 4 * 1024 * 1024 }, async (request, reply) 
     });
   }
 
+  if (!geminiClient || !GEMINI_API_KEY) {
+    appendBackendLog('GEMINI_CONFIG_ERROR: missing GEMINI_API_KEY in chat');
+    releaseAiCoachReservation(uid, timezone);
+    return reply.code(500).send({
+      error: 'InternalServerError',
+      message: 'AI coach service is temporarily unavailable.'
+    });
+  }
+
   let committed = false;
   try {
-    fastify.log.info({ messageCount: messages.length, provider: geminiClient ? 'gemini' : 'nvidia', quotaRemaining: reservation.remaining }, 'Processing AI Coach Chat');
+    fastify.log.info({ messageCount: messages.length, provider: 'gemini', model: CHAT_MODEL, quotaRemaining: reservation.remaining }, 'Processing AI Coach Chat');
 
     const systemInstruction = `You are Kcal Grind AI Coach.
 You provide intelligent, empathetic, evidence-based nutrition coaching.
@@ -1033,9 +966,8 @@ Guidelines:
 - Answer warmly, concisely, and practically.
 - Ground your answers strictly in the tool data.`;
 
-    // 1. Attempt with Gemini 2.5 Flash
-    if (geminiClient) {
-      try {
+    // Call Gemini 2.5 Flash
+    try {
         // Format messages for Gemini (role 'user' | 'model')
         const contents = messages.map(m => ({
           role: m.role === 'assistant' ? 'model' : 'user',
@@ -1084,168 +1016,16 @@ Guidelines:
             suggestedAction: null
           };
         }
+
+        throw new Error('Gemini returned empty text and no function calls');
       } catch (geminiError) {
-        fastify.log.warn({ err: geminiError.message }, 'Gemini chat call failed, attempting fallback');
+        fastify.log.error({ err: geminiError.message }, 'Gemini chat call failed');
+        appendBackendLog(`GEMINI_CHAT_FAILED: ${geminiError.message}`);
+        if (!committed) {
+          releaseAiCoachReservation(uid, timezone);
+        }
+        return sendAiUnavailable(reply, geminiError);
       }
-    }
-
-    // 2. Fallback to NVIDIA Chat
-    if (NVIDIA_API_KEY) {
-      const tools = [
-        {
-          type: 'function',
-          function: {
-            name: 'get_today_diary',
-            description: 'Get meals logged today, consumed calories, and remaining calorie allowance',
-            parameters: { type: 'object', properties: {} }
-          }
-        },
-        {
-          type: 'function',
-          function: {
-            name: 'get_user_profile',
-            description: 'Get user nutrition goals, target calories, weight, dietary tags, and allergies',
-            parameters: { type: 'object', properties: {} }
-          }
-        },
-        {
-          type: 'function',
-          function: {
-            name: 'get_recent_trends',
-            description: 'Get recent 7-day average calories, target, tracking rate percentage, and weight changes',
-            parameters: { type: 'object', properties: {} }
-          }
-        },
-        {
-          type: 'function',
-          function: {
-            name: 'search_food',
-            description: 'Look up nutritional information when user asks "how many calories in X" without wanting to log it.',
-            parameters: {
-              type: 'object',
-              properties: { query: { type: 'string', description: 'Food name to search' } },
-              required: ['query']
-            }
-          }
-        },
-        {
-          type: 'function',
-          function: {
-            name: 'create_food_log',
-            description: 'Log or add food/meal to the user daily diary. Call this whenever user asks to log, track, record, or add food or meal.',
-            parameters: {
-              type: 'object',
-              properties: {
-                mealType: { type: 'string', description: 'Meal type: breakfast, lunch, dinner, or snack' },
-                items: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      name: { type: 'string' },
-                      estimatedGrams: { type: 'number' },
-                      calories: { type: 'number' },
-                      proteinG: { type: 'number' },
-                      carbsG: { type: 'number' },
-                      fatG: { type: 'number' }
-                    },
-                    required: ['name', 'calories']
-                  }
-                }
-              },
-              required: ['items']
-            }
-          }
-        },
-        {
-          type: 'function',
-          function: {
-            name: 'log_water',
-            description: 'Log water intake in milliliters directly to the daily diary',
-            parameters: {
-              type: 'object',
-              properties: {
-                amountMl: { type: 'number', description: 'Amount of water in milliliters, e.g. 250 for 1 glass' }
-              },
-              required: ['amountMl']
-            }
-          }
-        }
-      ];
-
-      const chatMessages = [
-        { role: 'system', content: systemInstruction },
-        ...messages
-      ];
-
-      try {
-        const turn1Result = await callNvidiaChat(chatMessages, 'meta/llama-3.2-11b-vision-instruct', 0.4, tools);
-        const choice = turn1Result?.choices?.[0];
-
-        let toolCall = null;
-        if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
-          toolCall = choice.message.tool_calls[0];
-        } else if (choice?.message?.content) {
-          const content = choice.message.content.trim();
-          if (content.startsWith('{') && content.endsWith('}')) {
-            try {
-              const parsed = JSON.parse(content);
-              if (parsed.name && (parsed.arguments || parsed.parameters)) {
-                toolCall = {
-                  function: {
-                    name: parsed.name,
-                    arguments: JSON.stringify(parsed.arguments || parsed.parameters)
-                  }
-                };
-              }
-            } catch (e) {}
-          }
-        }
-
-        if (toolCall) {
-          const fnName = toolCall.function.name;
-          let fnArgs = {};
-          try {
-            fnArgs = JSON.parse(toolCall.function.arguments || '{}');
-          } catch {
-            fnArgs = {};
-          }
-
-          const { toolOutput, suggestedAction, items, mealType } = executeTool(fnName, fnArgs, userContext);
-          const finalReply = buildDefaultReply(fnName, toolOutput, mealType, items);
-
-          // Success: atomically commit quota reservation & write to disk
-          commitAiCoachQuota(uid, timezone);
-          committed = true;
-
-          return {
-            reply: finalReply,
-            toolInvoked: fnName,
-            toolData: toolOutput,
-            suggestedAction
-          };
-        }
-
-        if (choice?.message?.content) {
-          // Success: atomically commit quota reservation & write to disk
-          commitAiCoachQuota(uid, timezone);
-          committed = true;
-
-          return {
-            reply: choice.message.content.trim(),
-            suggestedAction: null
-          };
-        }
-      } catch (error) {
-        fastify.log.error(error?.response?.data || error.message);
-      }
-    }
-
-    // Both failed: release reservation so quota is NOT consumed
-    releaseAiCoachReservation(uid, timezone);
-    return reply.code(502).send({
-      error: 'AI Coach service unavailable. Please check API key configuration.'
-    });
   } catch (chatError) {
     if (!committed) {
       releaseAiCoachReservation(uid, timezone);
@@ -1769,7 +1549,7 @@ const start = async () => {
     const port = parseInt(process.env.PORT || '8000', 10);
     const host = process.env.HOST || '0.0.0.0';
     await fastify.listen({ port, host });
-    console.log(`Kcal Grind AI Proxy Backend running on http://${host}:${port} (Provider: ${geminiClient ? 'gemini' : (NVIDIA_API_KEY ? 'nvidia' : 'unconfigured')})`);
+    console.log(`Kcal Grind AI Proxy Backend running on http://${host}:${port} (Provider: ${geminiClient ? `gemini (${GEMINI_MODEL})` : 'unconfigured'})`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

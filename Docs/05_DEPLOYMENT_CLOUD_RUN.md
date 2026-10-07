@@ -33,9 +33,7 @@ This document outlines the architecture, secret management, and step-by-step pro
             | Secret Manager    |    | Google Gemini 2.5   |
             | - kcalgrindai-    |    | (Primary Provider)  |
             |   gemini          |    +---------------------+
-            | - kcalgrindai-    |    | NVIDIA Integrate    |
-            |   nvidia          |    | (Fallback Provider) |
-            +-------------------+    +---------------------+
+            +-------------------+
 ```
 
 ### Key Specifications:
@@ -53,25 +51,18 @@ API keys are **never** stored in environment variables, git repositories, or con
 
 ### Secret Names:
 1. `kcalgrindai-gemini-api-key`: Google AI Studio / Gemini API key.
-2. `kcalgrindai-nvidia-api-key`: NVIDIA API key (fallback provider).
 
 ### Provisioning Commands:
 ```bash
-# 1. Create the secrets
+# 1. Create the secret
 gcloud secrets create kcalgrindai-gemini-api-key --replication-policy="automatic"
-gcloud secrets create kcalgrindai-nvidia-api-key --replication-policy="automatic"
 
-# 2. Add secret versions securely (typing hidden or via file)
+# 2. Add secret version securely (typing hidden or via file)
 echo -n "YOUR_GEMINI_API_KEY" | gcloud secrets versions add kcalgrindai-gemini-api-key --data-file=-
-echo -n "YOUR_NVIDIA_API_KEY" | gcloud secrets versions add kcalgrindai-nvidia-api-key --data-file=-
 
 # 3. Grant Cloud Run Service Account read permissions
 PROJECT_NUMBER=$(gcloud projects describe $(gcloud config get-value project) --format="value(projectNumber)")
 gcloud secrets add-iam-policy-binding kcalgrindai-gemini-api-key \
-  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-  --role="roles/secretmanager.secretAccessor"
-
-gcloud secrets add-iam-policy-binding kcalgrindai-nvidia-api-key \
   --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
   --role="roles/secretmanager.secretAccessor"
 ```
@@ -104,8 +95,8 @@ gcloud run deploy kcalgrindai-backend \
   --min-instances 0 \
   --max-instances 10 \
   --timeout 60s \
-  --set-env-vars="AI_PROVIDER=gemini,GEMINI_MODEL=gemini-2.5-flash,FIREBASE_PROJECT_ID=${PROJECT_ID},NODE_ENV=production" \
-  --set-secrets="GEMINI_API_KEY=kcalgrindai-gemini-api-key:latest,NVIDIA_API_KEY=kcalgrindai-nvidia-api-key:latest"
+  --set-env-vars="GEMINI_MODEL=gemini-2.5-flash,FIREBASE_PROJECT_ID=${PROJECT_ID},NODE_ENV=production" \
+  --set-secrets="GEMINI_API_KEY=kcalgrindai-gemini-api-key:latest"
 ```
 
 ---

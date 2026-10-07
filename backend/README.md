@@ -1,6 +1,6 @@
 # Kcal Grind AI Proxy Backend
 
-A local Node.js + Fastify service that securely proxies AI nutrition analysis and chat requests to NVIDIA's OpenAI-compatible API (`https://integrate.api.nvidia.com/v1`).
+A Node.js + Fastify service that securely proxies AI nutrition analysis and chat requests to Google Gemini 2.5 Flash.
 
 ---
 
@@ -14,15 +14,14 @@ npm install
 
 ## 2. Environment Configuration
 
-Copy `.env.example` to `.env` and provide your NVIDIA API Key:
+Copy `.env.example` to `.env` and provide your Google Gemini API Key:
 
 ```env
 PORT=8000
 HOST=0.0.0.0
-NVIDIA_API_KEY=nvapi-your-key-here
-VISION_MODEL=meta/llama-3.2-90b-vision-instruct
-TEXT_MODEL=nvidia/nemotron-3.5-lightning-30b-a3b
-CHAT_MODEL=meta/llama-3.3-70b-instruct
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.5-flash
+FIREBASE_PROJECT_ID=kcal-grind-ai
 ```
 
 ## 3. Running the Server
@@ -45,7 +44,7 @@ The server will listen on `http://0.0.0.0:8000`. From the Android emulator, it i
 
 | Endpoint | Method | Input Payload | Output |
 |---|---|---|---|
-| `/health` | GET | None | `{ status: "ok" }` |
+| `/health` | GET | None | `{ status: "ok", provider: "gemini" }` |
 | `/ai/analyze-photo` | POST | `{ imageBase64, dietTags?, allergies? }` | `{ foods: [...], overallConfidence }` |
 | `/ai/analyze-text` | POST | `{ text, dietTags?, allergies? }` | `{ foods: [...], overallConfidence }` |
 | `/ai/transcribe` | POST | `{ transcript, dietTags?, allergies? }` | `{ foods: [...], overallConfidence }` |

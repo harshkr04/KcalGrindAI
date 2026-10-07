@@ -161,58 +161,78 @@ class AIAnalysisRepositoryImpl @Inject constructor(
         text: String,
         dietTags: List<String>,
         allergies: List<String>
-    ): Result<AIAnalysisResult> = runCatching {
-        val response = aiApiService.analyzeText(
-            TextAnalysisRequest(
-                text = text,
-                dietTags = dietTags,
-                allergies = allergies
+    ): Result<AIAnalysisResult> = withContext(Dispatchers.IO) {
+        try {
+            val response = aiApiService.analyzeText(
+                TextAnalysisRequest(
+                    text = text,
+                    dietTags = dietTags,
+                    allergies = allergies
+                )
             )
-        )
-        val domain = response.toDomain(inputType = "text", rawQuery = text)
+            val domain = response.toDomain(inputType = "text", rawQuery = text)
 
-        saveAnalysis(
-            AIAnalysisRecord(
-                id = 0L,
-                inputType = "text",
-                rawInputRef = text,
-                resultJson = response.toString(),
-                overallConfidence = domain.overallConfidence.toFloat(),
-                createdAt = System.currentTimeMillis()
+            saveAnalysis(
+                AIAnalysisRecord(
+                    id = 0L,
+                    inputType = "text",
+                    rawInputRef = text,
+                    resultJson = response.toString(),
+                    overallConfidence = domain.overallConfidence.toFloat(),
+                    createdAt = System.currentTimeMillis()
+                )
             )
-        )
-        domain
-    }.onFailure { e ->
-        com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.recordException(e, mapOf("feature" to "ai_analysis", "type" to "text"))
+            Result.success(domain)
+        } catch (e: Throwable) {
+            if (e is CancellationException || e is kotlinx.coroutines.CancellationException) {
+                throw e
+            }
+            val mapped = mapError(e)
+            com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.recordException(
+                mapped,
+                mapOf("feature" to "ai_analysis", "type" to "text")
+            )
+            Result.failure(mapped)
+        }
     }
 
     override suspend fun transcribeAndAnalyze(
         transcript: String,
         dietTags: List<String>,
         allergies: List<String>
-    ): Result<AIAnalysisResult> = runCatching {
-        val response = aiApiService.transcribe(
-            TranscribeRequest(
-                transcript = transcript,
-                dietTags = dietTags,
-                allergies = allergies
+    ): Result<AIAnalysisResult> = withContext(Dispatchers.IO) {
+        try {
+            val response = aiApiService.transcribe(
+                TranscribeRequest(
+                    transcript = transcript,
+                    dietTags = dietTags,
+                    allergies = allergies
+                )
             )
-        )
-        val domain = response.toDomain(inputType = "voice", rawQuery = transcript)
+            val domain = response.toDomain(inputType = "voice", rawQuery = transcript)
 
-        saveAnalysis(
-            AIAnalysisRecord(
-                id = 0L,
-                inputType = "voice",
-                rawInputRef = transcript,
-                resultJson = response.toString(),
-                overallConfidence = domain.overallConfidence.toFloat(),
-                createdAt = System.currentTimeMillis()
+            saveAnalysis(
+                AIAnalysisRecord(
+                    id = 0L,
+                    inputType = "voice",
+                    rawInputRef = transcript,
+                    resultJson = response.toString(),
+                    overallConfidence = domain.overallConfidence.toFloat(),
+                    createdAt = System.currentTimeMillis()
+                )
             )
-        )
-        domain
-    }.onFailure { e ->
-        com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.recordException(e, mapOf("feature" to "ai_analysis", "type" to "voice"))
+            Result.success(domain)
+        } catch (e: Throwable) {
+            if (e is CancellationException || e is kotlinx.coroutines.CancellationException) {
+                throw e
+            }
+            val mapped = mapError(e)
+            com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.recordException(
+                mapped,
+                mapOf("feature" to "ai_analysis", "type" to "voice")
+            )
+            Result.failure(mapped)
+        }
     }
 
     override suspend fun saveAnalysis(analysis: AIAnalysisRecord): Long {
