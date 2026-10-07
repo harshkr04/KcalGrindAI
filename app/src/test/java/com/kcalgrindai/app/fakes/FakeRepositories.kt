@@ -158,11 +158,18 @@ class FakeMealLogRepository : com.kcalgrindai.app.domain.repository.MealLogRepos
     private val items = mutableListOf<com.kcalgrindai.app.domain.model.FoodLogItem>()
     private val updateTrigger = MutableStateFlow(0L)
 
+    var shouldFail: Boolean = false
+    var saveCallCount: Int = 0
+
     private fun notifyUpdate() {
         updateTrigger.value += 1
     }
 
     override suspend fun saveMeal(meal: com.kcalgrindai.app.domain.model.MealLog, itemsList: List<com.kcalgrindai.app.domain.model.FoodLogItem>): Long {
+        saveCallCount++
+        if (shouldFail) {
+            throw IllegalStateException("Simulated database failure")
+        }
         val id = if (meal.id == 0L) (meals.size + 1).toLong() else meal.id
         val item = meal.copy(id = id)
         meals.removeAll { it.id == id }

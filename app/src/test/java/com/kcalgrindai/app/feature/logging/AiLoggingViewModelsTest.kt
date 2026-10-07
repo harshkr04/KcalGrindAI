@@ -230,4 +230,97 @@ class AiLoggingViewModelsTest {
         assertEquals(1.0f, savedMeal.items[0].confidence!!, 0.001f)
         assertEquals(42L, savedMeal.items[0].foodId)
     }
+
+    @Test
+    fun testMealConfirmViewModelSaveFailurePreservesDraftAndSession() = runTest(testDispatcher) {
+        val fakeDraftStore = FakePhotoDraftStore()
+        val draftPhoto = "/data/user/0/com.kcalgrindai.app/cache/draft_meal.jpg"
+        sessionManager.setCapturedPhotoPath(draftPhoto)
+        sessionManager.setAiAnalysisResult(
+            result = com.kcalgrindai.app.domain.model.AIAnalysisResult(
+                foods = listOf(
+                    AIFoodItem("Avocado Toast", 120.0, 280, AIMacros(8.0, 30.0, 15.0), 0.90)
+                ),
+                overallConfidence = 0.90,
+                inputType = "photo"
+            ),
+            source = "ai_photo"
+        )
+        mealLogRepository.shouldFail = true
+
+        val viewModel = MealConfirmViewModel(mealLogRepository, sessionManager, fakeDraftStore)
+        var successCalled = false
+        viewModel.logMeal { successCalled = true }
+        advanceUntilIdle()
+
+        // 1. onSuccess must NOT be called
+        assertFalse(successCalled)
+        // 2. Draft photo must NOT be deleted
+        assertTrue("Draft photo must not be deleted on save failure", fakeDraftStore.deleteDraftCalls.isEmpty())
+        // 3. Friendly error message set and isSaving reset
+        assertNotNull(viewModel.uiState.value.errorMessage)
+        assertEquals("Unable to save meal. Please try again.", viewModel.uiState.value.errorMessage)
+        assertFalse(viewModel.uiState.value.isSaving)
+        // 4. Session must remain intact
+        assertEquals(draftPhoto, sessionManager.state.value.capturedPhotoPath)
+        assertEquals(1, sessionManager.state.value.candidateFoods.size)
+    }
+
+    @Test
+    fun testMealConfirmViewModelDoubleTapCallsSaveMealOnlyOnce() = runTest(testDispatcher) {
+        sessionManager.setAiAnalysisResult(
+            result = com.kcalgrindai.app.domain.model.AIAnalysisResult(
+                foods = listOf(
+                    AIFoodItem("Black Coffee", 250.0, 5, AIMacros(0.5, 0.0, 0.0), 0.99)
+                ),
+                overallConfidence = 0.99,
+                inputType = "text"
+            ),
+            source = "ai_text"
+        )
+        val viewModel = MealConfirmViewModel(mealLogRepository, sessionManager, FakePhotoDraftStore())
+
+        var successCount = 0
+        // Simulate rapid double-tap
+        viewModel.logMeal { successCount++ }
+        viewModel.logMeal { successCount++ }
+        advanceUntilIdle()
+
+        assertEquals("saveMeal must only be called once on double-tap", 1, mealLogRepository.saveCallCount)
+        assertEquals(1, successCount)
+    }
+
+    @Test
+    fun testMealConfirmViewModelSuccessfulSaveDeletesDraftOnceAndClearsSession() = runTest(testDispatcher) {
+        val fakeDraftStore = FakePhotoDraftStore()
+        val draftPhoto = "/data/user/0/com.kcalgrindai.app/cache/draft_meal.jpg"
+        sessionManager.setCapturedPhotoPath(draftPhoto)
+        sessionManager.setAiAnalysisResult(
+            result = com.kcalgrindai.app.domain.model.AIAnalysisResult(
+                foods = listOf(
+                    AIFoodItem("Greek Yogurt", 200.0, 150, AIMacros(15.0, 10.0, 4.0), 0.95)
+                ),
+                overallConfidence = 0.95,
+                inputType = "photo"
+            ),
+            source = "ai_photo"
+        )
+
+        val viewModel = MealConfirmViewModel(mealLogRepository, sessionManager, fakeDraftStore)
+        var successCalled = false
+        viewModel.logMeal { successCalled = true }
+        advanceUntilIdle()
+
+        // 1. onSuccess called
+        assertTrue(successCalled)
+        // 2. Draft deleted exactly once
+        assertEquals(listOf(draftPhoto), fakeDraftStore.deleteDraftCalls)
+        // 3. Session cleared
+        org.junit.Assert.assertNull(sessionManager.state.value.capturedPhotoPath)
+        assertTrue(sessionManager.state.value.candidateFoods.isEmpty())
+        // 4. UI state updated
+        assertTrue(viewModel.uiState.value.isSuccess)
+        assertFalse(viewModel.uiState.value.isSaving)
+        org.junit.Assert.assertNull(viewModel.uiState.value.errorMessage)
+    }
 }

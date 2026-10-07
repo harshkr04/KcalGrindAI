@@ -11,6 +11,7 @@ import com.kcalgrindai.app.domain.repository.MealLogRepository
 import com.kcalgrindai.app.core.util.PhotoDraftStore
 import com.kcalgrindai.app.feature.logging.state.LoggingSessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.kcalgrindai.app.core.util.Timber
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +21,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 data class MealConfirmUiState(
     val mealType: MealType = MealType.LUNCH,
@@ -27,7 +29,8 @@ data class MealConfirmUiState(
     val totalCalories: Int = 0,
     val loggingSource: String = "manual",
     val isSaving: Boolean = false,
-    val isSuccess: Boolean = false
+    val isSuccess: Boolean = false,
+    val errorMessage: String? = null
 )
 
 @HiltViewModel
@@ -120,11 +123,15 @@ class MealConfirmViewModel @Inject constructor(
         }
     }
 
+    fun clearError() {
+        _uiState.update { it.copy(errorMessage = null) }
+    }
+
     fun logMeal(onSuccess: () -> Unit) {
         val currentState = _uiState.value
-        if (currentState.items.isEmpty()) return
+        if (currentState.isSaving || currentState.items.isEmpty()) return
 
-        _uiState.update { it.copy(isSaving = true) }
+        _uiState.update { it.copy(isSaving = true, errorMessage = null) }
 
         viewModelScope.launch {
             val targetDate = sessionManager.state.value.targetDate
@@ -153,10 +160,24 @@ class MealConfirmViewModel @Inject constructor(
                 synced = false
             )
 
-            mealLogRepository.saveMeal(meal, currentState.items)
+            try {
+                mealLogRepository.saveMeal(meal, currentState.items)
+            } catch (e: Throwable) {
+                if (e is CancellationException || e is kotlinx.coroutines.CancellationException) {
+                    throw e
+                }
+                Timber.e(e, "Failed to save meal log")
+                _uiState.update { it.copy(isSaving = false, errorMessage = "Unable to save meal. Please try again.") }
+                return@launch
+            }
+
             val draftPhotoPath = sessionManager.state.value.capturedPhotoPath
             if (draftPhotoPath != null) {
-                photoDraftStore.deleteDraft(draftPhotoPath)
+                runCatching {
+                    photoDraftStore.deleteDraft(draftPhotoPath)
+                }.onFailure { e ->
+                    Timber.w(e, "Failed to delete photo draft after saving meal")
+                }
             }
             sessionManager.clear()
             _uiState.update { it.copy(isSaving = false, isSuccess = true) }

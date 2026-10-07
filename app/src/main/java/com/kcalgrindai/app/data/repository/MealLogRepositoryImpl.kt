@@ -1,5 +1,7 @@
 package com.kcalgrindai.app.data.repository
 
+import androidx.room.withTransaction
+import com.kcalgrindai.app.data.local.KcalGrindDatabase
 import com.kcalgrindai.app.data.local.dao.FoodLogItemDao
 import com.kcalgrindai.app.data.local.dao.MealLogDao
 import com.kcalgrindai.app.data.mapper.toDomain
@@ -16,7 +18,8 @@ import javax.inject.Singleton
 @Singleton
 class MealLogRepositoryImpl @Inject constructor(
     private val mealLogDao: MealLogDao,
-    private val foodLogItemDao: FoodLogItemDao
+    private val foodLogItemDao: FoodLogItemDao,
+    private val database: KcalGrindDatabase? = null
 ) : MealLogRepository {
 
     override suspend fun saveMeal(meal: MealLog, items: List<FoodLogItem>): Long {
@@ -26,20 +29,31 @@ class MealLogRepositoryImpl @Inject constructor(
             items.sumOf { it.calories }
         }
         val mealToSave = meal.copy(totalCalories = calculatedCalories)
-        val mealId = if (mealToSave.id == 0L) {
-            mealLogDao.insertMealLog(mealToSave.toEntity())
-        } else {
-            mealLogDao.upsertMealLog(mealToSave.toEntity())
-            mealToSave.id
+
+        val executeSave: suspend () -> Long = {
+            val mealId = if (mealToSave.id == 0L) {
+                mealLogDao.insertMealLog(mealToSave.toEntity())
+            } else {
+                mealLogDao.upsertMealLog(mealToSave.toEntity())
+                mealToSave.id
+            }
+
+            // Delete existing items for update scenario or save new items
+            foodLogItemDao.deleteItemsForMeal(mealId)
+            val itemsWithMealId = items.map { it.copy(mealLogId = mealId).toEntity() }
+            if (itemsWithMealId.isNotEmpty()) {
+                foodLogItemDao.insertItems(itemsWithMealId)
+            }
+            mealId
         }
 
-        // Delete existing items for update scenario or save new items
-        foodLogItemDao.deleteItemsForMeal(mealId)
-        val itemsWithMealId = items.map { it.copy(mealLogId = mealId).toEntity() }
-        if (itemsWithMealId.isNotEmpty()) {
-            foodLogItemDao.insertItems(itemsWithMealId)
+        return if (database != null) {
+            database.withTransaction {
+                executeSave()
+            }
+        } else {
+            executeSave()
         }
-        return mealId
     }
 
     override suspend fun updateMeal(meal: MealLog) {
