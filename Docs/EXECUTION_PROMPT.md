@@ -8,7 +8,7 @@ Run these in order. Each assumes the docs in this folder (`00_MASTER_PLAN.md` th
 
 ```
 Read every .html file under app/ in this repo, plus shared/vitality.css and
-vitality_flow/DESIGN.md. Do not write any Kotlin or Android code in this task.
+Docs/design/DESIGN.md. Do not write any Kotlin or Android code in this task.
 
 Produce docs/screen-inventory.md with one row per screen containing:
 - Screen name and filename

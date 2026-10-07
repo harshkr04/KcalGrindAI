@@ -1,6 +1,6 @@
 # Design Tokens (Vitality Flow)
 
-This document contains the design tokens extracted from `vitality_flow/DESIGN.md` and `app/shared/vitality.css`. These tokens are ready to be converted into a Jetpack Compose `Theme.kt`.
+This document contains the design tokens extracted from `Docs/design/DESIGN.md` and `app/shared/vitality.css`. These tokens are ready to be converted into a Jetpack Compose `Theme.kt`.
 
 ## 1. Colors
 The palette is rooted in "Chlorophyll Greens" and "Atmospheric Neutrals".

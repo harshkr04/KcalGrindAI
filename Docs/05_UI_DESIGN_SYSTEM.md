@@ -2,7 +2,7 @@
 
 ## 1. The rule
 
-**Do not redesign.** The 42-screen HTML prototype + `vitality_flow/DESIGN.md` + `shared/vitality.css` is the design spec. Engineering's job is faithful translation to Compose, not reinterpretation. Any visual deviation should be a deliberate, called-out decision — not something that happens because a screen wasn't checked against the source.
+**Do not redesign.** The 42-screen HTML prototype + `Docs/design/DESIGN.md` + `shared/vitality.css` is the design spec. Engineering's job is faithful translation to Compose, not reinterpretation. Any visual deviation should be a deliberate, called-out decision — not something that happens because a screen wasn't checked against the source.
 
 ## 2. Confirmed design tokens (from the audit — already extracted)
 
