@@ -250,7 +250,7 @@ class WidgetStateMapperTest {
     }
 
     @Test
-    fun testPrivacyModeMasksNumericalValues() {
+    fun testPrivacyModeHidesAllValuesAndProgressIndicators() {
         val meal = createMeal(calories = 1420.0, protein = 98.0, carbs = 142.0, fat = 45.0)
         val state = mapper.map(
             goal = testGoal,
@@ -266,8 +266,61 @@ class WidgetStateMapperTest {
         assertEquals("•••• / ••••", state.subHeadline)
         assertEquals(SproutlingMood.SECURE, state.sproutlingMood)
         assertTrue(state.isPrivacyEnabled)
-        // Energy blocks remain visible proportionally per specification
-        assertEquals(7, state.energyBlocksFilled)
+
+        // Energy blocks must be 0 to hide approximate consumption
+        assertEquals(0, state.energyBlocksFilled)
+        assertEquals(0, state.progressPercent)
+
+        // Macro progress bars and values must be completely zeroed
+        assertEquals(0.0f, state.proteinFraction, 0.0001f)
+        assertEquals(0.0f, state.carbsFraction, 0.0001f)
+        assertEquals(0.0f, state.fatFraction, 0.0001f)
+        assertEquals(0.0, state.proteinGrams, 0.0001)
+        assertEquals(0.0, state.carbsGrams, 0.0001)
+        assertEquals(0.0, state.fatGrams, 0.0001)
+
+        // Calorie and water metrics hidden
+        assertEquals(0, state.consumedCalories)
+        assertEquals(0, state.remainingCalories)
+        assertEquals(0, state.waterMl)
+        assertEquals(0, state.waterGlasses)
+
+        // Non-informative decorative elements remain visible
+        assertEquals(5, state.streakDays)
+    }
+
+    @Test
+    fun testPrivacyModeWhenOverGoalHidesAllOverconsumptionIndicators() {
+        val heavyMeal = createMeal(calories = 3200.0, protein = 250.0, carbs = 350.0, fat = 120.0)
+        val state = mapper.map(
+            goal = testGoal,
+            mealsWithItems = listOf(heavyMeal),
+            waterTotalMl = 3000,
+            streakDays = 12,
+            profile = testProfile,
+            isPrivacyEnabled = true
+        )
+
+        assertEquals(WidgetStatusType.PRIVACY, state.statusType)
+        assertEquals("•••• kcal left", state.primaryHeadline)
+        assertEquals("•••• / ••••", state.subHeadline)
+        assertEquals(SproutlingMood.SECURE, state.sproutlingMood)
+
+        // All progress indicators must be completely blank / 0
+        assertEquals(0, state.energyBlocksFilled)
+        assertEquals(0, state.progressPercent)
+        assertEquals(0.0f, state.proteinFraction, 0.0001f)
+        assertEquals(0.0f, state.carbsFraction, 0.0001f)
+        assertEquals(0.0f, state.fatFraction, 0.0001f)
+
+        // Raw numbers cannot be queried
+        assertEquals(0, state.consumedCalories)
+        assertEquals(0, state.remainingCalories)
+        assertEquals(0.0, state.proteinGrams, 0.0001)
+        assertEquals(0.0, state.carbsGrams, 0.0001)
+        assertEquals(0.0, state.fatGrams, 0.0001)
+        assertEquals(0, state.waterMl)
+        assertEquals(12, state.streakDays)
     }
 
     @Test

@@ -61,6 +61,34 @@ class WidgetStateMapper @Inject constructor(
             )
         }
 
+        if (isPrivacyEnabled) {
+            return WidgetUiState(
+                targetCalories = 0,
+                consumedCalories = 0,
+                remainingCalories = 0,
+                progressPercent = 0,
+                energyBlocksFilled = 0,
+                proteinGrams = 0.0,
+                targetProteinGrams = 0.0,
+                proteinFraction = 0.0f,
+                carbsGrams = 0.0,
+                targetCarbsGrams = 0.0,
+                carbsFraction = 0.0f,
+                fatGrams = 0.0,
+                targetFatGrams = 0.0,
+                fatFraction = 0.0f,
+                waterMl = 0,
+                waterGlasses = 0,
+                streakDays = streakDays,
+                statusType = WidgetStatusType.PRIVACY,
+                primaryHeadline = "•••• kcal left",
+                subHeadline = "•••• / ••••",
+                sproutlingMood = SproutlingMood.SECURE,
+                isPrivacyEnabled = true,
+                lastUpdatedEpochMs = clock.millis()
+            )
+        }
+
         val targetCalories = goal.calories
         val targetProtein = goal.proteinG
         val targetCarbs = goal.carbsG
