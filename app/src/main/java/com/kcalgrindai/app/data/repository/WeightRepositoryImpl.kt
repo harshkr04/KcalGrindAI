@@ -12,11 +12,14 @@ import javax.inject.Singleton
 
 @Singleton
 class WeightRepositoryImpl @Inject constructor(
-    private val weightEntryDao: WeightEntryDao
+    private val weightEntryDao: WeightEntryDao,
+    private val widgetUpdater: dagger.Lazy<com.kcalgrindai.app.core.util.WidgetUpdater>? = null
 ) : WeightRepository {
 
     override suspend fun saveWeightEntry(entry: WeightEntry): Long {
-        return weightEntryDao.upsertWeightEntry(entry.toEntity())
+        val result = weightEntryDao.upsertWeightEntry(entry.toEntity())
+        widgetUpdater?.get()?.requestUpdate()
+        return result
     }
 
     override suspend fun getWeightEntryById(id: Long): WeightEntry? {
@@ -44,5 +47,6 @@ class WeightRepositoryImpl @Inject constructor(
 
     override suspend fun deleteWeightEntry(id: Long) {
         weightEntryDao.deleteWeightEntryById(id)
+        widgetUpdater?.get()?.requestUpdate()
     }
 }

@@ -68,12 +68,22 @@ import com.kcalgrindai.app.feature.splash.LaunchViewModel
 fun KcalGrindNavHost(
     navController: NavHostController = rememberNavController(),
     launchViewModel: LaunchViewModel = hiltViewModel(),
-    loggingNavViewModel: com.kcalgrindai.app.feature.logging.state.LoggingNavigationViewModel = hiltViewModel()
+    loggingNavViewModel: com.kcalgrindai.app.feature.logging.state.LoggingNavigationViewModel = hiltViewModel(),
+    initialRoute: String? = null
 ) {
     val sessionManager = loggingNavViewModel.sessionManager
     val destinations = remember { KcalGrindRoute.all }
     val routeMap = remember(destinations) { KcalGrindRoute.validatedRouteMap(destinations) }
     val launchDestination by launchViewModel.destination.collectAsState()
+
+    androidx.compose.runtime.LaunchedEffect(launchDestination, initialRoute) {
+        if (launchDestination is LaunchDestination.Home && initialRoute != null) {
+            val valid = routeMap[initialRoute]
+            if (valid != null && navController.currentDestination?.route != valid.route) {
+                navController.navigate(valid.route)
+            }
+        }
+    }
 
     val navigateToRoute: (String) -> Unit = { route ->
         navController.navigate(routeMap.getValue(route).route)

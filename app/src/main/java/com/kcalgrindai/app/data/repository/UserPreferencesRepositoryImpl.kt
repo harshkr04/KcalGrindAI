@@ -13,7 +13,8 @@ import javax.inject.Singleton
 
 @Singleton
 class UserPreferencesRepositoryImpl @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val widgetUpdater: dagger.Lazy<com.kcalgrindai.app.core.util.WidgetUpdater>? = null
 ) : UserPreferencesRepository {
 
     private val prefs: SharedPreferences by lazy {
@@ -79,10 +80,23 @@ class UserPreferencesRepositoryImpl @Inject constructor(
         _selectedAvatar.value = avatar
     }
 
+    private val _widgetPrivacyEnabled: MutableStateFlow<Boolean> by lazy {
+        MutableStateFlow(prefs.getBoolean(KEY_WIDGET_PRIVACY_ENABLED, false))
+    }
+    override val widgetPrivacyEnabled: Flow<Boolean>
+        get() = _widgetPrivacyEnabled.asStateFlow()
+
+    override suspend fun setWidgetPrivacyEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_WIDGET_PRIVACY_ENABLED, enabled).apply()
+        _widgetPrivacyEnabled.value = enabled
+        widgetUpdater?.get()?.requestUpdate()
+    }
+
     companion object {
         private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
         private const val KEY_DARK_MODE_ENABLED = "dark_mode_enabled"
         private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_SELECTED_AVATAR = "selected_avatar"
+        private const val KEY_WIDGET_PRIVACY_ENABLED = "widget_privacy_enabled"
     }
 }

@@ -12,11 +12,14 @@ import javax.inject.Singleton
 
 @Singleton
 class WaterLogRepositoryImpl @Inject constructor(
-    private val waterLogDao: WaterLogDao
+    private val waterLogDao: WaterLogDao,
+    private val widgetUpdater: dagger.Lazy<com.kcalgrindai.app.core.util.WidgetUpdater>? = null
 ) : WaterLogRepository {
 
     override suspend fun saveWaterLog(entry: WaterLog): Long {
-        return waterLogDao.insertWaterLog(entry.toEntity())
+        val result = waterLogDao.insertWaterLog(entry.toEntity())
+        widgetUpdater?.get()?.requestUpdate()
+        return result
     }
 
     override suspend fun logWater(amountMl: Int, date: String): Long {
@@ -26,7 +29,9 @@ class WaterLogRepositoryImpl @Inject constructor(
             amountMl = amountMl,
             loggedAt = System.currentTimeMillis()
         )
-        return waterLogDao.insertWaterLog(entry.toEntity())
+        val result = waterLogDao.insertWaterLog(entry.toEntity())
+        widgetUpdater?.get()?.requestUpdate()
+        return result
     }
 
     override fun observeWaterLogsByDate(date: String): Flow<List<WaterLog>> {
@@ -55,5 +60,6 @@ class WaterLogRepositoryImpl @Inject constructor(
 
     override suspend fun deleteWaterLog(id: Long) {
         waterLogDao.deleteWaterLogById(id)
+        widgetUpdater?.get()?.requestUpdate()
     }
 }

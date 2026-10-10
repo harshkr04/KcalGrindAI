@@ -54,8 +54,14 @@ class MainActivity : ComponentActivity() {
             }
 
             KcalGrindTheme(darkTheme = isDark) {
-                KcalGrindNavHost()
+                val initialRoute = intent?.getStringExtra("EXTRA_DESTINATION")
+                KcalGrindNavHost(initialRoute = initialRoute)
             }
         }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
     }
 }

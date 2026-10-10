@@ -19,7 +19,8 @@ import javax.inject.Singleton
 class MealLogRepositoryImpl @Inject constructor(
     private val mealLogDao: MealLogDao,
     private val foodLogItemDao: FoodLogItemDao,
-    private val database: KcalGrindDatabase? = null
+    private val database: KcalGrindDatabase? = null,
+    private val widgetUpdater: dagger.Lazy<com.kcalgrindai.app.core.util.WidgetUpdater>? = null
 ) : MealLogRepository {
 
     override suspend fun saveMeal(meal: MealLog, items: List<FoodLogItem>): Long {
@@ -47,21 +48,25 @@ class MealLogRepositoryImpl @Inject constructor(
             mealId
         }
 
-        return if (database != null) {
+        val result = if (database != null) {
             database.withTransaction {
                 executeSave()
             }
         } else {
             executeSave()
         }
+        widgetUpdater?.get()?.requestUpdate()
+        return result
     }
 
     override suspend fun updateMeal(meal: MealLog) {
         mealLogDao.updateMealLog(meal.toEntity())
+        widgetUpdater?.get()?.requestUpdate()
     }
 
     override suspend fun deleteMeal(mealId: Long) {
         mealLogDao.deleteMealLogById(mealId)
+        widgetUpdater?.get()?.requestUpdate()
     }
 
     override suspend fun getMealById(mealId: Long): MealWithFoodItems? {
@@ -80,15 +85,19 @@ class MealLogRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveFoodLogItem(item: FoodLogItem): Long {
-        return foodLogItemDao.upsertItem(item.toEntity())
+        val result = foodLogItemDao.upsertItem(item.toEntity())
+        widgetUpdater?.get()?.requestUpdate()
+        return result
     }
 
     override suspend fun updateFoodLogItem(item: FoodLogItem) {
         foodLogItemDao.updateItem(item.toEntity())
+        widgetUpdater?.get()?.requestUpdate()
     }
 
     override suspend fun deleteFoodLogItem(itemId: Long) {
         foodLogItemDao.deleteItemById(itemId)
+        widgetUpdater?.get()?.requestUpdate()
     }
 
     override fun observeItemsForMeal(mealId: Long): Flow<List<FoodLogItem>> {

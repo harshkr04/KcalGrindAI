@@ -18,7 +18,8 @@ import javax.inject.Singleton
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
-    private val userProfileRepository: UserProfileRepository
+    private val userProfileRepository: UserProfileRepository,
+    private val widgetUpdater: dagger.Lazy<com.kcalgrindai.app.core.util.WidgetUpdater>? = null
 ) : AuthRepository {
 
     override fun observeAuthState(): Flow<AuthState> = callbackFlow {
@@ -117,6 +118,7 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun signOut() {
         auth.signOut()
         com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.setUserId(null)
+        widgetUpdater?.get()?.clearWidgetDataOnSignOut()
     }
 
     override suspend fun getIdToken(forceRefresh: Boolean): String? {
