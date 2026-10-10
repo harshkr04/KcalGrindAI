@@ -258,10 +258,23 @@ fun KcalGrindNavHost(
                     KcalGrindRoute.PermissionSetup -> {
                         PermissionSetupScreen(
                             onNavigateHome = {
+                                navController.navigate(KcalGrindRoute.OnboardingAddWidget.route)
+                            },
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                    KcalGrindRoute.OnboardingAddWidget -> {
+                        com.kcalgrindai.app.feature.onboarding.widget.AddWidgetOnboardingScreen(
+                            onNavigateNext = {
                                 navController.navigate(KcalGrindRoute.Home.route) {
                                     popUpTo(KcalGrindRoute.Welcome.route) { inclusive = true }
                                 }
                             },
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                    KcalGrindRoute.WidgetSettings -> {
+                        com.kcalgrindai.app.feature.settings.widget.WidgetSettingsScreen(
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
@@ -277,6 +290,9 @@ fun KcalGrindNavHost(
                             },
                             onNavigateToSubscription = {
                                 navController.navigate(KcalGrindRoute.Subscription.route)
+                            },
+                            onNavigateToWidgetSettings = {
+                                navController.navigate(KcalGrindRoute.WidgetSettings.route)
                             }
                         )
                     }
@@ -418,7 +434,8 @@ fun KcalGrindNavHost(
                                 navController.navigate("${KcalGrindRoute.MealDetail.route}?mealId=$mealId")
                             },
                             onNavigateToAiCoach = { onNavigateToTab(KcalGrindRoute.AiChat.route) },
-                            onNavigateToProfile = { navController.navigate(KcalGrindRoute.Profile.route) }
+                            onNavigateToProfile = { navController.navigate(KcalGrindRoute.Profile.route) },
+                            onNavigateToWidgetSettings = { navController.navigate(KcalGrindRoute.WidgetSettings.route) }
                         )
                     }
                     KcalGrindRoute.Diary -> {

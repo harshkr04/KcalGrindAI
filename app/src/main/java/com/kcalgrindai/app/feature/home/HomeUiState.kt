@@ -50,5 +50,6 @@ data class HomeUiState(
     val activity: ActivityProgress = ActivityProgress(),
     val mealsGrouped: List<MealCategorySummary> = emptyList(),
     val hasLoggedMealsToday: Boolean = false,
-    val streakDays: Int = 0
+    val streakDays: Int = 0,
+    val showWidgetPromoCard: Boolean = false
 )

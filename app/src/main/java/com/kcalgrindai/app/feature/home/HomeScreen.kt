@@ -36,11 +36,15 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -78,6 +82,7 @@ fun HomeScreen(
     onNavigateToMealDetail: (Long) -> Unit,
     onNavigateToAiCoach: () -> Unit = {},
     onNavigateToProfile: () -> Unit = { onNavigateToTab(KcalGrindRoute.Profile.route) },
+    onNavigateToWidgetSettings: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -130,6 +135,17 @@ fun HomeScreen(
                         streakDays = uiState.streakDays,
                         onOpenProfile = onNavigateToProfile
                     )
+                }
+
+                // Promo Card: One-time dismissible Sproutling Widget Promo
+                if (uiState.showWidgetPromoCard) {
+                    item(key = "home_widget_promo_card") {
+                        HomeWidgetPromoCard(
+                            onAddWidget = { viewModel.pinWidget() },
+                            onOpenSettings = onNavigateToWidgetSettings,
+                            onDismiss = { viewModel.dismissWidgetPromo() }
+                        )
+                    }
                 }
 
                 // 2. Calorie Summary Card with Progress Ring
@@ -1108,3 +1124,141 @@ private fun ActivityDetailsDialog(
         }
     )
 }
+
+@Composable
+fun HomeWidgetPromoCard(
+    onAddWidget: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = RoundedCornerShape(24.dp),
+        color = Color(0xFFB0F1CC),
+        border = BorderStroke(1.dp, Color(0xFF94D4B1)),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Box(modifier = Modifier.padding(16.dp)) {
+            // Dismiss button in top-right
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(28.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Dismiss banner",
+                    tint = Color(0xFF0F5238).copy(alpha = 0.75f),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(end = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                // Sproutling Companion Badge
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0xFF0F5238)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Eco,
+                        contentDescription = "Sproutling",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Bring Sproutling to your home screen",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0F5238),
+                            fontSize = 17.sp,
+                            lineHeight = 22.sp
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "Glance at your calories and track water without opening the app.",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = Color(0xFF191C1C),
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Surface(
+                            onClick = onAddWidget,
+                            shape = RoundedCornerShape(20.dp),
+                            color = Color(0xFF0F5238)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Widgets,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Add widget",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        fontSize = 12.sp
+                                    )
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { onOpenSettings() }
+                                .padding(vertical = 4.dp, horizontal = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(
+                                text = "Widget settings",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF0F5238),
+                                    fontSize = 12.sp
+                                )
+                            )
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = null,
+                                tint = Color(0xFF0F5238),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

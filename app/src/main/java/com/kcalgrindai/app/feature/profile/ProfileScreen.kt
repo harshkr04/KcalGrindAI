@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -83,6 +84,7 @@ fun ProfileScreen(
     onNavigateToAddFood: () -> Unit = {},
     onNavigateToAuth: () -> Unit = {},
     onNavigateToSubscription: () -> Unit = {},
+    onNavigateToWidgetSettings: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -668,6 +670,43 @@ fun ProfileScreen(
                                     }
                                 }
                             }
+                        }
+
+                        CardDivider()
+
+                        // Home Screen Widget Row
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { onNavigateToWidgetSettings() }
+                                .padding(vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Home Screen Widget",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        fontSize = 14.sp
+                                    )
+                                )
+                                Text(
+                                    text = "Glance companion preview & privacy controls",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontSize = 12.sp
+                                    )
+                                )
+                            }
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = "Open Home Screen Widget settings",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
 

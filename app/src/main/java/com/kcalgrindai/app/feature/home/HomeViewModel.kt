@@ -31,7 +31,9 @@ class HomeViewModel @Inject constructor(
     private val nutritionGoalRepository: NutritionGoalRepository,
     private val userProfileRepository: UserProfileRepository,
     private val waterLogRepository: WaterLogRepository,
-    val healthConnectManager: HealthConnectManager
+    val healthConnectManager: HealthConnectManager,
+    private val userPreferencesRepository: com.kcalgrindai.app.domain.repository.UserPreferencesRepository? = null,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context? = null
 ) : ViewModel() {
 
     private val today: LocalDate get() = LocalDate.now()
@@ -126,9 +128,13 @@ class HomeViewModel @Inject constructor(
         mealLogRepository.observeMealsWithItemsByDate(todayIsoString),
         userProfileRepository.observeProfile(),
         waterLogRepository.observeWaterLogsByDate(todayIsoString),
-        combine(mealLogRepository.observeStreakDays(), _activityState) { streak, act -> Pair(streak, act) }
-    ) { goal, mealsWithItems, profile, waterLogs, streakAndActivity ->
-        val (streakDays, activity) = streakAndActivity
+        combine(
+            mealLogRepository.observeStreakDays(),
+            _activityState,
+            userPreferencesRepository?.widgetPromoDismissed ?: kotlinx.coroutines.flow.flowOf(false)
+        ) { streak, act, promoDismissed -> Triple(streak, act, promoDismissed) }
+    ) { goal, mealsWithItems, profile, waterLogs, streakAndActivityAndPromo ->
+        val (streakDays, activity, promoDismissed) = streakAndActivityAndPromo
         val targetCalories = goal?.calories ?: 2000
         val targetProtein = goal?.proteinG ?: 150.0
         val targetCarbs = goal?.carbsG ?: 200.0
@@ -220,7 +226,8 @@ class HomeViewModel @Inject constructor(
             activity = activity,
             mealsGrouped = grouped,
             hasLoggedMealsToday = validMealsWithItems.isNotEmpty(),
-            streakDays = streakDays
+            streakDays = streakDays,
+            showWidgetPromoCard = !promoDismissed
         )
     }.stateIn(
         scope = viewModelScope,
@@ -229,4 +236,17 @@ class HomeViewModel @Inject constructor(
             currentDateFormatted = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.getDefault()))
         )
     )
+
+    fun dismissWidgetPromo() {
+        viewModelScope.launch {
+            userPreferencesRepository?.setWidgetPromoDismissed(true)
+        }
+    }
+
+    fun pinWidget(): Boolean {
+        val ctx = context ?: return false
+        val result = com.kcalgrindai.app.core.util.WidgetPinningHelper.requestPinWidget(ctx)
+        dismissWidgetPromo()
+        return result
+    }
 }

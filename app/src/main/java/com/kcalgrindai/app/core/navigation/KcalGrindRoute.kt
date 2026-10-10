@@ -21,7 +21,9 @@ sealed class KcalGrindRoute(
     data object CalorieTarget : KcalGrindRoute("calorie_target", "Calorie Target", "08_calorie_target.html", "Onboarding", listOf("goal_setting"))
     data object GoalSetting : KcalGrindRoute("goal_setting", "Goal Setting", "09_goal_setting.html", "Onboarding", listOf("onboarding_plan_reveal"))
     data object PlanReveal : KcalGrindRoute("onboarding_plan_reveal", "Plan Ready", "09b_plan_reveal.html", "Onboarding", listOf("permission_setup"))
-    data object PermissionSetup : KcalGrindRoute("permission_setup", "Permission Setup", "10_permission_setup.html", "Onboarding", listOf("home"))
+    data object PermissionSetup : KcalGrindRoute("permission_setup", "Permission Setup", "10_permission_setup.html", "Onboarding", listOf("onboarding_add_widget"))
+    data object OnboardingAddWidget : KcalGrindRoute("onboarding_add_widget", "Add Widget", "app_screen_v2_onboarding_add_widget.html", "Onboarding", listOf("home"))
+    data object WidgetSettings : KcalGrindRoute("widget_settings", "Home Screen Widget", "app_screen_v2_settings_widget.html", "Settings", listOf("home", "profile"))
     data object Home : KcalGrindRoute("home", "Home / Dashboard", "11_home.html", "Main", listOf("add_food_sheet", "diary", "insights", "profile"))
     data object Diary : KcalGrindRoute("diary", "Diary", "diary.html", "Main", listOf("meal_detail", "home", "insights"))
     data object Insights : KcalGrindRoute("insights", "Insights", "insights.html", "Main", listOf("weight_log", "home", "diary", "recipe_detail"))
@@ -77,6 +79,8 @@ sealed class KcalGrindRoute(
                 GoalSetting,
                 PlanReveal,
                 PermissionSetup,
+                OnboardingAddWidget,
+                WidgetSettings,
                 Home,
                 Diary,
                 Insights,

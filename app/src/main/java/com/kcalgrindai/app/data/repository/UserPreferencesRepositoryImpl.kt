@@ -92,11 +92,23 @@ class UserPreferencesRepositoryImpl @Inject constructor(
         widgetUpdater?.get()?.requestUpdate()
     }
 
+    private val _widgetPromoDismissed: MutableStateFlow<Boolean> by lazy {
+        MutableStateFlow(prefs.getBoolean(KEY_WIDGET_PROMO_DISMISSED, false))
+    }
+    override val widgetPromoDismissed: Flow<Boolean>
+        get() = _widgetPromoDismissed.asStateFlow()
+
+    override suspend fun setWidgetPromoDismissed(dismissed: Boolean) {
+        prefs.edit().putBoolean(KEY_WIDGET_PROMO_DISMISSED, dismissed).apply()
+        _widgetPromoDismissed.value = dismissed
+    }
+
     companion object {
         private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
         private const val KEY_DARK_MODE_ENABLED = "dark_mode_enabled"
         private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_SELECTED_AVATAR = "selected_avatar"
         private const val KEY_WIDGET_PRIVACY_ENABLED = "widget_privacy_enabled"
+        private const val KEY_WIDGET_PROMO_DISMISSED = "widget_promo_dismissed"
     }
 }
