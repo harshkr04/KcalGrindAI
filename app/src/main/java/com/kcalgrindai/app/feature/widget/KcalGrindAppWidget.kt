@@ -108,37 +108,45 @@ class KcalGrindAppWidget : GlanceAppWidget() {
         }
     }
 
+    internal suspend fun loadWidgetState(entryPoint: WidgetEntryPoint): WidgetUiState {
+        val profile = entryPoint.userProfileRepository().getProfile()
+        if (profile == null) {
+            return WidgetUiState.LoggedOut
+        }
+
+        val authUser = entryPoint.authRepository().getCurrentUser()
+        if (profile.firebaseUid != null && (authUser == null || authUser.uid != profile.firebaseUid)) {
+            return WidgetUiState.LoggedOut
+        }
+
+        val mapper = entryPoint.widgetStateMapper()
+        val today = mapper.getCurrentDateString()
+        val goal = entryPoint.nutritionGoalRepository().getLatestGoal()
+        val meals = entryPoint.mealLogRepository().observeMealsWithItemsByDate(today).firstOrNull() ?: emptyList()
+        val waterLogs = entryPoint.waterLogRepository().getWaterLogsByDate(today)
+        val waterTotal = waterLogs.sumOf { it.amountMl }
+        val streak = entryPoint.mealLogRepository().getStreakDays()
+        val isPrivacy = entryPoint.userPreferencesRepository().widgetPrivacyEnabled.firstOrNull() ?: false
+
+        return mapper.map(
+            goal = goal,
+            mealsWithItems = meals,
+            waterTotalMl = waterTotal,
+            streakDays = streak,
+            profile = profile,
+            isPrivacyEnabled = isPrivacy,
+            isLoading = false,
+            isLoggedIn = true
+        )
+    }
+
     private suspend fun loadWidgetState(context: Context): WidgetUiState {
         return try {
             val entryPoint = EntryPointAccessors.fromApplication(
                 context.applicationContext,
                 WidgetEntryPoint::class.java
             )
-            val authUser = entryPoint.authRepository().getCurrentUser()
-            if (authUser == null) {
-                return WidgetUiState.LoggedOut
-            }
-
-            val mapper = entryPoint.widgetStateMapper()
-            val today = mapper.getCurrentDateString()
-            val goal = entryPoint.nutritionGoalRepository().getLatestGoal()
-            val profile = entryPoint.userProfileRepository().getProfile()
-            val meals = entryPoint.mealLogRepository().observeMealsWithItemsByDate(today).firstOrNull() ?: emptyList()
-            val waterLogs = entryPoint.waterLogRepository().getWaterLogsByDate(today)
-            val waterTotal = waterLogs.sumOf { it.amountMl }
-            val streak = entryPoint.mealLogRepository().getStreakDays()
-            val isPrivacy = entryPoint.userPreferencesRepository().widgetPrivacyEnabled.firstOrNull() ?: false
-
-            mapper.map(
-                goal = goal,
-                mealsWithItems = meals,
-                waterTotalMl = waterTotal,
-                streakDays = streak,
-                profile = profile,
-                isPrivacyEnabled = isPrivacy,
-                isLoading = false,
-                isLoggedIn = true
-            )
+            loadWidgetState(entryPoint)
         } catch (e: Exception) {
             WidgetUiState.Loading
         }
