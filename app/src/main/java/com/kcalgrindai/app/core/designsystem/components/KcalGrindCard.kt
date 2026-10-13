@@ -16,6 +16,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+import com.kcalgrindai.app.core.designsystem.v3Colors
+
 @Composable
 fun KcalGrindAISelectableCard(
     selected: Boolean,
@@ -25,12 +27,17 @@ fun KcalGrindAISelectableCard(
     content: @Composable () -> Unit
 ) {
     val shape = RoundedCornerShape(cornerRadius)
+    val v3 = MaterialTheme.v3Colors
     val borderColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+        targetValue = if (selected) v3.emeraldAccent else v3.subtleBorder,
         label = "cardBorder"
     )
     val containerColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.35f) else MaterialTheme.colorScheme.surfaceContainerLowest,
+        targetValue = if (selected) {
+            if (v3.isDark) v3.emeraldAccent.copy(alpha = 0.12f) else v3.emeraldAccent.copy(alpha = 0.08f)
+        } else {
+            v3.surface
+        },
         label = "cardContainer"
     )
 

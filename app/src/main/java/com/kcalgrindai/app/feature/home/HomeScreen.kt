@@ -1,8 +1,10 @@
 package com.kcalgrindai.app.feature.home
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,29 +17,30 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.DirectionsRun
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DinnerDining
+import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.LocalCafe
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -57,23 +60,32 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kcalgrindai.app.core.designsystem.components.KcalGrindProgressRing
+import com.kcalgrindai.app.R
+import com.kcalgrindai.app.core.designsystem.components.KcalGrindLiquidBadge
+import com.kcalgrindai.app.core.designsystem.components.KcalGrindLiquidCard
+import com.kcalgrindai.app.core.designsystem.v3Colors
 import com.kcalgrindai.app.core.navigation.KcalGrindRoute
 import com.kcalgrindai.app.domain.model.MealType
+import com.kcalgrindai.app.domain.model.SproutlingMood
+import java.text.NumberFormat
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import kotlin.math.roundToInt
 
 @Composable
 fun HomeScreen(
@@ -86,6 +98,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val v3 = MaterialTheme.v3Colors
     var showActivityDetailsDialog by remember { mutableStateOf(false) }
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -108,7 +121,7 @@ fun HomeScreen(
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.surface
+        containerColor = v3.background
     ) { paddingValues ->
         if (uiState.isLoading) {
             Box(
@@ -117,116 +130,119 @@ fun HomeScreen(
                     .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                CircularProgressIndicator(color = v3.emeraldAccent)
             }
         } else {
-            LazyColumn(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 120.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                    .background(v3.background)
             ) {
-                // 1. Top Header (Greeting & Profile Button)
-                item {
-                    HomeHeader(
-                        userName = uiState.userName,
-                        dateFormatted = uiState.currentDateFormatted,
-                        streakDays = uiState.streakDays,
-                        onOpenProfile = onNavigateToProfile
-                    )
-                }
+                // Ambient Liquid Aurora Glow in Background per V3 spec
+                Box(
+                    modifier = Modifier
+                        .size(240.dp)
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(
+                                    v3.emeraldAccent.copy(alpha = if (v3.isDark) 0.12f else 0.08f),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
 
-                // Promo Card: One-time dismissible Sproutling Widget Promo
-                if (uiState.showWidgetPromoCard) {
-                    item(key = "home_widget_promo_card") {
-                        HomeWidgetPromoCard(
-                            onAddWidget = { viewModel.pinWidget() },
-                            onOpenSettings = onNavigateToWidgetSettings,
-                            onDismiss = { viewModel.dismissWidgetPromo() }
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 120.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // 1. Top App Bar / Header
+                    item {
+                        HomeTopAppBar(
+                            userName = uiState.userName,
+                            goalLabel = uiState.goalLabel,
+                            streakDays = uiState.streakDays,
+                            onOpenProfile = onNavigateToProfile
                         )
                     }
-                }
 
-                // 2. Calorie Summary Card with Progress Ring
-                item {
-                    HomeCalorieSummaryCard(
-                        consumedCalories = uiState.consumedCalories,
-                        targetCalories = uiState.targetCalories,
-                        remainingCalories = uiState.remainingCalories,
-                        progressFraction = uiState.calorieProgressFraction,
-                        progressPercent = uiState.progressPercent
-                    )
-                }
-
-                // 3. Macro Breakdown Card
-                item {
-                    HomeMacroSummaryCard(
-                        protein = uiState.protein,
-                        carbs = uiState.carbs,
-                        fat = uiState.fat
-                    )
-                }
-
-                // 4. Daily Hydration Card (Redesigned with tappable glass icons & per-entry edit/delete)
-                item {
-                    HomeWaterCard(
-                        water = uiState.water,
-                        onLogWater = { amount -> viewModel.logWater(amount) },
-                        onUndoWater = { viewModel.undoLatestWaterLog() },
-                        onEditWater = { id, amount -> viewModel.editWaterLog(id, amount) },
-                        onDeleteWater = { id -> viewModel.deleteWaterLog(id) }
-                    )
-                }
-
-                // 5. Activity & Steps Card (Health Connect)
-                item {
-                    HomeActivityCard(
-                        activity = uiState.activity,
-                        onRequestPermission = {
-                            permissionLauncher.launch(viewModel.healthConnectManager.requiredPermissions)
-                        },
-                        onViewDetails = {
-                            showActivityDetailsDialog = true
+                    // Launcher Widget Promo Card (One-time dismissible)
+                    if (uiState.showWidgetPromoCard) {
+                        item(key = "home_widget_promo_card") {
+                            HomeWidgetPromoCard(
+                                onAddWidget = { viewModel.pinWidget() },
+                                onOpenSettings = onNavigateToWidgetSettings,
+                                onDismiss = { viewModel.dismissWidgetPromo() }
+                            )
                         }
-                    )
-                }
+                    }
 
-                // 6. Today's Meals Section Header
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Today's Meals",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        )
-                        Text(
-                            text = "${uiState.consumedCalories} kcal logged",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.Medium
-                            )
+                    // 2. HERO CALORIE ENERGY CARD (Liquid Glass + Stepped 10-Block Pixel Energy Meter)
+                    item {
+                        HomeCalorieEnergyCard(
+                            consumedCalories = uiState.consumedCalories,
+                            targetCalories = uiState.targetCalories,
+                            remainingCalories = uiState.remainingCalories,
+                            progressPercent = uiState.progressPercent,
+                            protein = uiState.protein,
+                            carbs = uiState.carbs,
+                            fat = uiState.fat
                         )
                     }
-                }
 
-                // 7. Continuous Chronological Meals Timeline
-                item {
-                    HomeMealsTimeline(
-                        meals = uiState.mealsGrouped,
-                        onMealClick = { mealId -> onNavigateToMealDetail(mealId) },
-                        onAddMealClick = { mealType -> onNavigateToAddFood(mealType) }
-                    )
-                }
+                    // 3. SPROUTLING COMPANION INTERACTIVE CARD
+                    item {
+                        HomeSproutlingCard(
+                            sproutlingMood = uiState.sproutlingMood,
+                            consumedCalories = uiState.consumedCalories,
+                            remainingCalories = uiState.remainingCalories,
+                            protein = uiState.protein,
+                            onAskCoach = onNavigateToAiCoach,
+                            onAddMeal = { onNavigateToAddFood(null) }
+                        )
+                    }
 
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    // 4. QUICK WATER HYDRATION SECTION
+                    item {
+                        HomeWaterHydrationCard(
+                            water = uiState.water,
+                            onLogWater = { amount -> viewModel.logWater(amount) },
+                            onUndoWater = { viewModel.undoLatestWaterLog() },
+                            onEditWater = { id, amount -> viewModel.editWaterLog(id, amount) },
+                            onDeleteWater = { id -> viewModel.deleteWaterLog(id) }
+                        )
+                    }
+
+                    // 5. ACTIVITY & STEPS CARD (Health Connect)
+                    item {
+                        HomeActivityCard(
+                            activity = uiState.activity,
+                            onRequestPermission = {
+                                permissionLauncher.launch(viewModel.healthConnectManager.requiredPermissions)
+                            },
+                            onViewDetails = {
+                                showActivityDetailsDialog = true
+                            }
+                        )
+                    }
+
+                    // 6. TODAY'S FUEL LOG / RECENT MEALS SUMMARY
+                    item {
+                        HomeFuelLogSection(
+                            meals = uiState.mealsGrouped,
+                            totalCaloriesLogged = uiState.consumedCalories,
+                            onMealClick = { mealId -> onNavigateToMealDetail(mealId) },
+                            onAddMealClick = { mealType -> onNavigateToAddFood(mealType) },
+                            onViewAll = { onNavigateToTab(KcalGrindRoute.Diary.route) }
+                        )
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
             }
         }
@@ -241,95 +257,129 @@ fun HomeScreen(
     }
 }
 
+// ============================================================================
+// 1. Top App Bar (Header with Alex Avatar, Status Rim, & Streak Chip)
+// ============================================================================
+
 @Composable
-private fun HomeHeader(
+private fun HomeTopAppBar(
     userName: String,
-    dateFormatted: String,
+    goalLabel: String,
     streakDays: Int,
     onOpenProfile: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val v3 = MaterialTheme.v3Colors
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            val greeting = if (userName.isNotBlank() && userName != "there") {
-                "Welcome back, $userName"
-            } else {
-                "Welcome back"
+        // User Avatar with Emerald Rim & Greeting
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(46.dp)
+                    .clickable(onClick = onOpenProfile)
+            ) {
+                // Profile Avatar Container with Emerald Border Rim
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    shape = CircleShape,
+                    color = v3.surfaceElevated,
+                    border = BorderStroke(2.dp, v3.emeraldAccent)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Profile",
+                            tint = v3.emeraldAccent,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                // Online Emerald Status Dot
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(v3.emeraldAccent)
+                        .border(2.dp, v3.background, CircleShape)
+                        .align(Alignment.BottomEnd)
+                )
             }
-            Text(
-                text = greeting,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 22.sp
+
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Hey, ${if (userName.isNotBlank() && userName != "there") userName else "Alex"}",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = v3.textPrimary,
+                            fontSize = 17.sp
+                        )
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = "👋", fontSize = 14.sp)
+                }
+                Text(
+                    text = "${if (goalLabel.isNotBlank()) goalLabel else "Hypertrophy Cut"} • Day ${if (streakDays > 0) streakDays else 1}",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = v3.textMuted,
+                        fontSize = 11.sp
+                    )
                 )
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = dateFormatted,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            )
+            }
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
-
+        // Action Chips (Streak & Profile / Settings)
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Circular Streak Button
+            // Streak Capsule Chip per V3 design
             Surface(
-                shape = CircleShape,
-                color = if (streakDays > 0) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
-                border = BorderStroke(
-                    1.dp,
-                    if (streakDays > 0) MaterialTheme.colorScheme.tertiary.copy(alpha = 0.45f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
-                ),
-                modifier = Modifier.size(44.dp)
+                shape = RoundedCornerShape(9999.dp),
+                color = if (v3.isDark) Color(0xFF1F2622) else Color(0xFFE5F7ED),
+                border = BorderStroke(1.dp, if (v3.isDark) Color(0xFF2F3C34) else Color(0xFFBCE7D0))
             ) {
                 Row(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Icon(
-                        imageVector = if (streakDays > 0) Icons.Default.LocalFireDepartment else Icons.Default.Bolt,
-                        contentDescription = "Streak",
-                        tint = if (streakDays > 0) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
                     Text(
-                        text = "$streakDays",
-                        style = MaterialTheme.typography.labelMedium.copy(
+                        text = if (streakDays > 0) "🔥" else "⚡",
+                        fontSize = 12.sp
+                    )
+                    Text(
+                        text = "$streakDays Days",
+                        style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = if (streakDays > 0) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 13.sp
+                            color = v3.emeraldAccent,
+                            fontSize = 11.sp
                         )
                     )
                 }
             }
 
-            // Profile & Settings Avatar Button
+            // Profile / Settings Button
             Surface(
                 onClick = onOpenProfile,
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)),
-                modifier = Modifier.size(44.dp)
+                color = v3.surfaceElevated,
+                border = BorderStroke(1.dp, v3.subtleBorder),
+                modifier = Modifier.size(38.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "Profile & Settings",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
+                        imageVector = Icons.Default.Notifications,
+                        contentDescription = "Notifications & Settings",
+                        tint = v3.textSecondary,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
@@ -337,263 +387,493 @@ private fun HomeHeader(
     }
 }
 
+// ============================================================================
+// 2. HERO CALORIE ENERGY CARD (Liquid Glass + Stepped 10-Block Pixel Energy Meter)
+// ============================================================================
+
 @Composable
-private fun HomeCalorieSummaryCard(
+private fun HomeCalorieEnergyCard(
     consumedCalories: Int,
     targetCalories: Int,
     remainingCalories: Int,
-    progressFraction: Float,
-    progressPercent: Int = 0,
-    modifier: Modifier = Modifier
-) {
-    val isOver = remainingCalories < 0
-    val remainingLabel = if (isOver) "Over Target" else "Remaining"
-    val remainingValue = if (isOver) "${-remainingCalories} kcal" else "$remainingCalories kcal"
-    val remainingColor = if (isOver) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 2.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            // Left: Progress Ring
-            KcalGrindProgressRing(
-                calories = consumedCalories,
-                label = "consumed",
-                progress = progressFraction,
-                size = 140.dp,
-                strokeWidth = 12.dp
-            )
-
-            // Right: Breakdown numbers
-            Column(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.padding(start = 16.dp)
-            ) {
-                CalorieMetricRow(
-                    label = "Target Goal",
-                    value = "$targetCalories kcal",
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                CalorieMetricRow(
-                    label = remainingLabel,
-                    value = remainingValue,
-                    color = remainingColor,
-                    isHighlight = true
-                )
-                CalorieMetricRow(
-                    label = "Progress",
-                    value = "$progressPercent%",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CalorieMetricRow(
-    label: String,
-    value: String,
-    color: Color,
-    isHighlight: Boolean = false
-) {
-    Column {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium.copy(
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 12.sp
-            )
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = if (isHighlight) FontWeight.Bold else FontWeight.SemiBold,
-                color = color,
-                fontSize = if (isHighlight) 18.sp else 16.sp
-            )
-        )
-    }
-}
-
-@Composable
-private fun HomeMacroSummaryCard(
+    progressPercent: Int,
     protein: MacroProgress,
     carbs: MacroProgress,
     fat: MacroProgress,
     modifier: Modifier = Modifier
 ) {
-    Surface(
+    val v3 = MaterialTheme.v3Colors
+    val isOver = remainingCalories < 0
+    val numberFormatter = remember { NumberFormat.getNumberInstance(Locale.US) }
+
+    // 10 blocks: calculate how many blocks should be active based on consumption
+    val filledBlocks = if (targetCalories > 0) {
+        ((consumedCalories.toFloat() / targetCalories.toFloat()) * 10f).roundToInt().coerceIn(0, 10)
+    } else 0
+
+    KcalGrindLiquidCard(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 2.dp
+        shape = RoundedCornerShape(28.dp),
+        contentPadding = PaddingValues(20.dp),
+        backgroundColor = v3.surface,
+        borderColor = v3.subtleBorder
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceAround
-        ) {
-            MacroColumnItem(
-                name = "Protein",
-                currentGrams = protein.currentGrams.toInt(),
-                targetGrams = protein.targetGrams.toInt(),
-                progress = protein.progressFraction,
-                color = Color(0xFF646FD4) // Periwinkle
-            )
-            MacroColumnItem(
-                name = "Carbs",
-                currentGrams = carbs.currentGrams.toInt(),
-                targetGrams = carbs.targetGrams.toInt(),
-                progress = carbs.progressFraction,
-                color = Color(0xFFF59E0B) // Amber
-            )
-            MacroColumnItem(
-                name = "Fat",
-                currentGrams = fat.currentGrams.toInt(),
-                targetGrams = fat.targetGrams.toInt(),
-                progress = fat.progressFraction,
-                color = Color(0xFF10B981) // Emerald
-            )
-        }
-    }
-}
-
-@Composable
-private fun MacroColumnItem(
-    name: String,
-    currentGrams: Int,
-    targetGrams: Int,
-    progress: Float,
-    color: Color,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.width(90.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = name,
-            style = MaterialTheme.typography.labelMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        LinearProgressIndicator(
-            progress = { progress },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .clip(RoundedCornerShape(4.dp)),
-            color = color,
-            trackColor = color.copy(alpha = 0.2f),
-            strokeCap = StrokeCap.Round
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = "${currentGrams}g / ${targetGrams}g",
-            style = MaterialTheme.typography.bodySmall.copy(
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = 12.sp
-            )
-        )
-    }
-}
-
-
-
-@Composable
-private fun HomeEmptyMealsCard(
-    onLogFirstMeal: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 2.dp
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                modifier = Modifier.size(56.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.RestaurantMenu,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "No meals logged yet today",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = "Track your breakfast, lunch, or a snack to see your progress update live.",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Surface(
-                onClick = onLogFirstMeal,
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.primary
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Card Header Row: Daily Energy Arc & Target Badge
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(18.dp)
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(v3.emeraldAccent)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Log Your First Meal",
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontWeight = FontWeight.Bold
+                        text = "DAILY ENERGY ARC",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = v3.textMuted,
+                            letterSpacing = 0.8.sp,
+                            fontSize = 11.sp
                         )
                     )
                 }
+
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = if (v3.isDark) Color(0xFF183526) else Color(0xFFE2F6EB),
+                    border = BorderStroke(1.dp, if (v3.isDark) Color(0xFF235038) else Color(0xFFACDFBF))
+                ) {
+                    Text(
+                        text = "Target: ${numberFormatter.format(targetCalories)} kcal",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = v3.emeraldAccent,
+                            fontSize = 11.sp
+                        ),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
+            }
+
+            // Divider Line
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(v3.subtleBorder.copy(alpha = 0.5f))
+            )
+
+            // Center Energy Arc: Stepped 10-Block Pixel Energy Meter
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 18.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Stepped 10-Block Pixel Energy Meter per V3 HTML design
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    for (i in 1..10) {
+                        val isActive = i <= filledBlocks
+                        Box(
+                            modifier = Modifier
+                                .width(16.dp)
+                                .height(10.dp)
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(
+                                    when {
+                                        isOver -> Color(0xFFE53935)
+                                        isActive -> v3.emeraldAccent
+                                        else -> if (v3.isDark) Color(0xFF222B26) else Color(0xFFD6DED9)
+                                    }
+                                )
+                                .border(
+                                    1.dp,
+                                    if (isActive) v3.emeraldAccent else v3.subtleBorder,
+                                    RoundedCornerShape(3.dp)
+                                )
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Bold Numbers & Readout
+                val displayCalories = if (isOver) -remainingCalories else remainingCalories
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = numberFormatter.format(displayCalories),
+                        style = MaterialTheme.typography.displayLarge.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            color = if (isOver) Color(0xFFE53935) else v3.textPrimary,
+                            fontSize = 44.sp,
+                            lineHeight = 44.sp
+                        )
+                    )
+                    Text(
+                        text = if (isOver) "KCAL OVER" else "KCAL REMAINING",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = if (isOver) Color(0xFFE53935) else v3.emeraldAccent,
+                            fontSize = 11.sp,
+                            letterSpacing = 0.5.sp
+                        ),
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "${numberFormatter.format(consumedCalories)} consumed • $progressPercent% of daily quota",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = v3.textMuted,
+                        fontSize = 12.sp
+                    )
+                )
+            }
+
+            // Divider Line
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(v3.subtleBorder.copy(alpha = 0.5f))
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Macro Progress Triplets (Bento row at bottom of hero card)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Protein Pill
+                MacroPill(
+                    name = "Protein",
+                    current = protein.currentGrams.roundToInt(),
+                    target = protein.targetGrams.roundToInt(),
+                    percent = (protein.progressFraction * 100).toInt(),
+                    barColor = v3.emeraldAccent,
+                    modifier = Modifier.weight(1f)
+                )
+
+                // Carbs Pill
+                MacroPill(
+                    name = "Carbs",
+                    current = carbs.currentGrams.roundToInt(),
+                    target = carbs.targetGrams.roundToInt(),
+                    percent = (carbs.progressFraction * 100).toInt(),
+                    barColor = if (v3.isDark) Color(0xFFA8B5AC) else Color(0xFF5B6E62),
+                    modifier = Modifier.weight(1f)
+                )
+
+                // Fats Pill
+                MacroPill(
+                    name = "Fats",
+                    current = fat.currentGrams.roundToInt(),
+                    target = fat.targetGrams.roundToInt(),
+                    percent = (fat.progressFraction * 100).toInt(),
+                    barColor = if (v3.isDark) Color(0xFF5E6D64) else Color(0xFF8B9E93),
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }
 }
 
 @Composable
-private fun HomeWaterCard(
+private fun MacroPill(
+    name: String,
+    current: Int,
+    target: Int,
+    percent: Int,
+    barColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val v3 = MaterialTheme.v3Colors
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = v3.surfaceElevated,
+        border = BorderStroke(1.dp, v3.subtleBorder)
+    ) {
+        Column(
+            modifier = Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = v3.textMuted,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                )
+                Text(
+                    text = "$percent%",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = barColor,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp
+                    )
+                )
+            }
+
+            Text(
+                text = "${current}/$target" + "g",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = v3.textPrimary,
+                    fontSize = 12.sp
+                )
+            )
+
+            // Mini Linear Bar
+            LinearProgressIndicator(
+                progress = { (percent / 100f).coerceIn(0f, 1f) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(5.dp)
+                    .clip(RoundedCornerShape(3.dp)),
+                color = barColor,
+                trackColor = v3.progressTrack,
+                strokeCap = StrokeCap.Round
+            )
+        }
+    }
+}
+
+// ============================================================================
+// 3. SPROUTLING COMPANION INTERACTIVE CARD (Character-Led Coaching Card)
+// ============================================================================
+
+@Composable
+private fun HomeSproutlingCard(
+    sproutlingMood: SproutlingMood,
+    consumedCalories: Int,
+    remainingCalories: Int,
+    protein: MacroProgress,
+    onAskCoach: () -> Unit,
+    onAddMeal: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val v3 = MaterialTheme.v3Colors
+
+    // Contextual coaching dialogue based on real Room metrics
+    val coachingMessage = remember(consumedCalories, remainingCalories, protein) {
+        when {
+            consumedCalories == 0 -> {
+                "Ready to kick off your day? Log your breakfast to start fueling up! 🌱"
+            }
+            remainingCalories == 0 -> {
+                "Bullseye! You've reached your exact calorie target for today! 🎯"
+            }
+            remainingCalories < 0 -> {
+                "Daily calorie quota completed! Prioritize water, minerals and rest. 💧"
+            }
+            protein.currentGrams < protein.targetGrams * 0.7 && remainingCalories > 300 -> {
+                val neededProtein = (protein.targetGrams - protein.currentGrams).roundToInt()
+                "Great pace! Focus on about ${neededProtein}g more protein in your next meal to hit your daily goal."
+            }
+            else -> {
+                "Looking solid today! You have $remainingCalories kcal remaining in your daily budget. Keep crushing it!"
+            }
+        }
+    }
+
+    val sproutlingDrawable = remember(sproutlingMood) {
+        when (sproutlingMood) {
+            SproutlingMood.RESTING -> R.drawable.ic_sproutling_resting
+            SproutlingMood.ACTIVE -> R.drawable.ic_sproutling_active
+            SproutlingMood.ENERGIZED -> R.drawable.ic_sproutling_energized
+            SproutlingMood.CONTENT -> R.drawable.ic_sproutling_content
+            SproutlingMood.WAVING -> R.drawable.ic_sproutling_waving
+            SproutlingMood.LOADING -> R.drawable.ic_sproutling_loading
+            SproutlingMood.SECURE -> R.drawable.ic_sproutling_secure
+        }
+    }
+
+    KcalGrindLiquidCard(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        contentPadding = PaddingValues(16.dp),
+        backgroundColor = v3.surface,
+        borderColor = v3.emeraldAccent.copy(alpha = 0.35f)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            // Mascot Container with AI Coach micro badge
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Surface(
+                    modifier = Modifier.size(56.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    color = if (v3.isDark) Color(0xFF142019) else Color(0xFFE0F5E9),
+                    border = BorderStroke(1.dp, if (v3.isDark) Color(0xFF2B4736) else Color(0xFFA6E0BD))
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Image(
+                            painter = painterResource(sproutlingDrawable),
+                            contentDescription = "Sproutling Coach",
+                            modifier = Modifier.size(38.dp)
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = v3.emeraldAccent
+                ) {
+                    Text(
+                        text = "AI COACH",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0E1B13),
+                            fontSize = 8.sp,
+                            letterSpacing = 0.5.sp
+                        ),
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                    )
+                }
+            }
+
+            // Dialogue Bubble & Actions
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Sproutling",
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = v3.textPrimary,
+                            fontSize = 13.sp
+                        )
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(v3.emeraldAccent)
+                        )
+                        Text(
+                            text = "Active",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = v3.emeraldAccent,
+                                fontSize = 10.sp
+                            )
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = coachingMessage,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = v3.textSecondary,
+                        fontSize = 12.sp,
+                        lineHeight = 17.sp
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Action Buttons
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Surface(
+                        onClick = onAskCoach,
+                        shape = RoundedCornerShape(9999.dp),
+                        color = v3.emeraldAccent.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, v3.emeraldAccent.copy(alpha = 0.4f))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SmartToy,
+                                contentDescription = null,
+                                tint = v3.emeraldAccent,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Text(
+                                text = "Ask AI Coach",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = v3.emeraldAccent,
+                                    fontSize = 11.sp
+                                )
+                            )
+                        }
+                    }
+
+                    Surface(
+                        onClick = onAddMeal,
+                        shape = RoundedCornerShape(9999.dp),
+                        color = v3.surfaceElevated,
+                        border = BorderStroke(1.dp, v3.subtleBorder)
+                    ) {
+                        Text(
+                            text = "Log Fuel",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = v3.textMuted,
+                                fontSize = 11.sp
+                            ),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ============================================================================
+// 4. QUICK WATER HYDRATION SECTION
+// ============================================================================
+
+@Composable
+private fun HomeWaterHydrationCard(
     water: WaterProgress,
     onLogWater: (Int) -> Unit,
     onUndoWater: () -> Unit,
@@ -601,27 +881,22 @@ private fun HomeWaterCard(
     onDeleteWater: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val v3 = MaterialTheme.v3Colors
     var showCustomDialog by remember { mutableStateOf(false) }
     var editingEntry by remember { mutableStateOf<com.kcalgrindai.app.domain.model.WaterLog?>(null) }
     var showHistory by remember { mutableStateOf(false) }
 
-    val currentGlasses = kotlin.math.round((water.consumedMl / 250.0)).toInt()
-    val totalGlasses = maxOf(water.targetGlasses, 8)
-    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-    val waterBlue = if (isDark) Color(0xFF38BDF8) else Color(0xFF0077B6)
-    val chipBg = Color(0xFF00B4D8).copy(alpha = if (isDark) 0.22f else 0.12f)
+    val numberFormatter = remember { NumberFormat.getNumberInstance(Locale.US) }
+    val waterBlue = Color(0xFF38BDF8)
 
-    Surface(
+    KcalGrindLiquidCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        border = BorderStroke(1.dp, Color(0xFF00B4D8).copy(alpha = 0.25f)),
-        tonalElevation = 2.dp
+        contentPadding = PaddingValues(16.dp),
+        backgroundColor = v3.surface,
+        borderColor = v3.subtleBorder
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             // Header Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -629,124 +904,149 @@ private fun HomeWaterCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.WaterDrop,
                         contentDescription = null,
                         tint = waterBlue,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(20.dp)
                     )
-                    Column {
-                        Text(
-                            text = "Daily Hydration",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                    Text(
+                        text = "Water Hydration",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = v3.textPrimary,
+                            fontSize = 14.sp
                         )
-                        Text(
-                            text = "${water.consumedMl} / ${water.targetMl} ml ($currentGlasses/$totalGlasses glasses)",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.Medium
-                            )
-                        )
-                    }
+                    )
                 }
 
-                if (water.todayLogs.isNotEmpty()) {
-                    TextButton(
-                        onClick = { showHistory = !showHistory },
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = if (showHistory) "Hide Logs" else "Logs (${water.todayLogs.size})",
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                color = waterBlue,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        )
-                    }
-                }
+                Text(
+                    text = "${numberFormatter.format(water.consumedMl)} / ${numberFormatter.format(water.targetMl)} ml",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = waterBlue,
+                        fontSize = 12.sp
+                    )
+                )
             }
 
-            // Progress Bar
-            LinearProgressIndicator(
-                progress = { water.progressFraction },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp)),
-                color = Color(0xFF00B4D8),
-                trackColor = Color(0xFF00B4D8).copy(alpha = if (isDark) 0.25f else 0.15f),
-                strokeCap = StrokeCap.Round
-            )
-
-            // Quick Add Chips
+            // Fluid Progress Bar
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(5.dp))
+                        .background(v3.surfaceElevated)
+                        .border(1.dp, v3.subtleBorder, RoundedCornerShape(5.dp))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(water.progressFraction)
+                            .height(10.dp)
+                            .clip(RoundedCornerShape(5.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(Color(0xFF0284C7), waterBlue)
+                                )
+                            )
+                    )
+                }
+
+                // Quick Add +250 ml Pill Button
                 Surface(
                     onClick = { onLogWater(250) },
-                    shape = RoundedCornerShape(12.dp),
-                    color = chipBg
+                    shape = RoundedCornerShape(9999.dp),
+                    color = if (v3.isDark) Color(0xFF182B20) else Color(0xFFE2F6EB),
+                    border = BorderStroke(1.dp, v3.emeraldAccent.copy(alpha = 0.4f))
                 ) {
                     Text(
                         text = "+250 ml",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            color = waterBlue,
-                            fontWeight = FontWeight.SemiBold
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = v3.emeraldAccent,
+                            fontSize = 11.sp
                         ),
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                     )
                 }
+            }
 
-                Surface(
-                    onClick = { onLogWater(500) },
-                    shape = RoundedCornerShape(12.dp),
-                    color = chipBg
-                ) {
-                    Text(
-                        text = "+500 ml",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            color = waterBlue,
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-                    )
+            // Extra Actions: Custom, Undo, View Logs
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Surface(
+                        onClick = { onLogWater(500) },
+                        shape = RoundedCornerShape(8.dp),
+                        color = v3.surfaceElevated,
+                        border = BorderStroke(1.dp, v3.subtleBorder)
+                    ) {
+                        Text(
+                            text = "+500 ml",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = v3.textSecondary,
+                                fontSize = 10.sp
+                            ),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    Surface(
+                        onClick = { showCustomDialog = true },
+                        shape = RoundedCornerShape(8.dp),
+                        color = v3.surfaceElevated,
+                        border = BorderStroke(1.dp, v3.subtleBorder)
+                    ) {
+                        Text(
+                            text = "+Custom",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = v3.textSecondary,
+                                fontSize = 10.sp
+                            ),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    if (water.todayLogs.isNotEmpty()) {
+                        Surface(
+                            onClick = { showHistory = !showHistory },
+                            shape = RoundedCornerShape(8.dp),
+                            color = v3.surfaceElevated,
+                            border = BorderStroke(1.dp, v3.subtleBorder)
+                        ) {
+                            Text(
+                                text = if (showHistory) "Hide logs" else "Logs (${water.todayLogs.size})",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = v3.textMuted,
+                                    fontSize = 10.sp
+                                ),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
                 }
-
-                Surface(
-                    onClick = { showCustomDialog = true },
-                    shape = RoundedCornerShape(12.dp),
-                    color = chipBg
-                ) {
-                    Text(
-                        text = "+Custom",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            color = waterBlue,
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
 
                 if (water.consumedMl > 0 && water.latestLogId != null) {
                     TextButton(
                         onClick = onUndoWater,
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
                             text = "Undo",
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.Medium
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = v3.textMuted,
+                                fontSize = 11.sp
                             )
                         )
                     }
@@ -762,70 +1062,58 @@ private fun HomeWaterCard(
                         .padding(top = 4.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text(
-                        text = "Today's Entries",
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    )
-
                     water.todayLogs.reversed().forEach { logEntry ->
                         Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            shape = RoundedCornerShape(10.dp),
+                            color = v3.surfaceElevated,
+                            border = BorderStroke(1.dp, v3.subtleBorder),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    .padding(horizontal = 10.dp, vertical = 6.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
                                     Text(
                                         text = "${logEntry.amountMl} ml",
                                         fontWeight = FontWeight.Bold,
-                                        style = MaterialTheme.typography.bodyMedium.copy(color = waterBlue)
+                                        style = MaterialTheme.typography.bodySmall.copy(color = waterBlue)
                                     )
                                     Text(
                                         text = timeFormat.format(Date(logEntry.loggedAt)),
-                                        style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        style = MaterialTheme.typography.labelSmall.copy(color = v3.textMuted)
                                     )
                                 }
 
                                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Surface(
+                                    IconButton(
                                         onClick = { editingEntry = logEntry },
-                                        shape = CircleShape,
-                                        color = Color.Transparent,
-                                        modifier = Modifier.size(32.dp)
+                                        modifier = Modifier.size(28.dp)
                                     ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(
-                                                imageVector = Icons.Default.Edit,
-                                                contentDescription = "Edit entry",
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        }
+                                        Icon(
+                                            imageVector = Icons.Default.Edit,
+                                            contentDescription = "Edit entry",
+                                            tint = v3.textMuted,
+                                            modifier = Modifier.size(14.dp)
+                                        )
                                     }
 
-                                    Surface(
+                                    IconButton(
                                         onClick = { onDeleteWater(logEntry.id) },
-                                        shape = CircleShape,
-                                        color = Color.Transparent,
-                                        modifier = Modifier.size(32.dp)
+                                        modifier = Modifier.size(28.dp)
                                     ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(
-                                                imageVector = Icons.Default.Delete,
-                                                contentDescription = "Delete entry",
-                                                tint = Color(0xFFE53935),
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        }
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = "Delete entry",
+                                            tint = Color(0xFFE53935),
+                                            modifier = Modifier.size(14.dp)
+                                        )
                                     }
                                 }
                             }
@@ -842,10 +1130,10 @@ private fun HomeWaterCard(
         var amountText by remember(entry.id) { mutableStateOf(entry.amountMl.toString()) }
         AlertDialog(
             onDismissRequest = { editingEntry = null },
-            title = { Text("Edit Water Entry") },
+            title = { Text("Edit Water Entry", color = v3.textPrimary) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Change the logged amount for this entry:")
+                    Text("Change the logged amount for this entry:", color = v3.textSecondary)
                     OutlinedTextField(
                         value = amountText,
                         onValueChange = { if (it.all { ch -> ch.isDigit() }) amountText = it },
@@ -864,12 +1152,12 @@ private fun HomeWaterCard(
                         }
                     }
                 ) {
-                    Text("Save", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text("Save", color = v3.emeraldAccent, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { editingEntry = null }) {
-                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Cancel", color = v3.textMuted)
                 }
             }
         )
@@ -880,10 +1168,10 @@ private fun HomeWaterCard(
         var customAmountText by remember { mutableStateOf("250") }
         AlertDialog(
             onDismissRequest = { showCustomDialog = false },
-            title = { Text("Log Custom Water") },
+            title = { Text("Log Custom Water", color = v3.textPrimary) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Enter the water amount in milliliters (ml):")
+                    Text("Enter the water amount in milliliters (ml):", color = v3.textSecondary)
                     OutlinedTextField(
                         value = customAmountText,
                         onValueChange = { if (it.all { ch -> ch.isDigit() }) customAmountText = it },
@@ -902,17 +1190,21 @@ private fun HomeWaterCard(
                         }
                     }
                 ) {
-                    Text("Add", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text("Add", color = v3.emeraldAccent, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCustomDialog = false }) {
-                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Cancel", color = v3.textMuted)
                 }
             }
         )
     }
 }
+
+// ============================================================================
+// 5. ACTIVITY & STEPS CARD (Health Connect)
+// ============================================================================
 
 @Composable
 private fun HomeActivityCard(
@@ -921,35 +1213,37 @@ private fun HomeActivityCard(
     onViewDetails: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
+    val v3 = MaterialTheme.v3Colors
+
+    KcalGrindLiquidCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 1.dp
+        contentPadding = PaddingValues(16.dp),
+        backgroundColor = v3.surface,
+        borderColor = v3.subtleBorder
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
                 modifier = Modifier.weight(1f, fill = false),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier.size(36.dp)
+                    color = v3.surfaceElevated,
+                    border = BorderStroke(1.dp, v3.subtleBorder),
+                    modifier = Modifier.size(40.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            imageVector = Icons.Default.DirectionsRun,
+                            imageVector = Icons.AutoMirrored.Filled.DirectionsRun,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
+                            tint = v3.emeraldAccent,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }
@@ -958,72 +1252,78 @@ private fun HomeActivityCard(
                         text = "Steps & Activity",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = v3.textPrimary,
+                            fontSize = 14.sp
                         )
                     )
                     Text(
                         text = activity.statusMessage,
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = v3.textMuted,
+                            fontSize = 12.sp
                         )
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
             when {
                 activity.isLoading -> {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(22.dp),
+                        modifier = Modifier.size(20.dp),
                         strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.primary
+                        color = v3.emeraldAccent
                     )
                 }
                 activity.isConnected -> {
                     Surface(
                         onClick = onViewDetails,
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f))
+                        shape = RoundedCornerShape(9999.dp),
+                        color = v3.emeraldAccent.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, v3.emeraldAccent.copy(alpha = 0.35f))
                     ) {
                         Text(
                             text = "View details",
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.SemiBold
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = v3.emeraldAccent,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp
                             ),
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                     }
                 }
                 activity.isAvailable -> {
                     Surface(
                         onClick = onRequestPermission,
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.primary
+                        shape = RoundedCornerShape(9999.dp),
+                        color = v3.emeraldAccent
                     ) {
                         Text(
                             text = "Connect",
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                fontWeight = FontWeight.SemiBold
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color(0xFF101211),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp
                             ),
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
                         )
                     }
                 }
                 else -> {
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh
+                        shape = RoundedCornerShape(9999.dp),
+                        color = v3.surfaceElevated,
+                        border = BorderStroke(1.dp, v3.subtleBorder)
                     ) {
                         Text(
                             text = "Unavailable",
                             style = MaterialTheme.typography.labelSmall.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = v3.textMuted,
+                                fontSize = 10.sp
                             ),
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                         )
                     }
                 }
@@ -1038,6 +1338,7 @@ private fun ActivityDetailsDialog(
     targetCalories: Int,
     onDismiss: () -> Unit
 ) {
+    val v3 = MaterialTheme.v3Colors
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -1046,16 +1347,16 @@ private fun ActivityDetailsDialog(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.DirectionsRun,
+                    imageVector = Icons.AutoMirrored.Filled.DirectionsRun,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = v3.emeraldAccent,
                     modifier = Modifier.size(24.dp)
                 )
                 Text(
                     text = "Health Connect Activity",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = v3.textPrimary
                     )
                 )
             }
@@ -1064,7 +1365,8 @@ private fun ActivityDetailsDialog(
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Surface(
                     shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    color = v3.surfaceElevated,
+                    border = BorderStroke(1.dp, v3.subtleBorder),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
@@ -1075,23 +1377,23 @@ private fun ActivityDetailsDialog(
                             Icon(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = v3.emeraldAccent,
                                 modifier = Modifier.size(16.dp)
                             )
                             Text(
                                 text = "Connected • Google Health Connect",
                                 style = MaterialTheme.typography.labelMedium.copy(
-                                    color = MaterialTheme.colorScheme.primary,
+                                    color = v3.emeraldAccent,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "${java.text.NumberFormat.getNumberInstance(Locale.US).format(activity.stepsToday)} steps today",
+                            text = "${NumberFormat.getNumberInstance(Locale.US).format(activity.stepsToday)} steps today",
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                color = v3.textPrimary,
                                 fontSize = 22.sp
                             )
                         )
@@ -1102,13 +1404,13 @@ private fun ActivityDetailsDialog(
                     text = "Calorie Budget Integration",
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = v3.textPrimary
                     )
                 )
                 Text(
                     text = "Your daily target of $targetCalories kcal is calculated from your profile and baseline activity multiplier. Routine steps sync automatically from Health Connect without double-counting your standard daily burn.",
                     style = MaterialTheme.typography.bodySmall.copy(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = v3.textSecondary,
                         lineHeight = 18.sp
                     )
                 )
@@ -1117,13 +1419,214 @@ private fun ActivityDetailsDialog(
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = v3.emeraldAccent,
+                    contentColor = Color(0xFF101211)
+                )
             ) {
-                Text("Got it")
+                Text("Got it", fontWeight = FontWeight.Bold)
             }
         }
     )
 }
+
+// ============================================================================
+// 6. TODAY'S FUEL LOG / RECENT MEALS SUMMARY (V3 Spec)
+// ============================================================================
+
+@Composable
+private fun HomeFuelLogSection(
+    meals: List<MealCategorySummary>,
+    totalCaloriesLogged: Int,
+    onMealClick: (Long) -> Unit,
+    onAddMealClick: (MealType) -> Unit,
+    onViewAll: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val v3 = MaterialTheme.v3Colors
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Section Header Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = "TODAY'S FUEL LOG",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = v3.textMuted,
+                        letterSpacing = 0.8.sp,
+                        fontSize = 11.sp
+                    )
+                )
+                if (totalCaloriesLogged > 0) {
+                    Text(
+                        text = "• $totalCaloriesLogged kcal",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = v3.emeraldAccent,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 11.sp
+                        )
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .clickable(onClick = onViewAll)
+                    .padding(vertical = 4.dp, horizontal = 2.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "View All",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = v3.emeraldAccent,
+                        fontSize = 11.sp
+                    )
+                )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = v3.emeraldAccent,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+        }
+
+        // Meal Cards for Each Category
+        meals.forEach { category ->
+            val firstMeal = category.meals.firstOrNull()
+            val hasMeals = category.meals.isNotEmpty()
+            val icon: ImageVector = when (category.mealType) {
+                MealType.BREAKFAST -> Icons.Default.WbSunny
+                MealType.LUNCH -> Icons.Default.Restaurant
+                MealType.DINNER -> Icons.Default.DinnerDining
+                MealType.SNACK -> Icons.Default.LocalCafe
+            }
+
+            val itemsSummary = remember(category.meals) {
+                val names = category.meals.flatMap { it.items }.joinToString(", ") { it.name }.trim()
+                if (names.isNotBlank()) names else "Not logged yet • Tap + to log"
+            }
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        if (hasMeals && firstMeal != null) {
+                            onMealClick(firstMeal.meal.id)
+                        } else {
+                            onAddMealClick(category.mealType)
+                        }
+                    },
+                shape = RoundedCornerShape(16.dp),
+                color = v3.surface,
+                border = BorderStroke(1.dp, v3.subtleBorder)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Surface(
+                            modifier = Modifier.size(36.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (hasMeals) v3.emeraldAccent.copy(alpha = 0.15f) else v3.surfaceElevated,
+                            border = BorderStroke(1.dp, if (hasMeals) v3.emeraldAccent.copy(alpha = 0.35f) else v3.subtleBorder)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = null,
+                                    tint = if (hasMeals) v3.emeraldAccent else v3.textMuted,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = category.mealType.label,
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = v3.textPrimary,
+                                    fontSize = 13.sp
+                                )
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = itemsSummary,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = if (hasMeals) v3.textSecondary else v3.textMuted,
+                                    fontSize = 11.sp
+                                ),
+                                maxLines = 1
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (hasMeals) {
+                            Text(
+                                text = "${category.totalCalories.roundToInt()} kcal",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = v3.textPrimary,
+                                    fontSize = 13.sp
+                                )
+                            )
+                        }
+
+                        // Add (+) Button
+                        Surface(
+                            onClick = { onAddMealClick(category.mealType) },
+                            shape = CircleShape,
+                            color = v3.surfaceElevated,
+                            border = BorderStroke(1.dp, v3.subtleBorder),
+                            modifier = Modifier.size(30.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "Add ${category.mealType.label}",
+                                    tint = v3.emeraldAccent,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ============================================================================
+// 7. LAUNCHER WIDGET PROMO CARD (Preserved & Styled with V3 Tokens)
+// ============================================================================
 
 @Composable
 fun HomeWidgetPromoCard(
@@ -1132,10 +1635,12 @@ fun HomeWidgetPromoCard(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val v3 = MaterialTheme.v3Colors
+
     Surface(
-        shape = RoundedCornerShape(24.dp),
-        color = Color(0xFFB0F1CC),
-        border = BorderStroke(1.dp, Color(0xFF94D4B1)),
+        shape = RoundedCornerShape(22.dp),
+        color = if (v3.isDark) Color(0xFF16251D) else Color(0xFFD6F5E4),
+        border = BorderStroke(1.dp, if (v3.isDark) Color(0xFF254633) else Color(0xFFA5E6BF)),
         modifier = modifier.fillMaxWidth()
     ) {
         Box(modifier = Modifier.padding(16.dp)) {
@@ -1149,8 +1654,8 @@ fun HomeWidgetPromoCard(
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Dismiss banner",
-                    tint = Color(0xFF0F5238).copy(alpha = 0.75f),
-                    modifier = Modifier.size(18.dp)
+                    tint = if (v3.isDark) v3.emeraldAccent.copy(alpha = 0.7f) else Color(0xFF0F5238).copy(alpha = 0.75f),
+                    modifier = Modifier.size(16.dp)
                 )
             }
 
@@ -1166,13 +1671,13 @@ fun HomeWidgetPromoCard(
                     modifier = Modifier
                         .size(44.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(Color(0xFF0F5238)),
+                        .background(v3.emeraldAccent),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Eco,
                         contentDescription = "Sproutling",
-                        tint = Color.White,
+                        tint = Color(0xFF101211),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -1182,9 +1687,9 @@ fun HomeWidgetPromoCard(
                         text = "Bring Sproutling to your home screen",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F5238),
-                            fontSize = 17.sp,
-                            lineHeight = 22.sp
+                            color = if (v3.isDark) v3.textPrimary else Color(0xFF0F5238),
+                            fontSize = 16.sp,
+                            lineHeight = 21.sp
                         )
                     )
 
@@ -1193,13 +1698,13 @@ fun HomeWidgetPromoCard(
                     Text(
                         text = "Glance at your calories and track water without opening the app.",
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = Color(0xFF191C1C),
-                            fontSize = 13.sp,
-                            lineHeight = 18.sp
+                            color = if (v3.isDark) v3.textSecondary else Color(0xFF191C1C),
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp
                         )
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -1207,25 +1712,25 @@ fun HomeWidgetPromoCard(
                     ) {
                         Surface(
                             onClick = onAddWidget,
-                            shape = RoundedCornerShape(20.dp),
-                            color = Color(0xFF0F5238)
+                            shape = RoundedCornerShape(9999.dp),
+                            color = v3.emeraldAccent
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Widgets,
                                     contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(16.dp)
+                                    tint = Color(0xFF101211),
+                                    modifier = Modifier.size(15.dp)
                                 )
                                 Text(
                                     text = "Add widget",
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontWeight = FontWeight.Bold,
-                                        color = Color.White,
+                                        color = Color(0xFF101211),
                                         fontSize = 12.sp
                                     )
                                 )
@@ -1244,15 +1749,15 @@ fun HomeWidgetPromoCard(
                                 text = "Widget settings",
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFF0F5238),
+                                    color = if (v3.isDark) v3.emeraldAccent else Color(0xFF0F5238),
                                     fontSize = 12.sp
                                 )
                             )
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                 contentDescription = null,
-                                tint = Color(0xFF0F5238),
-                                modifier = Modifier.size(16.dp)
+                                tint = if (v3.isDark) v3.emeraldAccent else Color(0xFF0F5238),
+                                modifier = Modifier.size(15.dp)
                             )
                         }
                     }
@@ -1261,4 +1766,3 @@ fun HomeWidgetPromoCard(
         }
     }
 }
-

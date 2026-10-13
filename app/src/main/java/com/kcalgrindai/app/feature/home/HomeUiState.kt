@@ -51,5 +51,7 @@ data class HomeUiState(
     val mealsGrouped: List<MealCategorySummary> = emptyList(),
     val hasLoggedMealsToday: Boolean = false,
     val streakDays: Int = 0,
-    val showWidgetPromoCard: Boolean = false
+    val showWidgetPromoCard: Boolean = false,
+    val sproutlingMood: com.kcalgrindai.app.domain.model.SproutlingMood = com.kcalgrindai.app.domain.model.SproutlingMood.RESTING,
+    val goalLabel: String = ""
 )

@@ -6,6 +6,7 @@ import com.kcalgrindai.app.domain.model.FoodLogItem
 import com.kcalgrindai.app.domain.model.ItemSource
 import com.kcalgrindai.app.domain.model.LogSource
 import com.kcalgrindai.app.domain.model.MealLog
+import com.kcalgrindai.app.domain.model.GoalType
 import com.kcalgrindai.app.domain.model.MealType
 import com.kcalgrindai.app.domain.model.NutritionGoal
 import com.kcalgrindai.app.fakes.FakeMealLogRepository
@@ -234,6 +235,135 @@ class HomeViewModelTest {
         val stateAfterUndo = viewModel.uiState.value
         assertEquals(250, stateAfterUndo.water.consumedMl)
         assertEquals(1, stateAfterUndo.water.logsCountToday)
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `missing target and empty diary gracefully falls back to default 2000 kcal and resting sproutling mood`() = runTest {
+        // No goal saved, no meals saved
+        val viewModel = HomeViewModel(
+            mealLogRepository = mealLogRepository,
+            nutritionGoalRepository = nutritionGoalRepository,
+            userProfileRepository = userProfileRepository,
+            waterLogRepository = waterLogRepository,
+            healthConnectManager = healthConnectManager
+        )
+        val collectJob = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(2000, state.targetCalories)
+        assertEquals(0, state.consumedCalories)
+        assertEquals(2000, state.remainingCalories)
+        assertEquals(com.kcalgrindai.app.domain.model.SproutlingMood.RESTING, state.sproutlingMood)
+        assertFalse(state.hasLoggedMealsToday)
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `over budget calorie consumption updates remainingCalories and sproutlingMood`() = runTest {
+        nutritionGoalRepository.saveGoal(
+            NutritionGoal(
+                id = 1L,
+                userId = 1L,
+                calories = 2000,
+                proteinG = 150.0,
+                carbsG = 200.0,
+                fatG = 65.0,
+                waterLiters = 2.4,
+                waterGlasses = 8,
+                bmr = 1750.0,
+                tdee = 2000.0,
+                isCustom = false,
+                updatedAt = System.currentTimeMillis()
+            )
+        )
+
+        val todayStr = LocalDate.now().toString()
+        val meal = MealLog(
+            id = 10L,
+            date = todayStr,
+            mealType = MealType.DINNER,
+            totalCalories = 2400.0,
+            loggedAt = System.currentTimeMillis(),
+            source = LogSource.MANUAL,
+            synced = true
+        )
+        val items = listOf(
+            FoodLogItem(
+                id = 10L,
+                mealLogId = 10L,
+                name = "Steak and Fries",
+                servingDescription = "1 plate",
+                servingGrams = 600.0,
+                calories = 2400.0,
+                proteinG = 120.0,
+                carbsG = 150.0,
+                fatG = 90.0,
+                fiberG = 6.0,
+                source = ItemSource.MANUAL,
+                confirmed = true
+            )
+        )
+        mealLogRepository.saveMeal(meal, items)
+
+        val viewModel = HomeViewModel(
+            mealLogRepository = mealLogRepository,
+            nutritionGoalRepository = nutritionGoalRepository,
+            userProfileRepository = userProfileRepository,
+            waterLogRepository = waterLogRepository,
+            healthConnectManager = healthConnectManager
+        )
+        val collectJob = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(2000, state.targetCalories)
+        assertEquals(2400, state.consumedCalories)
+        assertEquals(-400, state.remainingCalories)
+        assertEquals(com.kcalgrindai.app.domain.model.SproutlingMood.CONTENT, state.sproutlingMood)
+        assertTrue(state.hasLoggedMealsToday)
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `user profile name and goal label are mapped into HomeUiState`() = runTest {
+        val now = System.currentTimeMillis()
+        userProfileRepository.saveProfile(
+            com.kcalgrindai.app.domain.model.UserProfile(
+                id = 1L,
+                firstName = "Alex",
+                goal = GoalType.MUSCLE,
+                units = com.kcalgrindai.app.domain.model.UnitSystem.METRIC,
+                age = 28,
+                heightCm = 180.0,
+                weightKg = 78.0,
+                goalWeightKg = 82.0,
+                activityLevel = com.kcalgrindai.app.domain.model.ActivityLevel.MODERATE,
+                dietTags = emptyList(),
+                allergies = emptyList(),
+                targetsSource = com.kcalgrindai.app.domain.model.TargetBasis.RECOMMENDED,
+                createdAt = now,
+                updatedAt = now
+            )
+        )
+
+        val viewModel = HomeViewModel(
+            mealLogRepository = mealLogRepository,
+            nutritionGoalRepository = nutritionGoalRepository,
+            userProfileRepository = userProfileRepository,
+            waterLogRepository = waterLogRepository,
+            healthConnectManager = healthConnectManager
+        )
+        val collectJob = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals("Alex", state.userName)
+        assertEquals("Build muscle", state.goalLabel)
 
         collectJob.cancel()
     }

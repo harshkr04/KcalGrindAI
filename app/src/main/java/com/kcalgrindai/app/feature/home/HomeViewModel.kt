@@ -210,6 +210,14 @@ class HomeViewModel @Inject constructor(
             )
         }
 
+        val mood = when {
+            consumedCalories <= 0.0 -> com.kcalgrindai.app.domain.model.SproutlingMood.RESTING
+            remainingCalories == 0 -> com.kcalgrindai.app.domain.model.SproutlingMood.ENERGIZED
+            remainingCalories < 0 -> com.kcalgrindai.app.domain.model.SproutlingMood.CONTENT
+            else -> com.kcalgrindai.app.domain.model.SproutlingMood.ACTIVE
+        }
+        val goalLabel = profile?.goal?.label ?: "Fitness Mission"
+
         HomeUiState(
             isLoading = false,
             userName = profile?.firstName?.takeIf { it.isNotBlank() } ?: "there",
@@ -227,7 +235,9 @@ class HomeViewModel @Inject constructor(
             mealsGrouped = grouped,
             hasLoggedMealsToday = validMealsWithItems.isNotEmpty(),
             streakDays = streakDays,
-            showWidgetPromoCard = !promoDismissed
+            showWidgetPromoCard = !promoDismissed,
+            sproutlingMood = mood,
+            goalLabel = goalLabel
         )
     }.stateIn(
         scope = viewModelScope,

@@ -30,14 +30,20 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kcalgrindai.app.core.designsystem.v3Colors
+
 @Composable
 fun KcalGrindBackButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
-    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    containerColor: Color? = null,
+    contentColor: Color? = null,
     contentDescription: String = "Navigate back"
 ) {
+    val v3 = MaterialTheme.v3Colors
+    val resolvedContainer = containerColor ?: v3.surfaceElevated
+    val resolvedContent = contentColor ?: v3.textPrimary
+
     Box(
         modifier = modifier
             .size(48.dp)
@@ -46,7 +52,7 @@ fun KcalGrindBackButton(
     ) {
         Surface(
             modifier = Modifier.size(38.dp),
-            color = containerColor,
+            color = resolvedContainer,
             shape = CircleShape,
             shadowElevation = 1.dp
         ) {
@@ -54,7 +60,7 @@ fun KcalGrindBackButton(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = contentDescription,
-                    tint = contentColor,
+                    tint = resolvedContent,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -68,6 +74,7 @@ fun KcalGrindTopBar(
     onBackClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -90,7 +97,7 @@ fun KcalGrindTopBar(
                 text = title,
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = v3.textPrimary
                 ),
                 modifier = Modifier.padding(start = 12.dp)
             )
@@ -105,6 +112,7 @@ fun OnboardingTopBar(
     onBackClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val v3 = MaterialTheme.v3Colors
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -127,14 +135,14 @@ fun OnboardingTopBar(
                 text = "Step $currentStep of $totalSteps",
                 style = MaterialTheme.typography.labelLarge.copy(
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = v3.emeraldAccent
                 )
             )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // True Segmented Capsule Bar per MyFitnessPal design pattern
+        // True Segmented Capsule Bar per V3 design system
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -148,8 +156,8 @@ fun OnboardingTopBar(
                         .fillMaxHeight()
                         .clip(CircleShape)
                         .background(
-                            if (step <= currentStep) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.45f)
+                            if (step <= currentStep) v3.emeraldAccent
+                            else v3.progressTrack
                         )
                         .semantics {
                             contentDescription = "Step segment $step of $totalSteps"
