@@ -3,6 +3,7 @@ package com.kcalgrindai.app.feature.profile
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,13 +29,16 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.kcalgrindai.app.core.designsystem.v3Colors
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -117,15 +122,16 @@ fun ProfileScreen(
     var showPersonalInfoDialog by remember { mutableStateOf(false) }
     var showSecurityDialog by remember { mutableStateOf(false) }
     var showAvatarDialog by remember { mutableStateOf(false) }
-    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val v3 = MaterialTheme.v3Colors
 
     Scaffold(
         topBar = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(v3.background)
                     .statusBarsPadding()
-                    .padding(horizontal = 20.dp, vertical = 14.dp)
+                    .padding(horizontal = 20.dp, vertical = 12.dp)
             ) {
                 KcalGrindBackButton(
                     onClick = onNavigateBack,
@@ -133,41 +139,69 @@ fun ProfileScreen(
                 )
 
                 Text(
-                    text = "Profile",
+                    text = "Settings & Profile",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 20.sp
+                        color = v3.textPrimary,
+                        fontSize = 19.sp
                     ),
                     modifier = Modifier.align(Alignment.Center)
                 )
+
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = v3.surfaceElevated,
+                    border = BorderStroke(1.dp, v3.subtleBorder),
+                    modifier = Modifier.align(Alignment.CenterEnd)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(v3.emeraldAccent)
+                        )
+                        Text(
+                            text = if (syncState is SyncState.Syncing) "Syncing…" else "Synced",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Medium,
+                                color = v3.textSecondary,
+                                fontSize = 11.sp
+                            )
+                        )
+                    }
+                }
             }
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = v3.background
     ) { paddingValues ->
         when (val state = uiState) {
             is ProfileUiState.Loading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background)
+                        .background(v3.background)
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    CircularProgressIndicator(color = v3.emeraldAccent)
                 }
             }
             is ProfileUiState.Empty -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background)
+                        .background(v3.background)
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "No profile found. Please complete onboarding.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = v3.textSecondary
                     )
                 }
             }
@@ -182,7 +216,7 @@ fun ProfileScreen(
                             ?.split(".", "_", "-")
                             ?.joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
                             ?.takeIf { it.isNotBlank() }
-                        ?: "User"
+                        ?: "Alex"
                 }
 
                 // Subtitle email with honest fallback
@@ -201,103 +235,164 @@ fun ProfileScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background)
+                        .background(v3.background)
                         .padding(paddingValues)
                         .padding(horizontal = 20.dp)
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    // Avatar with Edit Badge (Exclusively edits avatar theme)
-                    Box(
-                        contentAlignment = Alignment.BottomEnd,
-                        modifier = Modifier.size(82.dp)
+                    // User Profile Hero Card (V3 Liquid Glass style)
+                    Surface(
+                        shape = RoundedCornerShape(24.dp),
+                        color = v3.surfaceElevated,
+                        border = BorderStroke(1.dp, v3.subtleBorder),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Surface(
-                            modifier = Modifier.size(80.dp),
-                            shape = CircleShape,
-                            color = avatarColor ?: MaterialTheme.colorScheme.primaryContainer,
-                            border = BorderStroke(2.dp, MaterialTheme.colorScheme.surface),
-                            shadowElevation = 2.dp
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(
-                                    text = displayName.take(1).uppercase(),
-                                    style = MaterialTheme.typography.headlineMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (avatarColor != null) Color.White else MaterialTheme.colorScheme.primary
-                                    )
-                                )
-                            }
-                        }
-
-                        // Emerald Green Edit Badge Button (Exclusively edits avatar)
-                        Surface(
+                        Row(
                             modifier = Modifier
-                                .size(26.dp)
-                                .clip(CircleShape)
-                                .clickable { showAvatarDialog = true },
-                            shape = CircleShape,
-                            color = Color(0xFF10B981),
-                            border = BorderStroke(2.dp, MaterialTheme.colorScheme.surface)
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = "Change Profile Picture",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(13.dp)
+                            // Avatar with emerald ring
+                            Box(
+                                modifier = Modifier.size(68.dp),
+                                contentAlignment = Alignment.BottomEnd
+                            ) {
+                                Surface(
+                                    modifier = Modifier.size(64.dp),
+                                    shape = CircleShape,
+                                    color = avatarColor ?: v3.surface,
+                                    border = BorderStroke(2.dp, v3.emeraldAccent)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(
+                                            text = displayName.take(1).uppercase(),
+                                            style = MaterialTheme.typography.titleLarge.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (avatarColor != null) Color.White else v3.emeraldAccent,
+                                                fontSize = 24.sp
+                                            )
+                                        )
+                                    }
+                                }
+                                // Edit Badge (Tap to customize avatar theme)
+                                Surface(
+                                    modifier = Modifier
+                                        .size(22.dp)
+                                        .clip(CircleShape)
+                                        .clickable { showAvatarDialog = true },
+                                    shape = CircleShape,
+                                    color = v3.emeraldAccent,
+                                    border = BorderStroke(1.5.dp, v3.surfaceElevated)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Default.Edit,
+                                            contentDescription = "Change Profile Picture",
+                                            tint = if (v3.isDark) Color(0xFF101211) else Color.White,
+                                            modifier = Modifier.size(11.dp)
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Details
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = displayName,
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = v3.textPrimary,
+                                            fontSize = 17.sp
+                                        ),
+                                        maxLines = 1,
+                                        modifier = Modifier.weight(1f, fill = false)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = v3.emeraldAccent.copy(alpha = 0.15f),
+                                        border = BorderStroke(1.dp, v3.emeraldAccent.copy(alpha = 0.4f))
+                                    ) {
+                                        Text(
+                                            text = if (state.isPro) "Pro Member • Active" else "Active",
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                color = v3.emeraldAccent,
+                                                fontSize = 10.sp
+                                            ),
+                                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(2.dp))
+
+                                Text(
+                                    text = userEmail,
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = v3.textSecondary,
+                                        fontSize = 12.sp
+                                    ),
+                                    maxLines = 1
                                 )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // Connected tag pill
+                                val isCloudUser = profile.email?.isNotBlank() == true
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = v3.surface,
+                                        border = BorderStroke(1.dp, v3.subtleBorder)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(5.dp)
+                                                    .clip(CircleShape)
+                                                    .background(if (isCloudUser) v3.emeraldAccent else Color(0xFF38B2AC))
+                                            )
+                                            Text(
+                                                text = if (isCloudUser) "Google Connected" else "Guest Account",
+                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = v3.textPrimary,
+                                                    fontSize = 10.sp
+                                                )
+                                            )
+                                        }
+                                    }
+                                    Text(
+                                        text = if (isCloudUser) "Cloud Active" else "Local Data Safe",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = v3.textMuted,
+                                            fontSize = 10.sp
+                                        )
+                                    )
+                                }
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // User Name & PRO Badge
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = displayName,
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontSize = 21.sp
-                            )
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (isDark) MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f) else Color(0xFFEEF2FF),
-                            border = BorderStroke(1.dp, if (isDark) MaterialTheme.colorScheme.tertiary.copy(alpha = 0.4f) else Color(0xFFC7D2FE))
-                        ) {
-                            Text(
-                                text = "PRO",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isDark) MaterialTheme.colorScheme.tertiary else Color(0xFF4F46E5),
-                                    fontSize = 11.sp
-                                ),
-                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(3.dp))
-
-                    // Subtitle Email
-                    Text(
-                        text = userEmail,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 13.sp
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.height(22.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     // 1. HEALTH PROFILE SECTION
                     ProfileSectionCard {
@@ -310,15 +405,15 @@ fun ProfileScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 SectionIconBox(
                                     icon = Icons.Default.Person,
-                                    iconTint = Color(0xFF4F46E5),
-                                    backgroundColor = Color(0xFFEEF2FF)
+                                    iconTint = v3.emeraldAccent,
+                                    backgroundColor = v3.emeraldAccent.copy(alpha = 0.12f)
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
                                     text = "Health Profile",
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        color = v3.textPrimary,
                                         fontSize = 16.sp
                                     )
                                 )
@@ -330,14 +425,14 @@ fun ProfileScreen(
                                     .clip(RoundedCornerShape(12.dp))
                                     .clickable { showEditMetricsDialog = true },
                                 shape = RoundedCornerShape(12.dp),
-                                color = if (isDark) MaterialTheme.colorScheme.surfaceContainerHigh else Color(0xFFF1F5F9),
-                                border = BorderStroke(1.dp, if (isDark) MaterialTheme.colorScheme.outlineVariant else Color(0xFFE2E8F0))
+                                color = v3.surface,
+                                border = BorderStroke(1.dp, v3.subtleBorder)
                             ) {
                                 Text(
                                     text = "Edit",
                                     style = MaterialTheme.typography.labelMedium.copy(
                                         fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        color = v3.textPrimary,
                                         fontSize = 12.sp
                                     ),
                                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp)
@@ -405,7 +500,190 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // 2. ACCOUNT SETTINGS SECTION
+                    // 2. NUTRITION GOALS & TARGETS SECTION (V3 Feature)
+                    val goalEntity = state.goal
+                    val targetCalories = goalEntity?.calories ?: 2440
+                    val proteinG = goalEntity?.proteinG?.toInt() ?: 183
+                    val carbsG = goalEntity?.carbsG?.toInt() ?: 275
+                    val fatG = goalEntity?.fatG?.toInt() ?: 68
+
+                    ProfileSectionCard {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                SectionIconBox(
+                                    icon = Icons.Default.LocalFireDepartment,
+                                    iconTint = v3.emeraldAccent,
+                                    backgroundColor = v3.emeraldAccent.copy(alpha = 0.12f)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = "Nutrition Goals & Targets",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = v3.textPrimary,
+                                        fontSize = 16.sp
+                                    )
+                                )
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = v3.emeraldAccent.copy(alpha = 0.15f),
+                                border = BorderStroke(1.dp, v3.emeraldAccent.copy(alpha = 0.4f))
+                            ) {
+                                Text(
+                                    text = "$targetCalories kcal",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = v3.emeraldAccent,
+                                        fontSize = 11.sp
+                                    ),
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Macro ratio target breakdown with tri-color bar
+                        val totalMacroKcal = (proteinG * 4) + (carbsG * 4) + (fatG * 9)
+                        val proteinPct = if (totalMacroKcal > 0) ((proteinG * 4f) / totalMacroKcal) else 0.3f
+                        val carbsPct = if (totalMacroKcal > 0) ((carbsG * 4f) / totalMacroKcal) else 0.45f
+                        val fatPct = if (totalMacroKcal > 0) ((fatG * 9f) / totalMacroKcal) else 0.25f
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(v3.surface)
+                                .border(1.dp, v3.subtleBorder, RoundedCornerShape(12.dp))
+                                .padding(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Macro Target Distribution",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = v3.textSecondary,
+                                        fontSize = 11.sp
+                                    )
+                                )
+                                Text(
+                                    text = "${(proteinPct * 100).toInt()}% P / ${(carbsPct * 100).toInt()}% C / ${(fatPct * 100).toInt()}% F",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = v3.textPrimary,
+                                        fontSize = 11.sp
+                                    )
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Tri-color horizontal progress bar
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(8.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(v3.progressTrack)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .weight(proteinPct.coerceAtLeast(0.05f))
+                                        .fillMaxHeight()
+                                        .background(v3.emeraldAccent)
+                                )
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .weight(carbsPct.coerceAtLeast(0.05f))
+                                        .fillMaxHeight()
+                                        .background(Color(0xFFF1C40F))
+                                )
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .weight(fatPct.coerceAtLeast(0.05f))
+                                        .fillMaxHeight()
+                                        .background(Color(0xFF3498DB))
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .clip(CircleShape)
+                                            .background(v3.emeraldAccent)
+                                    )
+                                    Text(
+                                        text = "${proteinG}g Protein",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = v3.textMuted,
+                                            fontSize = 10.sp
+                                        )
+                                    )
+                                }
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFFF1C40F))
+                                    )
+                                    Text(
+                                        text = "${carbsG}g Carbs",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = v3.textMuted,
+                                            fontSize = 10.sp
+                                        )
+                                    )
+                                }
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFF3498DB))
+                                    )
+                                    Text(
+                                        text = "${fatG}g Fat",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = v3.textMuted,
+                                            fontSize = 10.sp
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // 3. ACCOUNT SETTINGS SECTION
                     ProfileSectionCard {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -414,14 +692,14 @@ fun ProfileScreen(
                             SectionIconBox(
                                 icon = Icons.Default.Settings,
                                 iconTint = Color(0xFF0284C7),
-                                backgroundColor = Color(0xFFE0F2FE)
+                                backgroundColor = Color(0xFF0284C7).copy(alpha = 0.12f)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
                                 text = "Account Settings",
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface,
+                                    color = v3.textPrimary,
                                     fontSize = 16.sp
                                 )
                             )
@@ -456,7 +734,7 @@ fun ProfileScreen(
                                 text = "Subscription",
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onSurface,
+                                    color = v3.textPrimary,
                                     fontSize = 14.sp
                                 )
                             )
@@ -465,12 +743,13 @@ fun ProfileScreen(
                                 val isPro = state.isPro
                                 Surface(
                                     shape = RoundedCornerShape(8.dp),
-                                    color = if (isPro) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surfaceVariant
+                                    color = if (isPro) v3.emeraldAccent.copy(alpha = 0.15f) else v3.surface,
+                                    border = BorderStroke(1.dp, if (isPro) v3.emeraldAccent.copy(alpha = 0.4f) else v3.subtleBorder)
                                 ) {
                                     Text(
                                         text = if (isPro) "Pro • Active" else "Free Plan • Upgrade",
                                         style = MaterialTheme.typography.labelSmall.copy(
-                                            color = if (isPro) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            color = if (isPro) v3.emeraldAccent else v3.textSecondary,
                                             fontWeight = FontWeight.SemiBold,
                                             fontSize = 11.sp
                                         ),
@@ -481,7 +760,7 @@ fun ProfileScreen(
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                    tint = v3.textMuted,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -490,7 +769,7 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // 3. PREFERENCES SECTION
+                    // 4. PREFERENCES SECTION
                     ProfileSectionCard {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -498,15 +777,15 @@ fun ProfileScreen(
                         ) {
                             SectionIconBox(
                                 icon = Icons.Default.Tune,
-                                iconTint = Color(0xFF059669),
-                                backgroundColor = Color(0xFFECFDF5)
+                                iconTint = v3.emeraldAccent,
+                                backgroundColor = v3.emeraldAccent.copy(alpha = 0.12f)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
                                 text = "Preferences",
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface,
+                                    color = v3.textPrimary,
                                     fontSize = 16.sp
                                 )
                             )
@@ -527,14 +806,14 @@ fun ProfileScreen(
                                     text = "Units",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        color = v3.textPrimary,
                                         fontSize = 14.sp
                                     )
                                 )
                                 Text(
                                     text = if (isMetric) "Metric (kg, cm, ml)" else "Imperial (lb, ft, oz)",
                                     style = MaterialTheme.typography.bodySmall.copy(
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = v3.textSecondary,
                                         fontSize = 12.sp
                                     )
                                 )
@@ -545,14 +824,14 @@ fun ProfileScreen(
                                     .clip(RoundedCornerShape(12.dp))
                                     .clickable { viewModel.toggleUnitSystem() },
                                 shape = RoundedCornerShape(12.dp),
-                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                                color = v3.surface,
+                                border = BorderStroke(1.dp, v3.subtleBorder)
                             ) {
                                 Text(
                                     text = "Change",
                                     style = MaterialTheme.typography.labelMedium.copy(
                                         fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        color = v3.textPrimary,
                                         fontSize = 12.sp
                                     ),
                                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp)
@@ -575,14 +854,14 @@ fun ProfileScreen(
                                     text = "Notifications",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        color = v3.textPrimary,
                                         fontSize = 14.sp
                                     )
                                 )
                                 Text(
                                     text = "Meal reminders, Insights",
                                     style = MaterialTheme.typography.bodySmall.copy(
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = v3.textSecondary,
                                         fontSize = 12.sp
                                     )
                                 )
@@ -593,9 +872,9 @@ fun ProfileScreen(
                                 onCheckedChange = { viewModel.setNotificationsEnabled(it) },
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.White,
-                                    checkedTrackColor = MaterialTheme.colorScheme.primary,
-                                    uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                                    checkedTrackColor = v3.emeraldAccent,
+                                    uncheckedThumbColor = v3.textMuted,
+                                    uncheckedTrackColor = v3.surface
                                 )
                             )
                         }
@@ -617,7 +896,7 @@ fun ProfileScreen(
                                     text = "Theme",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        color = v3.textPrimary,
                                         fontSize = 14.sp
                                     )
                                 )
@@ -628,7 +907,7 @@ fun ProfileScreen(
                                         com.kcalgrindai.app.domain.model.ThemeMode.DARK -> "Dark Mode"
                                     },
                                     style = MaterialTheme.typography.bodySmall.copy(
-                                        color = MaterialTheme.colorScheme.primary,
+                                        color = v3.emeraldAccent,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.SemiBold
                                     )
@@ -648,10 +927,10 @@ fun ProfileScreen(
                                     Surface(
                                         onClick = { viewModel.setThemeMode(mode) },
                                         shape = RoundedCornerShape(12.dp),
-                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                        color = if (isSelected) v3.emeraldAccent else v3.surface,
                                         border = BorderStroke(
                                             1.dp,
-                                            if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                                            if (isSelected) v3.emeraldAccent else v3.subtleBorder
                                         ),
                                         modifier = Modifier
                                             .weight(1f)
@@ -662,7 +941,11 @@ fun ProfileScreen(
                                                 text = label,
                                                 style = MaterialTheme.typography.labelMedium.copy(
                                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    color = if (isSelected) {
+                                                        if (v3.isDark) Color(0xFF101211) else Color.White
+                                                    } else {
+                                                        v3.textSecondary
+                                                    },
                                                     fontSize = 12.sp
                                                 )
                                             )
@@ -689,14 +972,14 @@ fun ProfileScreen(
                                     text = "Home Screen Widget",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        color = v3.textPrimary,
                                         fontSize = 14.sp
                                     )
                                 )
                                 Text(
                                     text = "Glance companion preview & privacy controls",
                                     style = MaterialTheme.typography.bodySmall.copy(
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = v3.textSecondary,
                                         fontSize = 12.sp
                                     )
                                 )
@@ -704,7 +987,7 @@ fun ProfileScreen(
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                 contentDescription = "Open Home Screen Widget settings",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                tint = v3.textMuted,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -712,7 +995,7 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // 4. INTEGRATIONS SECTION
+                    // 5. INTEGRATIONS SECTION
                     ProfileSectionCard {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -721,14 +1004,14 @@ fun ProfileScreen(
                             SectionIconBox(
                                 icon = Icons.Default.Sync,
                                 iconTint = Color(0xFFD97706),
-                                backgroundColor = Color(0xFFFFFBEB)
+                                backgroundColor = Color(0xFFD97706).copy(alpha = 0.12f)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
                                 text = "Integrations",
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface,
+                                    color = v3.textPrimary,
                                     fontSize = 16.sp
                                 )
                             )
@@ -749,14 +1032,14 @@ fun ProfileScreen(
                                     text = "Health Connect",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        color = v3.textPrimary,
                                         fontSize = 14.sp
                                     )
                                 )
                                 Text(
                                     text = "Sync daily step count",
                                     style = MaterialTheme.typography.bodySmall.copy(
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = v3.textSecondary,
                                         fontSize = 12.sp
                                     )
                                 )
@@ -765,8 +1048,8 @@ fun ProfileScreen(
                             if (hasHealthConnectPermission) {
                                 Surface(
                                     shape = RoundedCornerShape(12.dp),
-                                    color = if (isDark) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else Color(0xFFECFDF5),
-                                    border = BorderStroke(1.dp, if (isDark) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else Color(0xFFA7F3D0))
+                                    color = v3.emeraldAccent.copy(alpha = 0.15f),
+                                    border = BorderStroke(1.dp, v3.emeraldAccent.copy(alpha = 0.4f))
                                 ) {
                                     Row(
                                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
@@ -775,7 +1058,7 @@ fun ProfileScreen(
                                         Icon(
                                             imageVector = Icons.Default.Check,
                                             contentDescription = null,
-                                            tint = if (isDark) MaterialTheme.colorScheme.primary else Color(0xFF047857),
+                                            tint = v3.emeraldAccent,
                                             modifier = Modifier.size(14.dp)
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
@@ -783,7 +1066,7 @@ fun ProfileScreen(
                                             text = "Connected",
                                             style = MaterialTheme.typography.labelMedium.copy(
                                                 fontWeight = FontWeight.SemiBold,
-                                                color = if (isDark) MaterialTheme.colorScheme.primary else Color(0xFF047857),
+                                                color = v3.emeraldAccent,
                                                 fontSize = 12.sp
                                             )
                                         )
@@ -797,14 +1080,14 @@ fun ProfileScreen(
                                             permissionLauncher.launch(viewModel.requiredHealthConnectPermissions)
                                         },
                                     shape = RoundedCornerShape(12.dp),
-                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                                    color = v3.surface,
+                                    border = BorderStroke(1.dp, v3.subtleBorder)
                                 ) {
                                     Text(
                                         text = "Connect",
                                         style = MaterialTheme.typography.labelMedium.copy(
                                             fontWeight = FontWeight.SemiBold,
-                                            color = MaterialTheme.colorScheme.primary,
+                                            color = v3.emeraldAccent,
                                             fontSize = 12.sp
                                         ),
                                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp)
@@ -839,31 +1122,28 @@ fun ProfileScreen(
                                     text = "Cloud Sync",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        color = v3.textPrimary,
                                         fontSize = 14.sp
                                     )
                                 )
                                 Text(
                                     text = lastSyncText,
                                     style = MaterialTheme.typography.bodySmall.copy(
-                                        color = if (isSyncing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = if (isSyncing) v3.emeraldAccent else v3.textSecondary,
                                         fontSize = 12.sp,
                                         fontWeight = if (isSyncing) FontWeight.Medium else FontWeight.Normal
                                     )
                                 )
                             }
 
-                            val syncButtonBg = if (isSyncing) {
-                                if (isDark) MaterialTheme.colorScheme.surfaceContainerHigh else Color(0xFFE2E8F0)
-                            } else {
-                                MaterialTheme.colorScheme.primary
-                            }
+                            val syncButtonBg = if (isSyncing) v3.surface else v3.emeraldAccent
                             Surface(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
                                     .clickable(enabled = !isSyncing) { viewModel.onSyncNow() },
                                 shape = RoundedCornerShape(12.dp),
-                                color = syncButtonBg
+                                color = syncButtonBg,
+                                border = if (isSyncing) BorderStroke(1.dp, v3.subtleBorder) else null
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
@@ -872,7 +1152,7 @@ fun ProfileScreen(
                                     if (isSyncing) {
                                         CircularProgressIndicator(
                                             modifier = Modifier.size(14.dp),
-                                            color = MaterialTheme.colorScheme.primary,
+                                            color = v3.emeraldAccent,
                                             strokeWidth = 2.dp
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
@@ -880,7 +1160,7 @@ fun ProfileScreen(
                                             text = "Syncing…",
                                             style = MaterialTheme.typography.labelMedium.copy(
                                                 fontWeight = FontWeight.SemiBold,
-                                                color = MaterialTheme.colorScheme.onSurface,
+                                                color = v3.textPrimary,
                                                 fontSize = 12.sp
                                             )
                                         )
@@ -889,7 +1169,7 @@ fun ProfileScreen(
                                             text = "Sync Now",
                                             style = MaterialTheme.typography.labelMedium.copy(
                                                 fontWeight = FontWeight.SemiBold,
-                                                color = MaterialTheme.colorScheme.onPrimary,
+                                                color = if (v3.isDark) Color(0xFF101211) else Color.White,
                                                 fontSize = 12.sp
                                             )
                                         )
@@ -902,15 +1182,11 @@ fun ProfileScreen(
                         when (val s = syncState) {
                             is SyncState.Success -> {
                                 Spacer(modifier = Modifier.height(8.dp))
-                                val successBg = if (isDark) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else Color(0xFFECFDF5)
-                                val successBorder = if (isDark) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f) else Color(0xFFA7F3D0)
-                                val successText = if (isDark) MaterialTheme.colorScheme.primary else Color(0xFF047857)
-                                val successMsgText = if (isDark) MaterialTheme.colorScheme.onSurface else Color(0xFF065F46)
                                 Surface(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(10.dp),
-                                    color = successBg,
-                                    border = BorderStroke(1.dp, successBorder)
+                                    color = v3.emeraldAccent.copy(alpha = 0.12f),
+                                    border = BorderStroke(1.dp, v3.emeraldAccent.copy(alpha = 0.35f))
                                 ) {
                                     Row(
                                         modifier = Modifier.padding(10.dp),
@@ -919,14 +1195,14 @@ fun ProfileScreen(
                                         Icon(
                                             imageVector = Icons.Default.Check,
                                             contentDescription = null,
-                                            tint = successText,
+                                            tint = v3.emeraldAccent,
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
                                             text = "Sync complete. All food logs & targets updated.",
                                             style = MaterialTheme.typography.bodySmall.copy(
-                                                color = successMsgText,
+                                                color = v3.textPrimary,
                                                 fontSize = 12.sp
                                             )
                                         )
@@ -940,8 +1216,8 @@ fun ProfileScreen(
                                         .fillMaxWidth()
                                         .clickable { viewModel.dismissSyncResult() },
                                     shape = RoundedCornerShape(10.dp),
-                                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
-                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
+                                    color = Color(0xFFEF4444).copy(alpha = 0.12f),
+                                    border = BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.35f))
                                 ) {
                                     Row(
                                         modifier = Modifier.padding(10.dp),
@@ -950,14 +1226,14 @@ fun ProfileScreen(
                                         Icon(
                                             imageVector = Icons.Default.Close,
                                             contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.error,
+                                            tint = Color(0xFFEF4444),
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
                                             text = s.message,
                                             style = MaterialTheme.typography.bodySmall.copy(
-                                                color = MaterialTheme.colorScheme.error,
+                                                color = Color(0xFFEF4444),
                                                 fontSize = 12.sp
                                             )
                                         )
@@ -970,7 +1246,7 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(26.dp))
 
-                    // 5. SIGN OUT BUTTON (Red Pill)
+                    // 6. SIGN OUT BUTTON (V3 Styled)
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -981,8 +1257,8 @@ fun ProfileScreen(
                                 }
                             },
                         shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.4f))
+                        color = Color(0xFFEF4444).copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.35f))
                     ) {
                         Row(
                             modifier = Modifier
@@ -994,7 +1270,7 @@ fun ProfileScreen(
                             Icon(
                                 imageVector = LogoutIcon,
                                 contentDescription = "Sign Out",
-                                tint = MaterialTheme.colorScheme.error,
+                                tint = Color(0xFFEF4444),
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -1002,7 +1278,7 @@ fun ProfileScreen(
                                 text = "Sign Out",
                                 style = MaterialTheme.typography.labelLarge.copy(
                                     fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.error,
+                                    color = Color(0xFFEF4444),
                                     fontSize = 15.sp
                                 )
                             )
@@ -1377,12 +1653,12 @@ fun ProfileScreen(
 private fun ProfileSectionCard(
     content: @Composable () -> Unit
 ) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
-        shadowElevation = 1.dp
+        color = v3.surfaceElevated,
+        border = BorderStroke(1.dp, v3.subtleBorder)
     ) {
         Column(
             modifier = Modifier.padding(18.dp)
@@ -1398,11 +1674,12 @@ private fun SectionIconBox(
     iconTint: Color,
     backgroundColor: Color
 ) {
-    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val v3 = MaterialTheme.v3Colors
     Surface(
-        modifier = Modifier.size(32.dp),
-        shape = RoundedCornerShape(8.dp),
-        color = if (isDark) MaterialTheme.colorScheme.surfaceContainerHigh else backgroundColor
+        modifier = Modifier.size(34.dp),
+        shape = RoundedCornerShape(10.dp),
+        color = if (v3.isDark) v3.surface else backgroundColor,
+        border = BorderStroke(1.dp, v3.subtleBorder)
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
@@ -1424,7 +1701,7 @@ private fun GoalWeightProgressCard(
     isMetric: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val v3 = MaterialTheme.v3Colors
     val currentFormatted = if (isMetric) String.format(Locale.US, "%.1f kg", currentWeightKg) else "${NutritionCalculator.kgToLb(currentWeightKg)} lb"
     val goalFormatted = if (goalWeightKg != null && goalWeightKg > 0.0) {
         if (isMetric) String.format(Locale.US, "%.1f kg", goalWeightKg) else "${NutritionCalculator.kgToLb(goalWeightKg)} lb"
@@ -1441,8 +1718,8 @@ private fun GoalWeightProgressCard(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        color = if (isDark) MaterialTheme.colorScheme.surfaceContainerHigh else Color(0xFFF8FAFC),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+        color = v3.surface,
+        border = BorderStroke(1.dp, v3.subtleBorder)
     ) {
         Column(
             modifier = Modifier.padding(14.dp),
@@ -1457,7 +1734,7 @@ private fun GoalWeightProgressCard(
                     Icon(
                         imageVector = Icons.Default.Flag,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = v3.emeraldAccent,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
@@ -1465,20 +1742,21 @@ private fun GoalWeightProgressCard(
                         text = "Goal: ${goal.label}",
                         style = MaterialTheme.typography.titleSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = v3.textPrimary
                         )
                     )
                 }
 
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+                    color = v3.emeraldAccent.copy(alpha = 0.15f),
+                    border = BorderStroke(1.dp, v3.emeraldAccent.copy(alpha = 0.4f))
                 ) {
                     Text(
                         text = "$targetCalories kcal/day",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = v3.emeraldAccent
                         ),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                     )
@@ -1495,7 +1773,7 @@ private fun GoalWeightProgressCard(
                         Text(
                             text = "CURRENT",
                             style = MaterialTheme.typography.labelSmall.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = v3.textMuted,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -1504,7 +1782,7 @@ private fun GoalWeightProgressCard(
                             text = currentFormatted,
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = v3.textPrimary
                             )
                         )
                     }
@@ -1512,13 +1790,14 @@ private fun GoalWeightProgressCard(
                     if (diffFormatted != null) {
                         Surface(
                             shape = RoundedCornerShape(8.dp),
-                            color = if (diffKg != null && kotlin.math.abs(diffKg) < 0.2) Color(0xFF10B981).copy(alpha = 0.15f) else MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
+                            color = if (diffKg != null && kotlin.math.abs(diffKg) < 0.2) v3.emeraldAccent.copy(alpha = 0.15f) else v3.surfaceElevated,
+                            border = BorderStroke(1.dp, v3.subtleBorder)
                         ) {
                             Text(
                                 text = diffFormatted,
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.SemiBold,
-                                    color = if (diffKg != null && kotlin.math.abs(diffKg) < 0.2) Color(0xFF047857) else MaterialTheme.colorScheme.onSecondaryContainer
+                                    color = if (diffKg != null && kotlin.math.abs(diffKg) < 0.2) v3.emeraldAccent else v3.textSecondary
                                 ),
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
@@ -1529,7 +1808,7 @@ private fun GoalWeightProgressCard(
                         Text(
                             text = "TARGET",
                             style = MaterialTheme.typography.labelSmall.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = v3.textMuted,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -1538,7 +1817,7 @@ private fun GoalWeightProgressCard(
                             text = goalFormatted,
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = v3.emeraldAccent
                             )
                         )
                     }
@@ -1554,11 +1833,12 @@ private fun HealthMetricBox(
     value: String,
     modifier: Modifier = Modifier
 ) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+        color = v3.surface,
+        border = BorderStroke(1.dp, v3.subtleBorder)
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
@@ -1567,7 +1847,7 @@ private fun HealthMetricBox(
                 text = label,
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = v3.textMuted,
                     fontSize = 10.sp,
                     letterSpacing = 0.5.sp
                 )
@@ -1577,7 +1857,7 @@ private fun HealthMetricBox(
                 text = value,
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = v3.textPrimary,
                     fontSize = 17.sp
                 )
             )
@@ -1590,6 +1870,7 @@ private fun ProfileNavigationRow(
     title: String,
     onClick: () -> Unit
 ) {
+    val v3 = MaterialTheme.v3Colors
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1603,14 +1884,14 @@ private fun ProfileNavigationRow(
             text = title,
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = v3.textPrimary,
                 fontSize = 14.sp
             )
         )
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            tint = v3.textMuted,
             modifier = Modifier.size(20.dp)
         )
     }
@@ -1618,9 +1899,10 @@ private fun ProfileNavigationRow(
 
 @Composable
 private fun CardDivider() {
+    val v3 = MaterialTheme.v3Colors
     HorizontalDivider(
         modifier = Modifier.padding(vertical = 2.dp),
         thickness = 1.dp,
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+        color = v3.subtleBorder
     )
 }

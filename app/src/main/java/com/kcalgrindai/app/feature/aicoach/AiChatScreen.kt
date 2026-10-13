@@ -50,13 +50,19 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.kcalgrindai.app.R
+import com.kcalgrindai.app.core.designsystem.v3Colors
+import java.io.InputStream
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -110,7 +116,8 @@ fun AiChatScreen(
     ) { uri: Uri? ->
         if (uri != null) {
             try {
-                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                val stream: InputStream? = context.contentResolver.openInputStream(uri)
+                val bytes = stream?.use { it.readBytes() }
                 if (bytes != null) {
                     val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
                     viewModel.onImageAttached(uri, base64)
@@ -135,10 +142,12 @@ fun AiChatScreen(
         }
     }
 
+    val v3Colors = MaterialTheme.v3Colors
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(v3Colors.background)
     ) {
         Column(
             modifier = Modifier
@@ -154,20 +163,22 @@ fun AiChatScreen(
         ) {
             com.kcalgrindai.app.core.designsystem.components.KcalGrindBackButton(
                 onClick = onNavigateBack,
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                containerColor = v3Colors.surfaceElevated
             )
 
             Spacer(modifier = Modifier.width(10.dp))
 
             Surface(
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(38.dp)
+                color = v3Colors.emeraldAccent.copy(alpha = 0.15f),
+                border = BorderStroke(1.dp, v3Colors.emeraldAccent.copy(alpha = 0.35f)),
+                modifier = Modifier.size(40.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    KcalGrindCoachIcon(
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
+                    androidx.compose.foundation.Image(
+                        painter = painterResource(id = R.drawable.ic_sproutling_active),
+                        contentDescription = "Sproutling Coach",
+                        modifier = Modifier.size(26.dp)
                     )
                 }
             }
@@ -179,17 +190,18 @@ fun AiChatScreen(
                     text = "Kcal Grind AI Coach",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = v3Colors.textPrimary,
                         fontSize = 17.sp
                     ),
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "Evidence-based nutrition guidance",
+                    text = "Sproutling Nutrition Intelligence",
                     style = MaterialTheme.typography.bodySmall.copy(
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 11.sp
+                        color = v3Colors.emeraldAccent,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium
                     ),
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
@@ -379,9 +391,10 @@ fun AiChatScreen(
 
         // Attached Photo Preview (if any)
         if (uiState.attachedImageUri != null) {
-            val bitmap = remember(uiState.attachedImageUri) {
+            val bitmap: android.graphics.Bitmap? = remember(uiState.attachedImageUri) {
                 try {
-                    context.contentResolver.openInputStream(uiState.attachedImageUri!!)?.use {
+                    val stream: InputStream? = context.contentResolver.openInputStream(uiState.attachedImageUri!!)
+                    stream?.use {
                         BitmapFactory.decodeStream(it)
                     }
                 } catch (_: Exception) {
@@ -886,6 +899,16 @@ private fun ChatBubble(
     onConfirmFoodLog: (MealType, List<FoodLogItem>) -> Unit
 ) {
     val isUser = message.role == MessageRole.USER
+    val v3Colors = MaterialTheme.v3Colors
+    val isFallback = remember(message.structuredDataJson, message.text) {
+        !isUser && (
+            message.structuredDataJson?.contains("\"is_fallback\": true") == true ||
+            message.text.contains("Your current goal is") ||
+            message.text.contains("fantastic complex carb") ||
+            message.text.contains("A bowl of oatmeal") ||
+            message.text.contains("offline", ignoreCase = true)
+        )
+    }
     val actionData = remember(message.structuredDataJson) {
         if (!isUser) parseActionData(message.structuredDataJson) else null
     }
@@ -894,6 +917,55 @@ private fun ChatBubble(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = if (isUser) Alignment.End else Alignment.Start
     ) {
+        if (!isUser) {
+            Row(
+                modifier = Modifier.padding(start = 6.dp, bottom = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (isFallback) {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = Color(0x33FFB74D),
+                        border = BorderStroke(1.dp, Color(0x66FFB74D))
+                    ) {
+                        Text(
+                            text = "Offline Nutrition Guide",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color(0xFFFFB74D),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.sp
+                            ),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Local guidelines (backend offline)",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = v3Colors.textMuted,
+                            fontSize = 10.sp
+                        )
+                    )
+                } else {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = v3Colors.emeraldAccent.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, v3Colors.emeraldAccent.copy(alpha = 0.35f))
+                    ) {
+                        Text(
+                            text = "AI Coach",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = v3Colors.emeraldAccent,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.sp
+                            ),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+        }
+
         Surface(
             shape = RoundedCornerShape(
                 topStart = 18.dp,
@@ -901,9 +973,9 @@ private fun ChatBubble(
                 bottomStart = if (isUser) 18.dp else 4.dp,
                 bottomEnd = if (isUser) 4.dp else 18.dp
             ),
-            color = if (isUser) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = if (isUser) v3Colors.emeraldAccent else v3Colors.surfaceElevated,
             border = if (!isUser) {
-                BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
+                BorderStroke(1.dp, if (isFallback) Color(0x44FFB74D) else v3Colors.subtleBorder)
             } else null,
             modifier = Modifier
                 .padding(horizontal = 4.dp)
@@ -912,8 +984,8 @@ private fun ChatBubble(
             AiCoachMarkdownText(
                 markdown = message.text,
                 isUser = isUser,
-                contentColor = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                primaryColor = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
+                contentColor = if (isUser) (if (v3Colors.isDark) Color(0xFF101211) else Color.White) else v3Colors.textPrimary,
+                primaryColor = if (isUser) (if (v3Colors.isDark) Color(0xFF101211) else Color.White) else v3Colors.emeraldAccent,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
             )
         }

@@ -305,7 +305,7 @@ class AiChatViewModel @Inject constructor(
                                     conversationId = convId,
                                     role = MessageRole.ASSISTANT,
                                     text = fallbackReply,
-                                    structuredDataJson = null,
+                                    structuredDataJson = "{\"is_fallback\": true, \"source\": \"offline_guidance\"}",
                                     createdAt = System.currentTimeMillis()
                                 )
                             )

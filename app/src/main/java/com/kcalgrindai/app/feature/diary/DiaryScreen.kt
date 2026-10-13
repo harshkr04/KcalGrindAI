@@ -1,6 +1,7 @@
 package com.kcalgrindai.app.feature.diary
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -46,13 +47,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kcalgrindai.app.core.navigation.KcalGrindRoute
+import com.kcalgrindai.app.R
+import com.kcalgrindai.app.core.designsystem.v3Colors
 import com.kcalgrindai.app.domain.model.FoodLogItem
 import com.kcalgrindai.app.domain.model.ItemSource
 import com.kcalgrindai.app.domain.model.MealType
@@ -68,6 +70,7 @@ fun DiaryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val v3Colors = MaterialTheme.v3Colors
 
     LaunchedEffect(uiState.undoMessage) {
         val msg = uiState.undoMessage
@@ -96,12 +99,13 @@ fun DiaryScreen(
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = MaterialTheme.colorScheme.surface
+        containerColor = v3Colors.background
     ) { paddingValues ->
         val onAddFoodScoped: (MealType?) -> Unit = { mealType ->
             viewModel.prepareAddFood(mealType)
             onNavigateToAddFood()
         }
+
         if (uiState.isLoading) {
             Box(
                 modifier = Modifier
@@ -109,7 +113,7 @@ fun DiaryScreen(
                     .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                CircularProgressIndicator(color = v3Colors.emeraldAccent)
             }
         } else {
             LazyColumn(
@@ -167,59 +171,88 @@ private fun DiaryDateHeader(
     onResetToToday: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val v3Colors = MaterialTheme.v3Colors
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding(),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp
+        color = v3Colors.surface,
+        border = BorderStroke(1.dp, v3Colors.subtleBorder.copy(alpha = 0.5f))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onPreviousDay) {
+            IconButton(
+                onClick = onPreviousDay,
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(v3Colors.surfaceElevated)
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                     contentDescription = "Previous Day",
-                    tint = MaterialTheme.colorScheme.onSurface
+                    tint = v3Colors.textPrimary
                 )
             }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = v3Colors.surfaceElevated,
+                border = BorderStroke(1.dp, v3Colors.subtleBorder),
                 modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(20.dp))
                     .clickable { onResetToToday() }
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
-                Text(
-                    text = formattedDate,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 17.sp
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    if (isToday) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(v3Colors.emeraldAccent)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    Text(
+                        text = formattedDate,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = v3Colors.textPrimary,
+                            fontSize = 15.sp
+                        )
                     )
-                )
-                if (!isToday) {
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Icon(
-                        imageVector = Icons.Default.DateRange,
-                        contentDescription = "Jump to Today",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp)
-                    )
+                    if (!isToday) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = "Jump to Today",
+                            tint = v3Colors.emeraldAccent,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
             }
 
-            IconButton(onClick = onNextDay) {
+            IconButton(
+                onClick = onNextDay,
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(v3Colors.surfaceElevated)
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = "Next Day",
-                    tint = MaterialTheme.colorScheme.onSurface
+                    tint = v3Colors.textPrimary
                 )
             }
         }
@@ -235,16 +268,18 @@ private fun DiaryDailySummaryCard(
     fatG: Double,
     modifier: Modifier = Modifier
 ) {
+    val v3Colors = MaterialTheme.v3Colors
+
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 2.dp
+        shape = RoundedCornerShape(24.dp),
+        color = v3Colors.surface,
+        border = BorderStroke(1.dp, v3Colors.subtleBorder)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -252,18 +287,31 @@ private fun DiaryDailySummaryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(
-                        text = "Daily Total",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Medium
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(v3Colors.emeraldAccent)
                         )
-                    )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "DAILY ENERGY QUOTA",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = v3Colors.textMuted,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 1.sp,
+                                fontSize = 11.sp
+                            )
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "$totalCalories / $targetCalories kcal",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = v3Colors.textPrimary,
+                            fontSize = 22.sp
                         )
                     )
                 }
@@ -271,43 +319,47 @@ private fun DiaryDailySummaryCard(
                 val remaining = targetCalories - totalCalories
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = if (remaining >= 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.errorContainer
+                    color = if (remaining >= 0) v3Colors.emeraldAccent.copy(alpha = 0.15f) else Color(0x33BA1A1A),
+                    border = BorderStroke(
+                        1.dp,
+                        if (remaining >= 0) v3Colors.emeraldAccent.copy(alpha = 0.35f) else Color(0x66BA1A1A)
+                    )
                 ) {
                     Text(
                         text = if (remaining >= 0) "$remaining kcal left" else "${-remaining} kcal over",
                         style = MaterialTheme.typography.labelMedium.copy(
-                            color = if (remaining >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onErrorContainer,
-                            fontWeight = FontWeight.Bold
+                            color = if (remaining >= 0) v3Colors.emeraldAccent else Color(0xFFFF897D),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
                         ),
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Macro Badges Row
-            val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 DiaryMacroPill(
                     label = "Protein",
                     amount = "${proteinG.roundToInt()}g",
-                    color = if (isDark) Color(0xFF818CF8) else Color(0xFF646FD4),
+                    accentColor = Color(0xFF60A5FA),
                     modifier = Modifier.weight(1f)
                 )
                 DiaryMacroPill(
                     label = "Carbs",
                     amount = "${carbsG.roundToInt()}g",
-                    color = if (isDark) Color(0xFFFBBF24) else Color(0xFFF59E0B),
+                    accentColor = Color(0xFFFBBF24),
                     modifier = Modifier.weight(1f)
                 )
                 DiaryMacroPill(
                     label = "Fat",
                     amount = "${fatG.roundToInt()}g",
-                    color = if (isDark) Color(0xFF34D399) else Color(0xFF10B981),
+                    accentColor = Color(0xFF34D399),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -319,31 +371,45 @@ private fun DiaryDailySummaryCard(
 private fun DiaryMacroPill(
     label: String,
     amount: String,
-    color: Color,
+    accentColor: Color,
     modifier: Modifier = Modifier
 ) {
-    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val v3Colors = MaterialTheme.v3Colors
+
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        color = color.copy(alpha = if (isDark) 0.20f else 0.12f)
+        shape = RoundedCornerShape(16.dp),
+        color = v3Colors.surfaceElevated,
+        border = BorderStroke(1.dp, v3Colors.subtleBorder)
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 8.dp, horizontal = 10.dp),
+            modifier = Modifier.padding(vertical = 10.dp, horizontal = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 11.sp
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(accentColor)
                 )
-            )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = v3Colors.textSecondary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = amount,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    color = color
+                    color = v3Colors.textPrimary,
+                    fontSize = 15.sp
                 )
             )
         }
@@ -358,18 +424,19 @@ private fun DiaryMealSectionCard(
     onDeleteItem: (FoodLogItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val v3Colors = MaterialTheme.v3Colors
     val mealTitle = category.mealType.name.lowercase().replaceFirstChar { it.uppercase() }
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 2.dp
+        shape = RoundedCornerShape(24.dp),
+        color = v3Colors.surface,
+        border = BorderStroke(1.dp, v3Colors.subtleBorder)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(18.dp)
                 .animateContentSize()
         ) {
             // Category Header
@@ -381,24 +448,25 @@ private fun DiaryMealSectionCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(34.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                            .background(v3Colors.emeraldAccent.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.List,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
+                            tint = v3Colors.emeraldAccent,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = mealTitle,
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = v3Colors.textPrimary,
+                            fontSize = 17.sp
                         )
                     )
                 }
@@ -408,23 +476,24 @@ private fun DiaryMealSectionCard(
                         text = "${category.totalCalories.toInt()} kcal",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = if (category.totalCalories > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (category.totalCalories > 0) v3Colors.emeraldAccent else v3Colors.textSecondary,
+                            fontSize = 15.sp
                         )
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
                     Surface(
                         onClick = onAddMealClick,
                         shape = CircleShape,
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
-                        modifier = Modifier.size(40.dp)
+                        color = v3Colors.surfaceElevated,
+                        border = BorderStroke(1.dp, v3Colors.subtleBorder),
+                        modifier = Modifier.size(36.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = "Add food to $mealTitle",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
+                                tint = v3Colors.emeraldAccent,
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                     }
@@ -433,7 +502,7 @@ private fun DiaryMealSectionCard(
 
             // Items List
             if (category.meals.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(14.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     category.meals.forEach { mealWithItems ->
                         mealWithItems.items.forEach { item ->
@@ -457,17 +526,20 @@ private fun DiaryFoodItemRow(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val v3Colors = MaterialTheme.v3Colors
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh
+        shape = RoundedCornerShape(14.dp),
+        color = v3Colors.surfaceElevated,
+        border = BorderStroke(1.dp, v3Colors.subtleBorder.copy(alpha = 0.5f))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -482,7 +554,7 @@ private fun DiaryFoodItemRow(
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = v3Colors.textPrimary
                         ),
                         modifier = Modifier.weight(1f, fill = false)
                     )
@@ -493,7 +565,7 @@ private fun DiaryFoodItemRow(
                 Text(
                     text = "${item.servingGrams.toInt()}g  •  P: ${item.proteinG.roundToInt()}g  C: ${item.carbsG.roundToInt()}g  F: ${item.fatG.roundToInt()}g",
                     style = MaterialTheme.typography.bodySmall.copy(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = v3Colors.textSecondary,
                         fontSize = 11.sp
                     )
                 )
@@ -504,7 +576,7 @@ private fun DiaryFoodItemRow(
                     text = "${item.calories.toInt()} kcal",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = v3Colors.emeraldAccent
                     )
                 )
                 Spacer(modifier = Modifier.width(6.dp))
@@ -515,8 +587,8 @@ private fun DiaryFoodItemRow(
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Delete item",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp)
+                        tint = v3Colors.textMuted,
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
@@ -526,12 +598,12 @@ private fun DiaryFoodItemRow(
 
 @Composable
 private fun SourceBadge(source: ItemSource) {
-    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val v3Colors = MaterialTheme.v3Colors
     val (label, bg, fg) = when (source) {
-        ItemSource.AI -> if (isDark) Triple("AI", Color(0xFF673AB7).copy(alpha = 0.25f), Color(0xFFD1C4E9)) else Triple("AI", Color(0xFFEDE7F6), Color(0xFF673AB7))
-        ItemSource.VERIFIED -> if (isDark) Triple("Barcode", Color(0xFF2E7D32).copy(alpha = 0.25f), Color(0xFFA5D6A7)) else Triple("Barcode", Color(0xFFE8F5E9), Color(0xFF2E7D32))
-        ItemSource.MANUAL -> if (isDark) Triple("Manual", Color(0xFF1976D2).copy(alpha = 0.25f), Color(0xFF90CAF9)) else Triple("Manual", Color(0xFFE3F2FD), Color(0xFF1976D2))
-        ItemSource.RECIPE, ItemSource.CURATED_RECIPE -> if (isDark) Triple("Recipe", Color(0xFFE65100).copy(alpha = 0.25f), Color(0xFFFFCC80)) else Triple("Recipe", Color(0xFFFFF3E0), Color(0xFFE65100))
+        ItemSource.AI -> Triple("AI", v3Colors.emeraldAccent.copy(alpha = 0.18f), v3Colors.emeraldAccent)
+        ItemSource.VERIFIED -> Triple("Barcode", Color(0x3338B2AC), Color(0xFF38B2AC))
+        ItemSource.MANUAL -> Triple("Manual", Color(0x3360A5FA), Color(0xFF60A5FA))
+        ItemSource.RECIPE, ItemSource.CURATED_RECIPE -> Triple("Recipe", Color(0x33FBBF24), Color(0xFFFBBF24))
     }
 
     Surface(
@@ -558,62 +630,73 @@ private fun DiaryEmptyDayCard(
     onLogMeal: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val v3Colors = MaterialTheme.v3Colors
+
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 2.dp
+        shape = RoundedCornerShape(24.dp),
+        color = v3Colors.surface,
+        border = BorderStroke(1.dp, v3Colors.subtleBorder)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = if (isToday) androidx.compose.material.icons.Icons.Filled.RestaurantMenu else androidx.compose.material.icons.Icons.Filled.DateRange,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(40.dp)
-            )
-            Spacer(modifier = Modifier.height(10.dp))
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .background(v3Colors.emeraldAccent.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.foundation.Image(
+                    painter = painterResource(id = R.drawable.ic_sproutling_active),
+                    contentDescription = "Sproutling waiting for fuel",
+                    modifier = Modifier.size(44.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(14.dp))
             Text(
                 text = if (isToday) "No meals logged today" else "No meals logged for this date",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = v3Colors.textPrimary,
+                    fontSize = 17.sp
                 )
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Use the button below or tap '+' to record your food.",
+                text = "Keep Sproutling energized! Tap below to track your fuel and hit today's targets.",
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = v3Colors.textSecondary,
+                    fontSize = 13.sp
                 ),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(18.dp))
             Surface(
                 onClick = onLogMeal,
-                shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.primary
+                shape = RoundedCornerShape(16.dp),
+                color = v3Colors.emeraldAccent
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(16.dp)
+                        tint = if (v3Colors.isDark) Color(0xFF101211) else Color.White,
+                        modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Add Food",
+                        text = "Log Meal",
                         style = MaterialTheme.typography.labelLarge.copy(
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = if (v3Colors.isDark) Color(0xFF101211) else Color.White,
                             fontWeight = FontWeight.Bold
                         )
                     )

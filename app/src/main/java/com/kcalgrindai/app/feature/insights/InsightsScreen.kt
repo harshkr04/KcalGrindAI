@@ -73,6 +73,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.IconButton
+import com.kcalgrindai.app.core.designsystem.v3Colors
 import com.kcalgrindai.app.core.navigation.KcalGrindRoute
 import com.kcalgrindai.app.domain.model.WeightEntry
 import kotlin.math.roundToInt
@@ -87,6 +88,7 @@ fun InsightsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showLogWeightDialog by remember { mutableStateOf(false) }
+    val v3 = MaterialTheme.v3Colors
 
     Scaffold(
         topBar = {
@@ -95,7 +97,7 @@ fun InsightsScreen(
                 onSelectTab = { viewModel.selectTab(it) }
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = v3.background
     ) { paddingValues ->
         if (uiState.isLoading) {
             Box(
@@ -104,7 +106,7 @@ fun InsightsScreen(
                     .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                CircularProgressIndicator(color = v3.emeraldAccent)
             }
         } else {
             LazyColumn(
@@ -283,33 +285,59 @@ private fun InsightsTopBar(
     selectedTab: InsightsTab,
     onSelectTab: (InsightsTab) -> Unit
 ) {
+    val v3 = MaterialTheme.v3Colors
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.background)
+            .background(v3.background)
             .statusBarsPadding()
             .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(v3.emeraldAccent)
+            )
+            Text(
+                text = "Kcal Grind AI V3",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = v3.emeraldAccent,
+                    fontSize = 11.sp,
+                    letterSpacing = 0.5.sp
+                )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(2.dp))
+
         Text(
-            text = "Insights & Trends",
+            text = "Insights & Progress",
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = v3.textPrimary,
                 fontSize = 24.sp
             )
         )
         Text(
             text = "Weekly nutrition performance & consistency",
             style = MaterialTheme.typography.bodyMedium.copy(
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = v3.textSecondary,
+                fontSize = 13.sp
             )
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         // Tab Row
         Surface(
-            shape = RoundedCornerShape(14.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(16.dp),
+            color = v3.surfaceElevated,
+            border = BorderStroke(1.dp, v3.subtleBorder),
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -348,22 +376,23 @@ private fun TabButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val v3 = MaterialTheme.v3Colors
     val animatedBgColor by androidx.compose.animation.animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+        targetValue = if (isSelected) v3.emeraldAccent else Color.Transparent,
         animationSpec = androidx.compose.animation.core.tween(durationMillis = 160, easing = androidx.compose.animation.core.FastOutSlowInEasing),
         label = "tabBg"
     )
     val animatedTextColor by androidx.compose.animation.animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+        targetValue = if (isSelected) (if (v3.isDark) Color(0xFF101211) else Color.White) else v3.textSecondary,
         animationSpec = androidx.compose.animation.core.tween(durationMillis = 160, easing = androidx.compose.animation.core.FastOutSlowInEasing),
         label = "tabText"
     )
 
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(12.dp),
         color = animatedBgColor,
-        modifier = modifier.height(40.dp)
+        modifier = modifier.height(38.dp)
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
@@ -387,9 +416,11 @@ private fun WeeklyCalorieSummaryCard(
     trackingRate: Int,
     calorieDelta: Int
 ) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        shape = RoundedCornerShape(24.dp),
+        color = v3.surfaceElevated,
+        border = BorderStroke(1.dp, v3.subtleBorder),
         tonalElevation = 2.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -407,7 +438,7 @@ private fun WeeklyCalorieSummaryCard(
                     Text(
                         text = "Average Intake",
                         style = MaterialTheme.typography.labelMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = v3.textSecondary
                         )
                     )
                     Spacer(modifier = Modifier.height(2.dp))
@@ -415,31 +446,37 @@ private fun WeeklyCalorieSummaryCard(
                         text = if (daysTracked > 0) "$avgCalories kcal / day" else "Not enough data yet",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = if (daysTracked > 0) 22.sp else 19.sp
+                            color = v3.textPrimary,
+                            fontSize = if (daysTracked > 0) 22.sp else 18.sp
                         )
                     )
                 }
 
                 if (daysTracked > 0) {
-                    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+                    val isDeficit = calorieDelta <= 0
+                    val isNearTarget = kotlin.math.abs(calorieDelta) <= 50
                     Surface(
                         shape = RoundedCornerShape(12.dp),
-                        color = if (isDark) {
-                            if (calorieDelta <= 50) Color(0xFF1E4B35) else Color(0xFF4E2C10)
-                        } else {
-                            if (calorieDelta <= 50) Color(0xFFE8F5E9) else Color(0xFFFFF3E0)
-                        }
+                        color = when {
+                            isNearTarget || isDeficit -> v3.emeraldAccent.copy(alpha = 0.15f)
+                            else -> Color(0xFFE5A93C).copy(alpha = 0.15f)
+                        },
+                        border = BorderStroke(
+                            1.dp,
+                            when {
+                                isNearTarget || isDeficit -> v3.emeraldAccent.copy(alpha = 0.35f)
+                                else -> Color(0xFFE5A93C).copy(alpha = 0.35f)
+                            }
+                        )
                     ) {
                         val label = if (calorieDelta <= 0) "${-calorieDelta} kcal deficit" else "+$calorieDelta kcal surplus"
                         Text(
                             text = label,
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = if (isDark) {
-                                    if (calorieDelta <= 50) Color(0xFF81C784) else Color(0xFFFFB74D)
-                                } else {
-                                    if (calorieDelta <= 50) Color(0xFF2E7D32) else Color(0xFFE65100)
+                                color = when {
+                                    isNearTarget || isDeficit -> v3.emeraldAccent
+                                    else -> Color(0xFFE5A93C)
                                 }
                             ),
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
@@ -460,14 +497,14 @@ private fun WeeklyCalorieSummaryCard(
                     text = "Tracking Consistency",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = v3.textPrimary
                     )
                 )
                 Text(
                     text = "$daysTracked of $totalDays days ($trackingRate%)",
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = v3.emeraldAccent
                     )
                 )
             }
@@ -480,8 +517,8 @@ private fun WeeklyCalorieSummaryCard(
                     .fillMaxWidth()
                     .height(8.dp)
                     .clip(CircleShape),
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                color = v3.emeraldAccent,
+                trackColor = v3.progressTrack
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -494,7 +531,7 @@ private fun WeeklyCalorieSummaryCard(
             Text(
                 text = conclusion,
                 style = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = v3.textSecondary,
                     fontSize = 12.sp
                 )
             )
@@ -507,9 +544,11 @@ private fun CalorieBarChartCard(
     points: List<DayCaloriePoint>,
     targetCalories: Int
 ) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        shape = RoundedCornerShape(24.dp),
+        color = v3.surfaceElevated,
+        border = BorderStroke(1.dp, v3.subtleBorder),
         tonalElevation = 2.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -527,16 +566,23 @@ private fun CalorieBarChartCard(
                     text = "7-Day Calorie Trend",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = v3.textPrimary
                     )
                 )
-                Text(
-                    text = "Target: $targetCalories kcal",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Medium
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = v3.surface,
+                    border = BorderStroke(1.dp, v3.subtleBorder)
+                ) {
+                    Text(
+                        text = "Target: $targetCalories kcal",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = v3.textSecondary,
+                            fontWeight = FontWeight.Medium
+                        ),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
-                )
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -566,7 +612,7 @@ private fun CalorieBarChartCard(
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = v3.textSecondary
                                 )
                             )
                             Spacer(modifier = Modifier.height(4.dp))
@@ -577,13 +623,13 @@ private fun CalorieBarChartCard(
                             modifier = Modifier
                                 .width(22.dp)
                                 .fillMaxHeight(fraction.coerceAtLeast(0.04f))
-                                .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
+                                .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
                                 .background(
                                     when {
-                                        !pt.hasLogs -> MaterialTheme.colorScheme.surfaceContainerHigh
-                                        isNearTarget -> MaterialTheme.colorScheme.primary
-                                        pt.calories > targetCalories -> Color(0xFFF59E0B)
-                                        else -> Color(0xFF646FD4)
+                                        !pt.hasLogs -> v3.progressTrack
+                                        isNearTarget -> v3.emeraldAccent
+                                        pt.calories > targetCalories -> Color(0xFFE5A93C)
+                                        else -> v3.strongEmerald
                                     }
                                 )
                         )
@@ -595,7 +641,7 @@ private fun CalorieBarChartCard(
                             text = pt.dayLabel,
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = if (pt.hasLogs) FontWeight.Bold else FontWeight.Normal,
-                                color = if (pt.hasLogs) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = if (pt.hasLogs) v3.textPrimary else v3.textMuted,
                                 fontSize = 11.sp
                             )
                         )
@@ -612,9 +658,11 @@ private fun MacroAdherenceCard(
     carbs: MacroAdherence,
     fat: MacroAdherence
 ) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        shape = RoundedCornerShape(24.dp),
+        color = v3.surfaceElevated,
+        border = BorderStroke(1.dp, v3.subtleBorder),
         tonalElevation = 2.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -627,18 +675,17 @@ private fun MacroAdherenceCard(
                 text = "Macro Adherence",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = v3.textPrimary
                 )
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
             MacroAdherenceRow(
                 name = "Protein",
                 avgGrams = protein.avgGrams,
                 targetGrams = protein.targetGrams,
                 percent = protein.adherencePercent,
-                color = if (isDark) Color(0xFF818CF8) else Color(0xFF646FD4)
+                color = v3.emeraldAccent
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -648,7 +695,7 @@ private fun MacroAdherenceCard(
                 avgGrams = carbs.avgGrams,
                 targetGrams = carbs.targetGrams,
                 percent = carbs.adherencePercent,
-                color = if (isDark) Color(0xFFFBBF24) else Color(0xFFF59E0B)
+                color = Color(0xFFE5A93C)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -658,7 +705,7 @@ private fun MacroAdherenceCard(
                 avgGrams = fat.avgGrams,
                 targetGrams = fat.targetGrams,
                 percent = fat.adherencePercent,
-                color = if (isDark) Color(0xFF34D399) else Color(0xFF10B981)
+                color = Color(0xFF38B2AC)
             )
         }
     }
@@ -672,6 +719,7 @@ private fun MacroAdherenceRow(
     percent: Int,
     color: Color
 ) {
+    val v3 = MaterialTheme.v3Colors
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -682,14 +730,14 @@ private fun MacroAdherenceRow(
                 text = name,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = v3.textPrimary
                 )
             )
             Text(
                 text = "${avgGrams.roundToInt()}g / ${targetGrams.roundToInt()}g ($percent%)",
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = v3.textSecondary
                 )
             )
         }
@@ -703,7 +751,7 @@ private fun MacroAdherenceRow(
                 .height(8.dp)
                 .clip(CircleShape),
             color = color,
-            trackColor = color.copy(alpha = 0.15f)
+            trackColor = v3.progressTrack
         )
     }
 }
@@ -713,9 +761,11 @@ private fun HydrationSummaryCard(
     avgWaterMl: Int,
     targetWaterMl: Int
 ) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        shape = RoundedCornerShape(24.dp),
+        color = v3.surfaceElevated,
+        border = BorderStroke(1.dp, v3.subtleBorder),
         tonalElevation = 2.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -730,38 +780,38 @@ private fun HydrationSummaryCard(
                 Icon(
                     imageVector = androidx.compose.material.icons.Icons.Default.WaterDrop,
                     contentDescription = null,
-                    tint = Color(0xFF0288D1),
+                    tint = Color(0xFF38B2AC),
                     modifier = Modifier.size(22.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(10.dp))
                 Column {
                     Text(
                         text = "Daily Hydration",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = v3.textPrimary
                         )
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "$avgWaterMl ml average / day",
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = v3.textSecondary
                         )
                     )
                 }
             }
 
-            val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = if (isDark) Color(0xFF003852) else Color(0xFFE0F2FE)
+                color = Color(0xFF38B2AC).copy(alpha = 0.15f),
+                border = BorderStroke(1.dp, Color(0xFF38B2AC).copy(alpha = 0.35f))
             ) {
                 Text(
                     text = "Target: $targetWaterMl ml",
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
-                        color = if (isDark) Color(0xFF78D1FF) else Color(0xFF0284C7)
+                        color = Color(0xFF38B2AC)
                     ),
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                 )
@@ -779,9 +829,11 @@ private fun WeightSummaryCard(
     entryCount: Int = 0,
     onLogWeightClick: () -> Unit
 ) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        shape = RoundedCornerShape(24.dp),
+        color = v3.surfaceElevated,
+        border = BorderStroke(1.dp, v3.subtleBorder),
         tonalElevation = 2.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -799,7 +851,7 @@ private fun WeightSummaryCard(
                     Text(
                         text = "Current Weight",
                         style = MaterialTheme.typography.labelMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = v3.textSecondary
                         )
                     )
                     Spacer(modifier = Modifier.height(2.dp))
@@ -807,7 +859,7 @@ private fun WeightSummaryCard(
                         text = if (latestWeight != null) "${"%.1f".format(latestWeight)} kg" else "-- kg",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = v3.textPrimary,
                             fontSize = 24.sp
                         )
                     )
@@ -815,17 +867,19 @@ private fun WeightSummaryCard(
 
                 Button(
                     onClick = onLogWeightClick,
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = v3.emeraldAccent,
+                        contentColor = if (v3.isDark) Color(0xFF101211) else Color.White
+                    )
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onPrimary
+                        modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "Log Weight", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                    Text(text = "Log Weight", fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -860,7 +914,7 @@ private fun WeightSummaryCard(
             Text(
                 text = weightConclusion,
                 style = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = v3.textSecondary,
                     fontSize = 12.sp
                 )
             )
@@ -870,9 +924,11 @@ private fun WeightSummaryCard(
 
 @Composable
 private fun WeeklyStepSummaryCard(avgSteps: Long?) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        shape = RoundedCornerShape(24.dp),
+        color = v3.surfaceElevated,
+        border = BorderStroke(1.dp, v3.subtleBorder),
         tonalElevation = 2.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -890,14 +946,15 @@ private fun WeeklyStepSummaryCard(avgSteps: Long?) {
             ) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    color = v3.surface,
+                    border = BorderStroke(1.dp, v3.subtleBorder),
                     modifier = Modifier.size(40.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Default.DirectionsRun,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = v3.emeraldAccent,
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -905,7 +962,7 @@ private fun WeeklyStepSummaryCard(avgSteps: Long?) {
                 Column {
                     Text(
                         text = "Weekly Activity",
-                        style = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        style = MaterialTheme.typography.labelMedium.copy(color = v3.textSecondary)
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
@@ -916,7 +973,7 @@ private fun WeeklyStepSummaryCard(avgSteps: Long?) {
                         },
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = v3.textPrimary
                         )
                     )
                     Text(
@@ -926,7 +983,7 @@ private fun WeeklyStepSummaryCard(avgSteps: Long?) {
                             "Connect Health Connect to track your 7-day movement trend"
                         },
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = v3.textSecondary,
                             fontSize = 11.sp
                         )
                     )
@@ -938,16 +995,17 @@ private fun WeeklyStepSummaryCard(avgSteps: Long?) {
 
 @Composable
 private fun WeightMetricCol(label: String, value: String) {
+    val v3 = MaterialTheme.v3Colors
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+            style = MaterialTheme.typography.labelSmall.copy(color = v3.textSecondary)
         )
         Text(
             text = value,
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = v3.textPrimary
             )
         )
     }
@@ -955,9 +1013,11 @@ private fun WeightMetricCol(label: String, value: String) {
 
 @Composable
 private fun WeightHistoryItemRow(entry: WeightEntry) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = RoundedCornerShape(14.dp),
+        color = v3.surfaceElevated,
+        border = BorderStroke(1.dp, v3.subtleBorder),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -970,7 +1030,7 @@ private fun WeightHistoryItemRow(entry: WeightEntry) {
             Text(
                 text = entry.date,
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = v3.textPrimary,
                     fontWeight = FontWeight.Medium
                 )
             )
@@ -978,7 +1038,7 @@ private fun WeightHistoryItemRow(entry: WeightEntry) {
                 text = "${"%.1f".format(entry.weightKg)} kg",
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = v3.emeraldAccent
                 )
             )
         }
@@ -987,9 +1047,11 @@ private fun WeightHistoryItemRow(entry: WeightEntry) {
 
 @Composable
 private fun EmptyWeightCard(onLogWeightClick: () -> Unit) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        shape = RoundedCornerShape(24.dp),
+        color = v3.surfaceElevated,
+        border = BorderStroke(1.dp, v3.subtleBorder),
         tonalElevation = 2.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -1002,7 +1064,7 @@ private fun EmptyWeightCard(onLogWeightClick: () -> Unit) {
             Icon(
                 imageVector = androidx.compose.material.icons.Icons.Default.Scale,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = v3.emeraldAccent,
                 modifier = Modifier.size(40.dp)
             )
             Spacer(modifier = Modifier.height(10.dp))
@@ -1010,23 +1072,26 @@ private fun EmptyWeightCard(onLogWeightClick: () -> Unit) {
                 text = "No weight entries logged yet",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = v3.textPrimary
                 )
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Log your weight regularly to track progress toward your goal.",
                 style = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = v3.textSecondary
                 )
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = onLogWeightClick,
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = v3.emeraldAccent,
+                    contentColor = if (v3.isDark) Color(0xFF101211) else Color.White
+                )
             ) {
-                Text("Log First Weight Entry", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                Text("Log First Weight Entry", fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -1039,15 +1104,17 @@ private fun LogWeightDialog(
     onConfirm: (Double) -> Unit
 ) {
     var weightText by remember { mutableStateOf(initialWeight.toString()) }
+    val v3 = MaterialTheme.v3Colors
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = v3.surfaceElevated,
         title = {
-            Text(text = "Log Today's Weight", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Text(text = "Log Today's Weight", fontWeight = FontWeight.Bold, color = v3.textPrimary)
         },
         text = {
             Column {
-                Text(text = "Enter your current weight in kilograms (kg):", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = "Enter your current weight in kilograms (kg):", color = v3.textSecondary)
                 Spacer(modifier = Modifier.height(10.dp))
                 OutlinedTextField(
                     value = weightText,
@@ -1055,10 +1122,10 @@ private fun LogWeightDialog(
                     label = { Text("Weight (kg)") },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                        focusedBorderColor = v3.emeraldAccent,
+                        unfocusedBorderColor = v3.subtleBorder,
+                        focusedTextColor = v3.textPrimary,
+                        unfocusedTextColor = v3.textPrimary
                     )
                 )
             }
@@ -1069,14 +1136,17 @@ private fun LogWeightDialog(
                     val w = weightText.toDoubleOrNull() ?: initialWeight
                     onConfirm(w)
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = v3.emeraldAccent,
+                    contentColor = if (v3.isDark) Color(0xFF101211) else Color.White
+                )
             ) {
-                Text("Save", color = MaterialTheme.colorScheme.onPrimary)
+                Text("Save", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Cancel", color = v3.textSecondary)
             }
         }
     )
@@ -1087,10 +1157,11 @@ private fun RecipeLoggedBanner(
     message: String,
     onDismiss: () -> Unit
 ) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
         shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
+        color = v3.emeraldAccent.copy(alpha = 0.12f),
+        border = BorderStroke(1.dp, v3.emeraldAccent.copy(alpha = 0.35f)),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -1107,7 +1178,7 @@ private fun RecipeLoggedBanner(
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = v3.emeraldAccent,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -1115,7 +1186,7 @@ private fun RecipeLoggedBanner(
                     text = message,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = v3.emeraldAccent
                     )
                 )
             }
@@ -1126,7 +1197,7 @@ private fun RecipeLoggedBanner(
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Dismiss",
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = v3.emeraldAccent,
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -1139,6 +1210,7 @@ private fun RecipeSearchBar(
     query: String,
     onQueryChange: (String) -> Unit
 ) {
+    val v3 = MaterialTheme.v3Colors
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
@@ -1147,7 +1219,7 @@ private fun RecipeSearchBar(
             Text(
                 text = "Search 40+ recipes, ingredients, tags...",
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    color = v3.textMuted,
                     fontSize = 13.sp
                 )
             )
@@ -1158,7 +1230,7 @@ private fun RecipeSearchBar(
             Icon(
                 imageVector = androidx.compose.material.icons.Icons.Default.Search,
                 contentDescription = "Search",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = v3.textSecondary
             )
         },
         trailingIcon = {
@@ -1167,18 +1239,18 @@ private fun RecipeSearchBar(
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Clear Search",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = v3.textSecondary
                     )
                 }
             }
         },
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = Color.Transparent,
-            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+            focusedContainerColor = v3.surfaceElevated,
+            unfocusedContainerColor = v3.surfaceElevated,
+            focusedBorderColor = v3.emeraldAccent,
+            unfocusedBorderColor = v3.subtleBorder,
+            focusedTextColor = v3.textPrimary,
+            unfocusedTextColor = v3.textPrimary
         )
     )
 }
@@ -1188,9 +1260,11 @@ private fun RecipeSortSection(
     selectedSort: RecipeSortOption,
     onSelectSort: (RecipeSortOption) -> Unit
 ) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = RoundedCornerShape(14.dp),
+        color = v3.surfaceElevated,
+        border = BorderStroke(1.dp, v3.subtleBorder),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -1202,8 +1276,8 @@ private fun RecipeSortSection(
             RecipeSortOption.entries.forEach { option ->
                 val isSelected = selectedSort == option
                 Surface(
-                    shape = RoundedCornerShape(9.dp),
-                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (isSelected) v3.emeraldAccent else Color.Transparent,
                     modifier = Modifier
                         .weight(1f)
                         .clickable { onSelectSort(option) }
@@ -1216,7 +1290,7 @@ private fun RecipeSortSection(
                             text = option.title,
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (isSelected) (if (v3.isDark) Color(0xFF101211) else Color.White) else v3.textSecondary
                             )
                         )
                     }
@@ -1231,6 +1305,7 @@ private fun RecipeMealTypeFilterRow(
     selectedMealType: String?,
     onSelectMealType: (String?) -> Unit
 ) {
+    val v3 = MaterialTheme.v3Colors
     val mealTypes = listOf(
         "All" to null,
         "Breakfast" to "breakfast",
@@ -1245,7 +1320,7 @@ private fun RecipeMealTypeFilterRow(
             text = "Meal Type",
             style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = v3.textSecondary
             ),
             modifier = Modifier.padding(bottom = 6.dp)
         )
@@ -1270,6 +1345,7 @@ private fun RecipeDietTagFilterRow(
     selectedDietTag: String?,
     onSelectDietTag: (String?) -> Unit
 ) {
+    val v3 = MaterialTheme.v3Colors
     val dietTags = listOf(
         "All" to null,
         "High-Protein" to "High-Protein",
@@ -1292,7 +1368,7 @@ private fun RecipeDietTagFilterRow(
             text = "Diet & Goal",
             style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = v3.textSecondary
             ),
             modifier = Modifier.padding(bottom = 6.dp)
         )
@@ -1318,12 +1394,13 @@ private fun RecipeFilterChip(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
         shape = RoundedCornerShape(10.dp),
-        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = if (isSelected) v3.emeraldAccent else v3.surfaceElevated,
         border = BorderStroke(
             width = 1.dp,
-            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+            color = if (isSelected) v3.emeraldAccent else v3.subtleBorder
         ),
         modifier = Modifier.clickable { onClick() }
     ) {
@@ -1331,7 +1408,7 @@ private fun RecipeFilterChip(
             text = label,
             style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                color = if (isSelected) (if (v3.isDark) Color(0xFF101211) else Color.White) else v3.textPrimary
             ),
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
         )
@@ -1342,10 +1419,11 @@ private fun RecipeFilterChip(
 private fun EmptyRecipesCard(
     onResetFilters: () -> Unit
 ) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
+        shape = RoundedCornerShape(24.dp),
+        color = v3.surfaceElevated,
+        border = BorderStroke(1.dp, v3.subtleBorder),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
@@ -1357,7 +1435,7 @@ private fun EmptyRecipesCard(
             Icon(
                 imageVector = androidx.compose.material.icons.Icons.Default.Search,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = v3.textSecondary,
                 modifier = Modifier.size(40.dp)
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -1365,25 +1443,28 @@ private fun EmptyRecipesCard(
                 text = "No matching recipes",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = v3.textPrimary
                 )
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = "Try adjusting your search query, meal-type, or diet filters to see more recipes.",
                 style = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = v3.textSecondary
                 )
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = onResetFilters,
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = v3.emeraldAccent,
+                    contentColor = if (v3.isDark) Color(0xFF101211) else Color.White
+                )
             ) {
                 Text(
                     text = "Reset Filters & Search",
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
                 )
             }
         }
@@ -1396,11 +1477,12 @@ private fun RecipeCard(
     onCardClick: () -> Unit,
     onToggleFavorite: () -> Unit
 ) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        color = v3.surfaceElevated,
         tonalElevation = 2.dp,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
+        border = BorderStroke(1.dp, v3.subtleBorder),
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
@@ -1417,7 +1499,7 @@ private fun RecipeCard(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                    .background(v3.surface),
                 contentAlignment = Alignment.Center
             ) {
                 val mealIcon = when (recipe.mealType.uppercase()) {
@@ -1430,7 +1512,7 @@ private fun RecipeCard(
                 Icon(
                     imageVector = mealIcon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = v3.emeraldAccent,
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -1445,13 +1527,14 @@ private fun RecipeCard(
                 ) {
                     Surface(
                         shape = RoundedCornerShape(6.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer
+                        color = v3.emeraldAccent.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, v3.emeraldAccent.copy(alpha = 0.3f))
                     ) {
                         Text(
                             text = recipe.mealType.uppercase(),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = v3.emeraldAccent,
                                 fontSize = 9.sp
                             ),
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -1461,22 +1544,22 @@ private fun RecipeCard(
                     Text(
                         text = "⏱ ${recipe.prepTimeMinutes} mins",
                         style = MaterialTheme.typography.labelSmall.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = v3.textSecondary,
                             fontSize = 11.sp
                         )
                     )
 
                     if (recipe.popularityScore >= 90.0) {
-                        val isDarkCard = MaterialTheme.colorScheme.surface.luminance() < 0.5f
                         Surface(
                             shape = RoundedCornerShape(6.dp),
-                            color = Color(0xFFF59E0B).copy(alpha = 0.12f)
+                            color = Color(0xFFE5A93C).copy(alpha = 0.15f),
+                            border = BorderStroke(1.dp, Color(0xFFE5A93C).copy(alpha = 0.3f))
                         ) {
                             Text(
                                 text = "Editor's Pick",
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.SemiBold,
-                                    color = if (isDarkCard) Color(0xFFFBBF24) else Color(0xFFD97706),
+                                    color = Color(0xFFE5A93C),
                                     fontSize = 9.sp
                                 ),
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -1491,7 +1574,7 @@ private fun RecipeCard(
                     text = recipe.name,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = v3.textPrimary,
                         fontSize = 15.sp
                     ),
                     maxLines = 2
@@ -1507,19 +1590,19 @@ private fun RecipeCard(
                         text = "${recipe.totalCalories.roundToInt()} kcal",
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = v3.emeraldAccent
                         )
                     )
                     Text(
                         text = "•",
                         style = MaterialTheme.typography.labelSmall.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = v3.textMuted
                         )
                     )
                     Text(
                         text = "${recipe.proteinG}g protein",
                         style = MaterialTheme.typography.labelSmall.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = v3.textSecondary
                         )
                     )
                 }
@@ -1533,7 +1616,7 @@ private fun RecipeCard(
                 Icon(
                     imageVector = Icons.Filled.Star,
                     contentDescription = if (recipe.isFavorite) "Favorited" else "Favorite",
-                    tint = if (recipe.isFavorite) Color(0xFFF59E0B) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
+                    tint = if (recipe.isFavorite) Color(0xFFE5A93C) else v3.textMuted.copy(alpha = 0.4f),
                     modifier = Modifier.size(22.dp)
                 )
             }
