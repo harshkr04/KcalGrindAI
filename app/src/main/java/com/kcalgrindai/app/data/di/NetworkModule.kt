@@ -147,4 +147,10 @@ object NetworkModule {
     fun provideSyncApiService(@Named("AiRetrofit") retrofit: Retrofit): SyncApiService {
         return retrofit.create(SyncApiService::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideNetworkMonitor(networkMonitor: com.kcalgrindai.app.core.util.ConnectivityManagerNetworkMonitor): com.kcalgrindai.app.core.util.NetworkMonitor {
+        return networkMonitor
+    }
 }
