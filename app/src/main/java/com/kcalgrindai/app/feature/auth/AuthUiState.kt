@@ -2,6 +2,7 @@ package com.kcalgrindai.app.feature.auth
 
 data class AuthUiState(
     val isSignUpMode: Boolean = false,
+    val isEmailExpanded: Boolean = false,
     val email: String = "",
     val emailError: String? = null,
     val password: String = "",

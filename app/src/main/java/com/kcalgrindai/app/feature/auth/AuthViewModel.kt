@@ -64,12 +64,22 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun toggleEmailExpanded() {
+        _uiState.update { it.copy(isEmailExpanded = !it.isEmailExpanded) }
+    }
+
+    fun dismissError() {
+        _uiState.update { it.copy(errorMessage = null) }
+    }
+
     fun togglePasswordVisibility() {
         _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
     }
 
     fun submit() {
         val state = _uiState.value
+        if (state.isLoading) return
+
         val email = state.email.trim()
         val password = state.password
 
@@ -147,7 +157,23 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun onGoogleSignInStarted() {
+        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+    }
+
+    fun onGoogleSignInCancelled() {
+        _uiState.update { it.copy(isLoading = false) }
+    }
+
+    fun onGoogleSignInFailure(message: String) {
+        _uiState.update { it.copy(isLoading = false, errorMessage = message) }
+    }
+
     fun onGoogleSignInSuccess(idToken: String) {
+        if (idToken.isBlank()) {
+            _uiState.update { it.copy(isLoading = false, errorMessage = "Google authentication failed: Empty token.") }
+            return
+        }
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
         viewModelScope.launch {
             val result = authRepository.signInWithGoogle(idToken)
@@ -168,6 +194,7 @@ class AuthViewModel @Inject constructor(
     }
 
     fun continueAsGuest() {
+        if (_uiState.value.isLoading) return
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
         viewModelScope.launch {
             val result = authRepository.signInAsGuest()

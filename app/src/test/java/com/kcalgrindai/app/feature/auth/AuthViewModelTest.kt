@@ -199,4 +199,98 @@ class AuthViewModelTest {
         assertFalse(state.isLoading)
         assertNull(state.errorMessage)
     }
+
+    @Test
+    fun onGoogleSignInSuccess_emptyToken_setsError() = runTest {
+        viewModel.onGoogleSignInSuccess("")
+        val state = viewModel.uiState.value
+        assertFalse(state.authSuccess)
+        assertFalse(state.isLoading)
+        assertEquals("Google authentication failed: Empty token.", state.errorMessage)
+    }
+
+    @Test
+    fun onGoogleSignInSuccess_failure_setsError() = runTest {
+        fakeAuthRepository.shouldFail = true
+        fakeAuthRepository.failureMessage = "Google token invalid"
+
+        viewModel.onGoogleSignInSuccess("invalid-token")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.authSuccess)
+        assertFalse(state.isLoading)
+        assertEquals("Google token invalid", state.errorMessage)
+    }
+
+    @Test
+    fun onGoogleSignInStarted_and_cancelled_updatesStateProperly() {
+        viewModel.onGoogleSignInStarted()
+        assertTrue(viewModel.uiState.value.isLoading)
+        assertNull(viewModel.uiState.value.errorMessage)
+
+        viewModel.onGoogleSignInCancelled()
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertNull(viewModel.uiState.value.errorMessage)
+        assertFalse(viewModel.uiState.value.authSuccess)
+    }
+
+    @Test
+    fun onGoogleSignInFailure_setsMessageAndClearsLoading() {
+        viewModel.onGoogleSignInStarted()
+        assertTrue(viewModel.uiState.value.isLoading)
+
+        viewModel.onGoogleSignInFailure("Missing Web Client ID")
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertEquals("Missing Web Client ID", viewModel.uiState.value.errorMessage)
+        assertFalse(viewModel.uiState.value.authSuccess)
+    }
+
+    @Test
+    fun dismissError_clearsErrorMessage() {
+        viewModel.onGoogleSignInFailure("Some error")
+        assertEquals("Some error", viewModel.uiState.value.errorMessage)
+
+        viewModel.dismissError()
+        assertNull(viewModel.uiState.value.errorMessage)
+    }
+
+    @Test
+    fun toggleEmailExpanded_invertsState() {
+        assertFalse(viewModel.uiState.value.isEmailExpanded)
+        viewModel.toggleEmailExpanded()
+        assertTrue(viewModel.uiState.value.isEmailExpanded)
+        viewModel.toggleEmailExpanded()
+        assertFalse(viewModel.uiState.value.isEmailExpanded)
+    }
+
+    @Test
+    fun submit_whileLoading_preventsDuplicateSubmission() = runTest {
+        viewModel.onEmailChanged("user@example.com")
+        viewModel.onPasswordChanged("password123")
+
+        // First submit triggers loading
+        viewModel.submit()
+        assertTrue(viewModel.uiState.value.isLoading)
+
+        // Second submit while loading should be ignored
+        viewModel.submit()
+        assertTrue(viewModel.uiState.value.isLoading)
+
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.authSuccess)
+    }
+
+    @Test
+    fun continueAsGuest_whileLoading_preventsDuplicateSubmission() = runTest {
+        // Start an action to set loading
+        viewModel.onGoogleSignInStarted()
+        assertTrue(viewModel.uiState.value.isLoading)
+
+        // continueAsGuest while loading is ignored
+        viewModel.continueAsGuest()
+        // Repository should not have been called because it returned early
+        assertFalse(viewModel.uiState.value.authSuccess)
+    }
 }
+
