@@ -349,4 +349,219 @@ class AiChatViewModelTest {
 
         collectJob.cancel()
     }
+
+    private fun createTestGoal(calories: Int) = com.kcalgrindai.app.domain.model.NutritionGoal(
+        id = 1L,
+        userId = 1L,
+        calories = calories,
+        proteinG = 150.0,
+        carbsG = 250.0,
+        fatG = 70.0,
+        waterLiters = 2.5,
+        waterGlasses = 8,
+        bmr = 1750.0,
+        tdee = calories.toDouble(),
+        isCustom = false,
+        updatedAt = System.currentTimeMillis()
+    )
+
+    @Test
+    fun `empty diary provides zero consumed calories and full target as remaining calories`() = runTest {
+        nutritionGoalRepository.saveGoal(createTestGoal(2200))
+        val viewModel = AiChatViewModel(
+            aiCoachRepository,
+            userProfileRepository,
+            nutritionGoalRepository,
+            mealLogRepository,
+            waterLogRepository,
+            weightRepository
+        )
+
+        val collectJob = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        val today = LocalDate.now().toString()
+        val consumed = viewModel.getDailyConsumedCalories(today)
+        assertEquals(0, consumed)
+
+        viewModel.onInputChanged("How is my nutrition today?")
+        viewModel.sendMessage()
+        advanceUntilIdle()
+
+        assertEquals(0, aiCoachRepository.lastConsumedCalories)
+        assertEquals(2200, aiCoachRepository.lastRemainingCalories)
+        assertEquals(2200, aiCoachRepository.lastTargetCalories)
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `nonzero diary consumption calculates accurate consumed calories`() = runTest {
+        nutritionGoalRepository.saveGoal(createTestGoal(2500))
+        val today = LocalDate.now().toString()
+        val meal1 = com.kcalgrindai.app.domain.model.MealLog(
+            id = 1L,
+            date = today,
+            mealType = MealType.BREAKFAST,
+            totalCalories = 400.0,
+            loggedAt = System.currentTimeMillis(),
+            source = com.kcalgrindai.app.domain.model.LogSource.MANUAL,
+            synced = true
+        )
+        val item1 = FoodLogItem(
+            id = 1L,
+            mealLogId = 1L,
+            name = "Oatmeal",
+            servingDescription = "1 bowl",
+            servingGrams = 150.0,
+            calories = 400.0,
+            proteinG = 15.0,
+            carbsG = 65.0,
+            fatG = 8.0,
+            fiberG = 6.0,
+            source = ItemSource.MANUAL,
+            confidence = 1.0f,
+            confirmed = true
+        )
+        mealLogRepository.saveMeal(meal1, listOf(item1))
+
+        val meal2 = com.kcalgrindai.app.domain.model.MealLog(
+            id = 2L,
+            date = today,
+            mealType = MealType.LUNCH,
+            totalCalories = 650.0,
+            loggedAt = System.currentTimeMillis(),
+            source = com.kcalgrindai.app.domain.model.LogSource.MANUAL,
+            synced = true
+        )
+        val item2 = FoodLogItem(
+            id = 2L,
+            mealLogId = 2L,
+            name = "Chicken Rice",
+            servingDescription = "1 plate",
+            servingGrams = 300.0,
+            calories = 650.0,
+            proteinG = 45.0,
+            carbsG = 75.0,
+            fatG = 12.0,
+            fiberG = 4.0,
+            source = ItemSource.MANUAL,
+            confidence = 1.0f,
+            confirmed = true
+        )
+        mealLogRepository.saveMeal(meal2, listOf(item2))
+
+        val viewModel = AiChatViewModel(
+            aiCoachRepository,
+            userProfileRepository,
+            nutritionGoalRepository,
+            mealLogRepository,
+            waterLogRepository,
+            weightRepository
+        )
+
+        val collectJob = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        val consumed = viewModel.getDailyConsumedCalories(today)
+        assertEquals(1050, consumed)
+
+        viewModel.onInputChanged("What should I eat for dinner?")
+        viewModel.sendMessage()
+        advanceUntilIdle()
+
+        assertEquals(1050, aiCoachRepository.lastConsumedCalories)
+        assertEquals(1450, aiCoachRepository.lastRemainingCalories)
+        assertEquals(2500, aiCoachRepository.lastTargetCalories)
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `remaining calories derives accurately from daily target and consumed calories`() = runTest {
+        nutritionGoalRepository.saveGoal(createTestGoal(2000))
+        val today = LocalDate.now().toString()
+        val meal = com.kcalgrindai.app.domain.model.MealLog(
+            id = 1L,
+            date = today,
+            mealType = MealType.SNACK,
+            totalCalories = 320.0,
+            loggedAt = System.currentTimeMillis(),
+            source = com.kcalgrindai.app.domain.model.LogSource.MANUAL,
+            synced = true
+        )
+        val item = FoodLogItem(
+            id = 1L,
+            mealLogId = 1L,
+            name = "Greek Yogurt",
+            servingDescription = "200g",
+            servingGrams = 200.0,
+            calories = 320.0,
+            proteinG = 20.0,
+            carbsG = 25.0,
+            fatG = 5.0,
+            fiberG = 0.0,
+            source = ItemSource.MANUAL,
+            confidence = 1.0f,
+            confirmed = true
+        )
+        mealLogRepository.saveMeal(meal, listOf(item))
+
+        val viewModel = AiChatViewModel(
+            aiCoachRepository,
+            userProfileRepository,
+            nutritionGoalRepository,
+            mealLogRepository,
+            waterLogRepository,
+            weightRepository
+        )
+
+        val collectJob = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.onInputChanged("Tell me about my remaining calories")
+        viewModel.sendMessage()
+        advanceUntilIdle()
+
+        assertEquals(320, aiCoachRepository.lastConsumedCalories)
+        assertEquals(1680, aiCoachRepository.lastRemainingCalories)
+        assertEquals(2000, aiCoachRepository.lastTargetCalories)
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `repository failure handling gracefully falls back to zero consumed calories without crashing`() = runTest {
+        nutritionGoalRepository.saveGoal(createTestGoal(1900))
+        val viewModel = AiChatViewModel(
+            aiCoachRepository,
+            userProfileRepository,
+            nutritionGoalRepository,
+            mealLogRepository,
+            waterLogRepository,
+            weightRepository
+        )
+
+        val collectJob = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        // Simulate repository observing failure
+        mealLogRepository.shouldFailObserve = true
+
+        val today = LocalDate.now().toString()
+        val consumed = viewModel.getDailyConsumedCalories(today)
+        assertEquals(0, consumed)
+
+        // sendMessage should not throw or crash
+        viewModel.onInputChanged("Hello after error")
+        viewModel.sendMessage()
+        advanceUntilIdle()
+
+        assertEquals(0, aiCoachRepository.lastConsumedCalories)
+        assertEquals(1900, aiCoachRepository.lastRemainingCalories)
+        assertEquals(1900, aiCoachRepository.lastTargetCalories)
+        assertNull(viewModel.uiState.value.errorMessage)
+
+        collectJob.cancel()
+    }
 }

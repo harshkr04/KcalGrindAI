@@ -22,6 +22,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -274,11 +275,15 @@ class AiChatViewModel @Inject constructor(
                     weightChangeKg = -0.5
                 )
 
+                val todayIso = LocalDate.now().toString()
+                val consumedCalories = getDailyConsumedCalories(todayIso)
+                val remainingCalories = targetCalories - consumedCalories
+
                 val result = aiCoachRepository.sendChatMessage(
                     conversationId = convId,
                     userContent = text,
-                    remainingCalories = targetCalories - 674,
-                    consumedCalories = 674,
+                    remainingCalories = remainingCalories,
+                    consumedCalories = consumedCalories,
                     targetCalories = targetCalories,
                     goal = profile?.goal?.name,
                     recentTrends = recentTrends
@@ -314,6 +319,23 @@ class AiChatViewModel @Inject constructor(
                     }
                 )
             }
+        }
+    }
+
+    internal suspend fun getDailyConsumedCalories(dateIso: String): Int {
+        return try {
+            val total = mealLogRepository.observeMealsWithItemsByDate(dateIso)
+                .first()
+                .sumOf { mealWithItems ->
+                    if (mealWithItems.items.isNotEmpty()) {
+                        mealWithItems.items.sumOf { it.calories }
+                    } else {
+                        mealWithItems.meal.totalCalories
+                    }
+                }
+            total.roundToInt()
+        } catch (_: Exception) {
+            0
         }
     }
 

@@ -159,6 +159,7 @@ class FakeMealLogRepository : com.kcalgrindai.app.domain.repository.MealLogRepos
     private val updateTrigger = MutableStateFlow(0L)
 
     var shouldFail: Boolean = false
+    var shouldFailObserve: Boolean = false
     var saveCallCount: Int = 0
 
     private fun notifyUpdate() {
@@ -210,6 +211,9 @@ class FakeMealLogRepository : com.kcalgrindai.app.domain.repository.MealLogRepos
 
     override fun observeMealsWithItemsByDate(date: String): Flow<List<com.kcalgrindai.app.domain.model.MealWithFoodItems>> {
         return updateTrigger.map {
+            if (shouldFail || shouldFailObserve) {
+                throw IllegalStateException("Simulated database failure")
+            }
             meals.filter { it.date == date }.map { meal ->
                 com.kcalgrindai.app.domain.model.MealWithFoodItems(
                     meal = meal,
@@ -375,6 +379,9 @@ class FakeAICoachRepository(
     private val conversations = mutableListOf<Conversation>()
     private val messages = mutableListOf<ChatMessage>()
     var shouldFail: Boolean = false
+    var lastRemainingCalories: Int? = null
+    var lastConsumedCalories: Int? = null
+    var lastTargetCalories: Int? = null
 
     override suspend fun createConversation(startedAt: Long): Long {
         val id = (conversations.size + 1).toLong()
@@ -426,6 +433,9 @@ class FakeAICoachRepository(
         }
 
         if (shouldFail) return Result.failure(java.io.IOException("AI Coach unavailable"))
+        this.lastRemainingCalories = remainingCalories
+        this.lastConsumedCalories = consumedCalories
+        this.lastTargetCalories = targetCalories
         saveMessage(ChatMessage(0L, conversationId, com.kcalgrindai.app.domain.model.MessageRole.USER, userContent, null, System.currentTimeMillis()))
         
         var suggestedAction: String? = null
