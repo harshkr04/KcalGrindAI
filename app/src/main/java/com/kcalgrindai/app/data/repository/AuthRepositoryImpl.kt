@@ -103,7 +103,19 @@ class AuthRepositoryImpl @Inject constructor(
             Result.success(user)
         } catch (e: Exception) {
             com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.recordException(e, mapOf("action" to "signInAsGuest"))
-            Result.failure(e)
+            val localProfile = userProfileRepository.getProfile()
+            if (localProfile != null) {
+                Result.success(
+                    AuthUser(
+                        uid = localProfile.firebaseUid ?: "guest_local",
+                        email = null,
+                        isAnonymous = true,
+                        displayName = localProfile.firstName ?: "Guest"
+                    )
+                )
+            } else {
+                Result.failure(e)
+            }
         }
     }
 

@@ -158,6 +158,7 @@ class AuthViewModel @Inject constructor(
     }
 
     fun onGoogleSignInStarted() {
+        if (_uiState.value.isLoading) return
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
     }
 

@@ -292,5 +292,40 @@ class AuthViewModelTest {
         // Repository should not have been called because it returned early
         assertFalse(viewModel.uiState.value.authSuccess)
     }
+
+    @Test
+    fun onGoogleSignInStarted_whileLoading_preventsDuplicateSubmission() {
+        viewModel.onGoogleSignInStarted()
+        assertTrue(viewModel.uiState.value.isLoading)
+
+        // Attempt second start while loading
+        viewModel.onGoogleSignInStarted()
+        assertTrue(viewModel.uiState.value.isLoading)
+        assertNull(viewModel.uiState.value.errorMessage)
+    }
+
+    @Test
+    fun onGoogleSignInFailure_handlesMissingWebClientIdMessage() {
+        val missingConfigMessage = "Google Sign-In configuration required: OAuth Web Client ID is missing in google-services.json."
+        viewModel.onGoogleSignInFailure(missingConfigMessage)
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertFalse(state.authSuccess)
+        assertEquals(missingConfigMessage, state.errorMessage)
+    }
+
+    @Test
+    fun onGoogleSignInSuccess_onlySetsAuthSuccessAfterRepositorySucceeds() = runTest {
+        assertFalse(viewModel.uiState.value.authSuccess)
+
+        viewModel.onGoogleSignInSuccess("sample-valid-token")
+        // Before coroutine executes to completion
+        assertTrue(viewModel.uiState.value.isLoading)
+
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.authSuccess)
+        assertFalse(viewModel.uiState.value.isLoading)
+    }
 }
 

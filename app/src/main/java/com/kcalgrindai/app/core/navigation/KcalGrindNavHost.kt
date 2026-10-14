@@ -177,7 +177,7 @@ fun KcalGrindNavHost(
                             onAuthSuccess = {
                                 launchViewModel.checkUserProfile()
                                 navController.navigate(KcalGrindRoute.Home.route) {
-                                    popUpTo(KcalGrindRoute.Welcome.route) { inclusive = true }
+                                    popUpTo(KcalGrindRoute.Auth.route) { inclusive = true }
                                 }
                             },
                             onNavigateBack = { navController.popBackStack() }

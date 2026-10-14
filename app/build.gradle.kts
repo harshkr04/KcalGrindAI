@@ -32,6 +32,7 @@ android {
         versionName = "0.1.0"
         buildConfigField("String", "USDA_API_KEY", "\"$usdaApiKey\"")
         buildConfigField("String", "BACKEND_URL", "\"${localProperties.getProperty("BACKEND_URL") ?: "http://10.0.2.2:8000/"}\"")
+        buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "${(localProperties.getProperty("USE_FIREBASE_EMULATOR") ?: System.getenv("USE_FIREBASE_EMULATOR") ?: "false").toBoolean()}")
     }
 
     buildTypes {
