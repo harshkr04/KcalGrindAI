@@ -58,8 +58,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.kcalgrindai.app.R
-import com.kcalgrindai.app.core.designsystem.KcalGrindPrimary
-import com.kcalgrindai.app.core.designsystem.KcalGrindSecondaryContainer
+import com.kcalgrindai.app.core.designsystem.v3Colors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -155,10 +154,11 @@ fun WidgetStatusCard(
     installedCount: Int,
     onAddWidgetClick: () -> Unit
 ) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+        color = v3.surface,
+        border = BorderStroke(1.dp, v3.subtleBorder),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -177,14 +177,14 @@ fun WidgetStatusCard(
                             .size(44.dp)
                             .clip(CircleShape)
                             .background(
-                                if (isAdded) Color(0xFFB0F1CC) else MaterialTheme.colorScheme.surfaceContainerHigh
+                                if (isAdded) v3.emeraldAccent.copy(alpha = 0.2f) else v3.surfaceElevated
                             ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = if (isAdded) Icons.Default.CheckCircle else Icons.Default.Widgets,
                             contentDescription = null,
-                            tint = if (isAdded) Color(0xFF0F5238) else MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = if (isAdded) v3.emeraldAccent else v3.textSecondary,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -194,7 +194,7 @@ fun WidgetStatusCard(
                             text = if (isAdded) "Widget status: Added" else "Widget status: Not added",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                color = v3.textPrimary,
                                 fontSize = 16.sp
                             )
                         )
@@ -206,7 +206,7 @@ fun WidgetStatusCard(
                                 "Not currently placed on home screen"
                             },
                             style = MaterialTheme.typography.bodySmall.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = v3.textSecondary,
                                 fontSize = 12.sp
                             )
                         )
@@ -215,13 +215,13 @@ fun WidgetStatusCard(
 
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = if (isAdded) Color(0xFFB0F1CC).copy(alpha = 0.4f) else MaterialTheme.colorScheme.surfaceContainerHigh
+                    color = if (isAdded) v3.emeraldAccent.copy(alpha = 0.2f) else v3.surfaceElevated
                 ) {
                     Text(
                         text = if (isAdded) "Active" else "Inactive",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = if (isAdded) Color(0xFF0F5238) else MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = if (isAdded) v3.emeraldAccent else v3.textSecondary,
                             fontSize = 11.sp
                         ),
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
@@ -234,7 +234,7 @@ fun WidgetStatusCard(
             Surface(
                 onClick = onAddWidgetClick,
                 shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.primary,
+                color = v3.emeraldAccent,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -245,7 +245,7 @@ fun WidgetStatusCard(
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
+                        tint = Color(0xFF101211),
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
@@ -253,7 +253,7 @@ fun WidgetStatusCard(
                         text = if (isAdded) "Add another widget" else "Add to home screen",
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = Color(0xFF101211),
                             fontSize = 14.sp
                         )
                     )
@@ -269,10 +269,11 @@ fun WidgetPreviewShowcaseCard(
     isPrivacyEnabled: Boolean,
     onSelectTab: (WidgetSizeTab) -> Unit
 ) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+        color = v3.surface,
+        border = BorderStroke(1.dp, v3.subtleBorder),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -286,14 +287,14 @@ fun WidgetPreviewShowcaseCard(
                         text = "Available Widget Sizes",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = v3.textPrimary,
                             fontSize = 16.sp
                         )
                     )
                     Text(
                         text = "Live Android dynamic Glance companion",
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = v3.textSecondary,
                             fontSize = 12.sp
                         )
                     )
@@ -301,13 +302,13 @@ fun WidgetPreviewShowcaseCard(
 
                 Surface(
                     shape = RoundedCornerShape(10.dp),
-                    color = Color(0xFFB0F1CC).copy(alpha = 0.4f)
+                    color = v3.emeraldAccent.copy(alpha = 0.15f)
                 ) {
                     Text(
                         text = "Android 12+ Glance",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F5238),
+                            color = v3.emeraldAccent,
                             fontSize = 10.sp
                         ),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -320,7 +321,7 @@ fun WidgetPreviewShowcaseCard(
             // Segmented Tabs
             Surface(
                 shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                color = v3.surfaceElevated,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(modifier = Modifier.padding(4.dp)) {
@@ -352,7 +353,7 @@ fun WidgetPreviewShowcaseCard(
 
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                color = v3.surfaceElevated,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -363,13 +364,13 @@ fun WidgetPreviewShowcaseCard(
                     Icon(
                         imageVector = Icons.Default.Palette,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = v3.emeraldAccent,
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
                         text = "Material 3 Dynamic Theming supported with system palette",
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = v3.textSecondary,
                             fontSize = 11.sp
                         )
                     )
@@ -386,10 +387,11 @@ private fun WidgetTabButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
-        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+        color = if (isSelected) v3.emeraldAccent else Color.Transparent,
         modifier = modifier
     ) {
         Box(
@@ -400,7 +402,7 @@ private fun WidgetTabButton(
                 text = text,
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (isSelected) Color(0xFF101211) else v3.textSecondary,
                     fontSize = 12.sp
                 )
             )
@@ -410,10 +412,11 @@ private fun WidgetTabButton(
 
 @Composable
 fun WidgetDetailed4x2Preview(isPrivacyEnabled: Boolean) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = Color(0xFFB0F1CC),
-        border = BorderStroke(1.dp, Color(0xFF9AE3B9)),
+        color = v3.surface,
+        border = BorderStroke(1.dp, v3.subtleBorder),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
@@ -429,14 +432,14 @@ fun WidgetDetailed4x2Preview(isPrivacyEnabled: Boolean) {
                     Icon(
                         imageVector = Icons.Default.Eco,
                         contentDescription = null,
-                        tint = Color(0xFF0F5238),
+                        tint = v3.emeraldAccent,
                         modifier = Modifier.size(15.dp)
                     )
                     Text(
                         text = "KCAL GRIND AI",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.ExtraBold,
-                            color = Color(0xFF0F5238),
+                            color = v3.textPrimary,
                             fontSize = 11.sp
                         )
                     )
@@ -444,13 +447,13 @@ fun WidgetDetailed4x2Preview(isPrivacyEnabled: Boolean) {
 
                 Surface(
                     shape = RoundedCornerShape(10.dp),
-                    color = Color(0xFF0F5238).copy(alpha = 0.12f)
+                    color = v3.surfaceElevated
                 ) {
                     Text(
                         text = if (isPrivacyEnabled) "Secure Mode" else "1,420 / 2,100",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F5238),
+                            color = if (isPrivacyEnabled) v3.emeraldAccent else v3.textSecondary,
                             fontSize = 10.sp
                         ),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
@@ -467,7 +470,7 @@ fun WidgetDetailed4x2Preview(isPrivacyEnabled: Boolean) {
             ) {
                 Surface(
                     shape = RoundedCornerShape(14.dp),
-                    color = Color.White.copy(alpha = 0.6f),
+                    color = v3.surfaceElevated,
                     modifier = Modifier.size(60.dp)
                 ) {
                     Box(
@@ -490,14 +493,14 @@ fun WidgetDetailed4x2Preview(isPrivacyEnabled: Boolean) {
                         text = if (isPrivacyEnabled) "•••• kcal left" else "680 kcal left",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.ExtraBold,
-                            color = Color(0xFF191C1C),
+                            color = v3.textPrimary,
                             fontSize = 17.sp
                         )
                     )
                     Text(
                         text = if (isPrivacyEnabled) "•••• / ••••" else "Budget: 2,100 kcal",
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = Color(0xFF404943),
+                            color = v3.textSecondary,
                             fontSize = 11.sp
                         )
                     )
@@ -517,7 +520,7 @@ fun WidgetDetailed4x2Preview(isPrivacyEnabled: Boolean) {
                                     .height(7.dp)
                                     .clip(RoundedCornerShape(2.dp))
                                     .background(
-                                        if (isFilled) Color(0xFF0F5238) else Color(0xFFC8F7DC)
+                                        if (isFilled) v3.emeraldAccent else v3.progressTrack
                                     )
                             )
                         }
@@ -535,19 +538,19 @@ fun WidgetDetailed4x2Preview(isPrivacyEnabled: Boolean) {
                 MacroSettingsPreviewPill(
                     label = if (isPrivacyEnabled) "C: •••g" else "C: 180g",
                     fraction = if (isPrivacyEnabled) 0.0f else 0.65f,
-                    barColor = Color(0xFF2D6A4F),
+                    barColor = v3.emeraldAccent,
                     modifier = Modifier.weight(1f)
                 )
                 MacroSettingsPreviewPill(
                     label = if (isPrivacyEnabled) "P: •••g" else "P: 120g",
                     fraction = if (isPrivacyEnabled) 0.0f else 0.80f,
-                    barColor = Color(0xFF195E3E),
+                    barColor = v3.strongEmerald,
                     modifier = Modifier.weight(1f)
                 )
                 MacroSettingsPreviewPill(
                     label = if (isPrivacyEnabled) "F: ••g" else "F: 55g",
                     fraction = if (isPrivacyEnabled) 0.0f else 0.50f,
-                    barColor = Color(0xFF407855),
+                    barColor = v3.emeraldAccent.copy(alpha = 0.6f),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -557,10 +560,11 @@ fun WidgetDetailed4x2Preview(isPrivacyEnabled: Boolean) {
 
 @Composable
 fun WidgetQuick2x2Preview(isPrivacyEnabled: Boolean) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = Color(0xFFB0F1CC),
-        border = BorderStroke(1.dp, Color(0xFF9AE3B9)),
+        color = v3.surface,
+        border = BorderStroke(1.dp, v3.subtleBorder),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
@@ -578,20 +582,20 @@ fun WidgetQuick2x2Preview(isPrivacyEnabled: Boolean) {
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF0F5238))
+                        .background(v3.emeraldAccent)
                 )
                 Text(
                     text = "KCAL GRIND",
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.ExtraBold,
-                        color = Color(0xFF0F5238),
+                        color = v3.textPrimary,
                         fontSize = 11.sp
                     )
                 )
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = null,
-                    tint = Color(0xFF0F5238),
+                    tint = v3.emeraldAccent,
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -613,7 +617,7 @@ fun WidgetQuick2x2Preview(isPrivacyEnabled: Boolean) {
                 text = if (isPrivacyEnabled) "•••• left" else "680 left",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF191C1C),
+                    color = v3.textPrimary,
                     fontSize = 16.sp
                 )
             )
@@ -621,7 +625,7 @@ fun WidgetQuick2x2Preview(isPrivacyEnabled: Boolean) {
             Text(
                 text = if (isPrivacyEnabled) "Privacy active" else "Sproutling is energized",
                 style = MaterialTheme.typography.bodySmall.copy(
-                    color = Color(0xFF404943),
+                    color = v3.textSecondary,
                     fontSize = 11.sp
                 )
             )
@@ -634,7 +638,7 @@ fun WidgetQuick2x2Preview(isPrivacyEnabled: Boolean) {
                     .fillMaxWidth(0.85f)
                     .height(6.dp)
                     .clip(RoundedCornerShape(3.dp))
-                    .background(Color(0xFFC8F7DC))
+                    .background(v3.progressTrack)
             ) {
                 if (!isPrivacyEnabled) {
                     Box(
@@ -642,7 +646,7 @@ fun WidgetQuick2x2Preview(isPrivacyEnabled: Boolean) {
                             .fillMaxWidth(0.68f)
                             .height(6.dp)
                             .clip(RoundedCornerShape(3.dp))
-                            .background(Color(0xFF0F5238))
+                            .background(v3.emeraldAccent)
                     )
                 }
             }
@@ -657,13 +661,14 @@ private fun MacroSettingsPreviewPill(
     barColor: Color,
     modifier: Modifier = Modifier
 ) {
+    val v3 = MaterialTheme.v3Colors
     Column(modifier = modifier) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall.copy(
                 fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF404943)
+                color = v3.textSecondary
             )
         )
         Spacer(modifier = Modifier.height(2.dp))
@@ -672,7 +677,7 @@ private fun MacroSettingsPreviewPill(
                 .fillMaxWidth()
                 .height(4.dp)
                 .clip(RoundedCornerShape(2.dp))
-                .background(Color.White.copy(alpha = 0.6f))
+                .background(v3.progressTrack)
         ) {
             if (fraction > 0f) {
                 Box(
@@ -692,10 +697,11 @@ fun WidgetPrivacyCard(
     isPrivacyEnabled: Boolean,
     onTogglePrivacy: (Boolean) -> Unit
 ) {
+    val v3 = MaterialTheme.v3Colors
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+        color = v3.surface,
+        border = BorderStroke(1.dp, v3.subtleBorder),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -709,7 +715,7 @@ fun WidgetPrivacyCard(
                         text = "Hide numbers on widget",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = v3.textPrimary,
                             fontSize = 16.sp
                         )
                     )
@@ -717,7 +723,7 @@ fun WidgetPrivacyCard(
                     Text(
                         text = "Hides calorie and macro numbers when device is locked or widget is visible to others.",
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = v3.textSecondary,
                             fontSize = 12.sp,
                             lineHeight = 17.sp
                         )
@@ -728,8 +734,8 @@ fun WidgetPrivacyCard(
                     checked = isPrivacyEnabled,
                     onCheckedChange = onTogglePrivacy,
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = KcalGrindPrimary,
-                        checkedTrackColor = KcalGrindSecondaryContainer
+                        checkedThumbColor = v3.emeraldAccent,
+                        checkedTrackColor = v3.emeraldAccent.copy(alpha = 0.35f)
                     ),
                     modifier = Modifier.semantics { contentDescription = "Toggle hiding numbers on widget" }
                 )
@@ -739,7 +745,7 @@ fun WidgetPrivacyCard(
 
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                color = v3.surfaceElevated,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -750,19 +756,19 @@ fun WidgetPrivacyCard(
                     Text(
                         text = "Simulated display mode:",
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = v3.textSecondary,
                             fontSize = 12.sp
                         )
                     )
                     Surface(
                         shape = RoundedCornerShape(10.dp),
-                        color = if (isPrivacyEnabled) Color(0xFFB0F1CC) else MaterialTheme.colorScheme.surfaceContainerHigh
+                        color = if (isPrivacyEnabled) v3.emeraldAccent.copy(alpha = 0.2f) else v3.surfaceElevated
                     ) {
                         Text(
                             text = if (isPrivacyEnabled) "•••• kcal masked" else "680 kcal visible",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = if (isPrivacyEnabled) Color(0xFF0F5238) else MaterialTheme.colorScheme.onSurface,
+                                color = if (isPrivacyEnabled) v3.emeraldAccent else v3.textPrimary,
                                 fontSize = 11.sp
                             ),
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -776,10 +782,11 @@ fun WidgetPrivacyCard(
 
 @Composable
 fun WidgetManualInstructionsCard() {
+    val v3 = MaterialTheme.v3Colors
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+        color = v3.surface,
+        border = BorderStroke(1.dp, v3.subtleBorder),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -787,14 +794,14 @@ fun WidgetManualInstructionsCard() {
                 text = "Manual Setup Instructions",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = v3.textPrimary,
                     fontSize = 16.sp
                 )
             )
             Text(
                 text = "If automatic pinning is not supported on your launcher:",
                 style = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = v3.textSecondary,
                     fontSize = 12.sp
                 )
             )
@@ -814,7 +821,7 @@ fun WidgetManualInstructionsCard() {
             Text(
                 text = "Works with Pixel Launcher, Nova, One UI, and other modern launchers",
                 style = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = v3.textMuted,
                     fontSize = 11.sp
                 )
             )
@@ -824,6 +831,7 @@ fun WidgetManualInstructionsCard() {
 
 @Composable
 private fun ManualStepRow(stepNumber: String, stepText: String) {
+    val v3 = MaterialTheme.v3Colors
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -832,14 +840,14 @@ private fun ManualStepRow(stepNumber: String, stepText: String) {
             modifier = Modifier
                 .size(26.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                .background(v3.surfaceElevated),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = stepNumber,
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = v3.emeraldAccent,
                     fontSize = 12.sp
                 )
             )
@@ -847,7 +855,7 @@ private fun ManualStepRow(stepNumber: String, stepText: String) {
         Text(
             text = stepText,
             style = MaterialTheme.typography.bodySmall.copy(
-                color = MaterialTheme.colorScheme.onSurface,
+                color = v3.textPrimary,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium
             )

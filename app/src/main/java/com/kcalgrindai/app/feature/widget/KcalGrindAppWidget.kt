@@ -55,21 +55,21 @@ class KcalGrindAppWidget : GlanceAppWidget() {
         val MINIMAL_4X1 = DpSize(250.dp, 48.dp)
         val EXPANDED_4X2 = DpSize(250.dp, 110.dp)
 
-        // Color tokens matching Docs/design/WIDGET_SPEC.md
-        val SurfaceColor = ColorProvider(day = Color(0xFFB0F1CC), night = Color(0xFF0B2B1D))
-        val PrimaryTextColor = ColorProvider(day = Color(0xFF191C1C), night = Color(0xFFEFF1F0))
-        val SecondaryTextColor = ColorProvider(day = Color(0xFF404943), night = Color(0xFFA8D1BC))
-        val EnergyActiveColor = ColorProvider(day = Color(0xFF0F5238), night = Color(0xFF95D4B3))
-        val EnergyTrackColor = ColorProvider(day = Color(0xFFC8F7DC), night = Color(0xFF051A10))
+        // Color tokens matching approved V3 Graphite & Emerald design system
+        val SurfaceColor = ColorProvider(day = Color(0xFFFFFFFF), night = Color(0xFF191D1B))
+        val PrimaryTextColor = ColorProvider(day = Color(0xFF171C19), night = Color(0xFFF4F6F4))
+        val SecondaryTextColor = ColorProvider(day = Color(0xFF505A53), night = Color(0xFFB2BAB5))
+        val EnergyActiveColor = ColorProvider(day = Color(0xFF16834D), night = Color(0xFF38C77B))
+        val EnergyTrackColor = ColorProvider(day = Color(0xFFDCE3DE), night = Color(0xFF2B332E))
 
-        val ActionAddColor = ColorProvider(day = Color(0xFF0F5238), night = Color(0xFF95D4B3))
-        val ActionAddIconColor = ColorProvider(day = Color(0xFFFFFFFF), night = Color(0xFF0A2619))
+        val ActionAddColor = ColorProvider(day = Color(0xFF16834D), night = Color(0xFF38C77B))
+        val ActionAddIconColor = ColorProvider(day = Color(0xFFFFFFFF), night = Color(0xFF101211))
         val ActionAiColor = ColorProvider(day = Color(0xFF313C9F), night = Color(0xFFBDC2FF))
-        val ActionWaterColor = ColorProvider(day = Color(0xFF2B694D), night = Color(0xFFA8E7C5))
+        val ActionWaterColor = ColorProvider(day = Color(0xFF10663C), night = Color(0xFF16834D))
 
-        val MacroProteinColor = ColorProvider(day = Color(0xFF195E3E), night = Color(0xFF7EC89F))
-        val MacroCarbsColor = ColorProvider(day = Color(0xFF2D6A4F), night = Color(0xFF95D4B3))
-        val MacroFatColor = ColorProvider(day = Color(0xFF407855), night = Color(0xFF5BA678))
+        val MacroProteinColor = ColorProvider(day = Color(0xFF16834D), night = Color(0xFF38C77B))
+        val MacroCarbsColor = ColorProvider(day = Color(0xFFD97706), night = Color(0xFFFBBF24))
+        val MacroFatColor = ColorProvider(day = Color(0xFF0284C7), night = Color(0xFF38BDF8))
     }
 
     override val sizeMode = SizeMode.Responsive(

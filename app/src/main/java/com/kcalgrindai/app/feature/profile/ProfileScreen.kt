@@ -154,6 +154,14 @@ fun ProfileScreen(
                     border = BorderStroke(1.dp, v3.subtleBorder),
                     modifier = Modifier.align(Alignment.CenterEnd)
                 ) {
+                    val isGuest = (uiState as? ProfileUiState.Content)?.profile?.firebaseUid == null
+                    val (syncText, dotColor) = when {
+                        syncState is SyncState.Syncing -> "Syncing…" to v3.emeraldAccent
+                        syncState is SyncState.Error -> "Offline" to v3.textMuted
+                        isGuest -> "Local" to v3.emeraldAccent
+                        syncState is SyncState.Success || viewModel.lastSyncTimestamp > 0L -> "Synced" to v3.emeraldAccent
+                        else -> "Local" to v3.emeraldAccent
+                    }
                     Row(
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -163,10 +171,10 @@ fun ProfileScreen(
                             modifier = Modifier
                                 .size(6.dp)
                                 .clip(CircleShape)
-                                .background(v3.emeraldAccent)
+                                .background(dotColor)
                         )
                         Text(
-                            text = if (syncState is SyncState.Syncing) "Syncing…" else "Synced",
+                            text = syncText,
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Medium,
                                 color = v3.textSecondary,
