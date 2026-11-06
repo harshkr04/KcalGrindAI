@@ -15,5 +15,7 @@ data class FoodLogItem(
     val fiberG: Double,
     val source: ItemSource,
     val confidence: Float? = null,
-    val confirmed: Boolean
+    val confirmed: Boolean,
+    val sugarG: Double = 0.0,
+    val sodiumMg: Double = 0.0
 )

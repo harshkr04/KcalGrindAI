@@ -1,6 +1,7 @@
 package com.kcalgrindai.app.data.repository
 
 import com.google.firebase.auth.EmailAuthProvider
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
@@ -65,7 +66,6 @@ class AuthRepositoryImpl @Inject constructor(
             }
             val user = resultUser.toDomain()
             userProfileRepository.updateAuthDetails(user.uid, user.email)
-            com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.setUserId(user.uid)
             Result.success(user)
         } catch (e: Exception) {
             com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.recordException(e, mapOf("action" to "signUpWithEmail"))
@@ -86,7 +86,6 @@ class AuthRepositoryImpl @Inject constructor(
             }
             val user = resultUser.toDomain()
             userProfileRepository.updateAuthDetails(user.uid, user.email)
-            com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.setUserId(user.uid)
             Result.success(user)
         } catch (e: Exception) {
             com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.recordException(e, mapOf("action" to "signInWithGoogle"))
@@ -99,7 +98,6 @@ class AuthRepositoryImpl @Inject constructor(
             val result = auth.signInAnonymously().await()
             val user = result.user?.toDomain() ?: throw IllegalStateException("Firebase returned null user")
             userProfileRepository.updateAuthDetails(user.uid, null)
-            com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.setUserId(user.uid)
             Result.success(user)
         } catch (e: Exception) {
             com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.recordException(e, mapOf("action" to "signInAsGuest"))
@@ -129,8 +127,48 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun signOut() {
         auth.signOut()
-        com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.setUserId(null)
         widgetUpdater?.get()?.clearWidgetDataOnSignOut()
+    }
+
+    override suspend fun checkSessionFreshness(): Result<Unit> {
+        val user = auth.currentUser ?: return Result.success(Unit)
+        if (user.isAnonymous) return Result.success(Unit)
+        return try {
+            val tokenResult = user.getIdToken(false).await()
+            val authTimeSeconds = (tokenResult.claims["auth_time"] as? Number)?.toLong()
+                ?: tokenResult.authTimestamp
+            val nowSeconds = System.currentTimeMillis() / 1000
+            if (authTimeSeconds > 0 && (nowSeconds - authTimeSeconds) > 300) {
+                Result.failure(FirebaseAuthRecentLoginRequiredException("auth/requires-recent-login", "Recent login required"))
+            } else {
+                Result.success(Unit)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun deleteFirebaseUser(): Result<Unit> {
+        val user = auth.currentUser ?: return Result.success(Unit)
+        return try {
+            user.delete().await()
+                widgetUpdater?.get()?.clearWidgetDataOnSignOut()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun reauthenticateWithPassword(password: String): Result<Unit> {
+        val user = auth.currentUser ?: return Result.failure(IllegalStateException("No authenticated user"))
+        val email = user.email ?: return Result.failure(IllegalStateException("No email on account"))
+        return try {
+            val credential = EmailAuthProvider.getCredential(email, password)
+            user.reauthenticate(credential).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     override suspend fun getIdToken(forceRefresh: Boolean): String? {

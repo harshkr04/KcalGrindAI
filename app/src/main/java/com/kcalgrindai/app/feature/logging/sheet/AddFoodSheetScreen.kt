@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Mic
@@ -46,7 +47,9 @@ fun AddFoodSheetScreen(
     onNavigateToBarcode: () -> Unit,
     onNavigateToPhoto: () -> Unit,
     onNavigateToVoice: () -> Unit,
-    onNavigateToText: () -> Unit
+    onNavigateToText: () -> Unit,
+    onNavigateToCustomFood: () -> Unit = {},
+    onNavigateToSavedMeals: () -> Unit = {}
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -137,6 +140,32 @@ fun AddFoodSheetScreen(
                 badgeColor = MaterialTheme.colorScheme.secondaryContainer,
                 badgeTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 onClick = onNavigateToBarcode
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 3. Custom Food Card
+            LogOptionCard(
+                icon = Icons.Default.EditNote,
+                title = "Custom Food",
+                subtitle = "Create your own food item with custom macros and serving size",
+                badge = "User",
+                badgeColor = MaterialTheme.colorScheme.secondaryContainer,
+                badgeTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                onClick = onNavigateToCustomFood
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 4. Saved Meals Card
+            LogOptionCard(
+                icon = Icons.Default.BookmarkBorder,
+                title = "Saved Meals",
+                subtitle = "Re-log your frequent meal combinations in 1 tap",
+                badge = "Combo",
+                badgeColor = MaterialTheme.colorScheme.secondaryContainer,
+                badgeTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                onClick = onNavigateToSavedMeals
             )
 
             Spacer(modifier = Modifier.height(24.dp))

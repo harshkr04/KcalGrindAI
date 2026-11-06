@@ -13,5 +13,7 @@ data class MealDetailUiState(
     val sourceLabel: String = "Manual",
     val isDuplicated: Boolean = false,
     val isDeleted: Boolean = false,
+    val isSavedAsTemplate: Boolean = false,
+    val saveSuccessMessage: String? = null,
     val errorMessage: String? = null
 )

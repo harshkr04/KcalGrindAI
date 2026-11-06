@@ -12,6 +12,8 @@ import com.kcalgrindai.app.domain.model.NutritionGoal
 import com.kcalgrindai.app.domain.model.UnitSystem
 import com.kcalgrindai.app.domain.model.UserProfile
 import com.kcalgrindai.app.domain.repository.AuthRepository
+import com.kcalgrindai.app.domain.usecase.AccountDeletionResult
+import com.kcalgrindai.app.domain.usecase.DeleteAccountUseCase
 import com.kcalgrindai.app.domain.repository.MealLogRepository
 import com.kcalgrindai.app.domain.repository.NutritionGoalRepository
 import com.kcalgrindai.app.domain.repository.SyncRepository
@@ -42,6 +44,15 @@ sealed interface ProfileUiState {
     data object Empty : ProfileUiState
 }
 
+sealed interface AccountDeletionUiState {
+    data object Idle : AccountDeletionUiState
+    data object ShowConfirmDialog : AccountDeletionUiState
+    data object InProgress : AccountDeletionUiState
+    data object ShowReauthDialog : AccountDeletionUiState
+    data class Error(val message: String) : AccountDeletionUiState
+    data object Deleted : AccountDeletionUiState
+}
+
 sealed interface SyncState {
     data object Idle : SyncState
     data object Syncing : SyncState
@@ -59,8 +70,13 @@ class ProfileViewModel @Inject constructor(
     private val syncRepository: SyncRepository? = null,
     private val authRepository: AuthRepository? = null,
     private val mealLogRepository: MealLogRepository? = null,
-    private val billingRepository: com.kcalgrindai.app.domain.repository.BillingRepository? = null
+    private val billingRepository: com.kcalgrindai.app.domain.repository.BillingRepository? = null,
+    private val deleteAccountUseCase: DeleteAccountUseCase? = null,
+    private val reminderScheduler: com.kcalgrindai.app.core.worker.ReminderScheduler? = null
 ) : ViewModel() {
+
+    private val _accountDeletionState = MutableStateFlow<AccountDeletionUiState>(AccountDeletionUiState.Idle)
+    val accountDeletionState: StateFlow<AccountDeletionUiState> = _accountDeletionState.asStateFlow()
 
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
@@ -71,6 +87,41 @@ class ProfileViewModel @Inject constructor(
     val notificationsEnabled: StateFlow<Boolean> = userPreferencesRepository?.notificationsEnabled
         ?.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
         ?: MutableStateFlow(true).asStateFlow()
+
+    val mealRemindersEnabled: StateFlow<Boolean> = userPreferencesRepository?.mealRemindersEnabled
+        ?.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+        ?: MutableStateFlow(true).asStateFlow()
+
+    val hydrationRemindersEnabled: StateFlow<Boolean> = userPreferencesRepository?.hydrationRemindersEnabled
+        ?.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+        ?: MutableStateFlow(true).asStateFlow()
+
+    val deductActiveCaloriesEnabled: StateFlow<Boolean> = userPreferencesRepository?.deductActiveCaloriesEnabled
+        ?.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+        ?: MutableStateFlow(false).asStateFlow()
+
+    fun setDeductActiveCaloriesEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            safeLog("Settings: Deduct active calories set to $enabled")
+            userPreferencesRepository?.setDeductActiveCaloriesEnabled(enabled)
+        }
+    }
+
+    fun setMealRemindersEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            safeLog("Settings: Meal reminders set to $enabled")
+            userPreferencesRepository?.setMealRemindersEnabled(enabled)
+            reminderScheduler?.syncRemindersWithSettings()
+        }
+    }
+
+    fun setHydrationRemindersEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            safeLog("Settings: Hydration reminders set to $enabled")
+            userPreferencesRepository?.setHydrationRemindersEnabled(enabled)
+            reminderScheduler?.syncRemindersWithSettings()
+        }
+    }
 
     val darkModeEnabled: StateFlow<Boolean> = userPreferencesRepository?.darkModeEnabled
         ?.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
@@ -143,6 +194,7 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             safeLog("Settings: Notifications set to $enabled")
             userPreferencesRepository?.setNotificationsEnabled(enabled)
+            reminderScheduler?.syncRemindersWithSettings()
         }
     }
 
@@ -396,5 +448,87 @@ class ProfileViewModel @Inject constructor(
             authRepository?.signOut()
             onComplete()
         }
+    }
+
+    fun promptDeleteAccount() {
+        _accountDeletionState.value = AccountDeletionUiState.ShowConfirmDialog
+    }
+
+    fun dismissDeleteAccount() {
+        _accountDeletionState.value = AccountDeletionUiState.Idle
+    }
+
+    fun confirmDeleteAccount(onSuccess: () -> Unit = {}) {
+        val useCase = deleteAccountUseCase
+        if (useCase == null) {
+            _accountDeletionState.value = AccountDeletionUiState.Error("Account deletion is not supported in this environment.")
+            return
+        }
+
+        viewModelScope.launch {
+            _accountDeletionState.value = AccountDeletionUiState.InProgress
+            when (val result = useCase.execute()) {
+                is AccountDeletionResult.Success -> {
+                    reminderScheduler?.cancelAllReminders()
+                    _accountDeletionState.value = AccountDeletionUiState.Deleted
+                    onSuccess()
+                }
+                is AccountDeletionResult.RequiresRecentLogin -> {
+                    _accountDeletionState.value = AccountDeletionUiState.ShowReauthDialog
+                }
+                is AccountDeletionResult.NetworkError -> {
+                    _accountDeletionState.value = AccountDeletionUiState.Error(result.message)
+                }
+                is AccountDeletionResult.BackendError -> {
+                    _accountDeletionState.value = AccountDeletionUiState.Error(result.message)
+                }
+                is AccountDeletionResult.Failure -> {
+                    _accountDeletionState.value = AccountDeletionUiState.Error(result.message)
+                }
+            }
+        }
+    }
+
+    fun reauthenticateAndDelete(password: String, onSuccess: () -> Unit = {}) {
+        val authRepo = authRepository
+        val useCase = deleteAccountUseCase
+        if (authRepo == null || useCase == null) {
+            _accountDeletionState.value = AccountDeletionUiState.Error("Authentication service unavailable.")
+            return
+        }
+
+        viewModelScope.launch {
+            _accountDeletionState.value = AccountDeletionUiState.InProgress
+            val reauthResult = authRepo.reauthenticateWithPassword(password)
+            if (reauthResult.isFailure) {
+                val err = reauthResult.exceptionOrNull()?.message ?: "Re-authentication failed. Incorrect password."
+                _accountDeletionState.value = AccountDeletionUiState.Error(err)
+                return@launch
+            }
+
+            when (val result = useCase.execute()) {
+                is AccountDeletionResult.Success -> {
+                    reminderScheduler?.cancelAllReminders()
+                    _accountDeletionState.value = AccountDeletionUiState.Deleted
+                    onSuccess()
+                }
+                is AccountDeletionResult.RequiresRecentLogin -> {
+                    _accountDeletionState.value = AccountDeletionUiState.ShowReauthDialog
+                }
+                is AccountDeletionResult.NetworkError -> {
+                    _accountDeletionState.value = AccountDeletionUiState.Error(result.message)
+                }
+                is AccountDeletionResult.BackendError -> {
+                    _accountDeletionState.value = AccountDeletionUiState.Error(result.message)
+                }
+                is AccountDeletionResult.Failure -> {
+                    _accountDeletionState.value = AccountDeletionUiState.Error(result.message)
+                }
+            }
+        }
+    }
+
+    fun dismissDeleteAccountError() {
+        _accountDeletionState.value = AccountDeletionUiState.Idle
     }
 }

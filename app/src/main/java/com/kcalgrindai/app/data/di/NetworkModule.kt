@@ -150,6 +150,12 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideAccountApiService(@Named("AiRetrofit") retrofit: Retrofit): com.kcalgrindai.app.data.remote.api.AccountApiService {
+        return retrofit.create(com.kcalgrindai.app.data.remote.api.AccountApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
     fun provideNetworkMonitor(networkMonitor: com.kcalgrindai.app.core.util.ConnectivityManagerNetworkMonitor): com.kcalgrindai.app.core.util.NetworkMonitor {
         return networkMonitor
     }

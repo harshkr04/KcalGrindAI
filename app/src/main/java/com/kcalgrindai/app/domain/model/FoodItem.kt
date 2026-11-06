@@ -13,6 +13,8 @@ data class FoodItem(
     val carbsG: Double,
     val fatG: Double,
     val fiberG: Double,
+    val sugarG: Double = 0.0,
+    val sodiumMg: Double = 0.0,
     val barcodeUpc: String? = null,
     val isUserCreated: Boolean,
     val createdAt: Long

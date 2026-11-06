@@ -1,5 +1,6 @@
 package com.kcalgrindai.app.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -26,6 +27,10 @@ data class FoodEntity(
     val carbsG: Double,
     val fatG: Double,
     val fiberG: Double,
+    @ColumnInfo(defaultValue = "0.0")
+    val sugarG: Double = 0.0,
+    @ColumnInfo(defaultValue = "0.0")
+    val sodiumMg: Double = 0.0,
     val barcodeUpc: String? = null,
     val isUserCreated: Boolean,
     val createdAt: Long

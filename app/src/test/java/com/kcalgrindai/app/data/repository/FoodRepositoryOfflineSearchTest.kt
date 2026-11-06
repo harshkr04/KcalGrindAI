@@ -12,7 +12,14 @@ import com.kcalgrindai.app.data.remote.api.UsdaApiService
 import com.kcalgrindai.app.data.remote.dto.OffProductResponse
 import com.kcalgrindai.app.data.remote.dto.UsdaFoodItem
 import com.kcalgrindai.app.data.remote.dto.UsdaSearchResponse
+import com.kcalgrindai.app.domain.model.FoodItem
+import com.kcalgrindai.app.domain.model.FoodLogItem
 import com.kcalgrindai.app.domain.model.FoodSource
+import com.kcalgrindai.app.domain.model.ItemSource
+import com.kcalgrindai.app.domain.model.LogSource
+import com.kcalgrindai.app.domain.model.MealLog
+import com.kcalgrindai.app.domain.model.MealType
+import org.junit.Assert.assertNotNull
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -150,5 +157,74 @@ class FoodRepositoryOfflineSearchTest {
         // Should contain local IFCT items AND the USDA item
         assertTrue("Should contain local IFCT dal items", items.any { it.source == FoodSource.IFCT })
         assertTrue("Should contain USDA item", items.any { it.source == FoodSource.USDA })
+    }
+
+    @Test
+    fun customFoodSavedWithUserEnteredSource_appearsInOfflineSearch_andCanBeLoggedToDiary() = runTest {
+        val customFood = FoodItem(
+            id = 0L,
+            source = FoodSource.USER_ENTERED,
+            name = "Harsh Homemade Khichdi",
+            brand = "Home",
+            servingDescription = "1 big bowl",
+            servingGrams = 300.0,
+            calories = 380.0,
+            proteinG = 14.0,
+            carbsG = 65.0,
+            fatG = 7.0,
+            fiberG = 6.0,
+            sugarG = 2.0,
+            sodiumMg = 300.0,
+            isUserCreated = true,
+            createdAt = System.currentTimeMillis()
+        )
+
+        val savedId = foodRepository.saveFood(customFood)
+        assertTrue(savedId > 0)
+
+        val searchResults = foodRepository.searchFoods("Khichdi")
+        assertTrue(searchResults.any { it.name == "Harsh Homemade Khichdi" && it.source == FoodSource.USER_ENTERED && it.isUserCreated })
+
+        val mealLogDao = db.mealLogDao()
+        val foodLogItemDao = db.foodLogItemDao()
+        val mealRepo = MealLogRepositoryImpl(mealLogDao, foodLogItemDao)
+
+        val meal = MealLog(
+            id = 0L,
+            date = "2026-11-04",
+            mealType = MealType.DINNER,
+            totalCalories = 380.0,
+            loggedAt = System.currentTimeMillis(),
+            source = LogSource.MANUAL,
+            synced = false
+        )
+        val logItem = FoodLogItem(
+            id = 0L,
+            mealLogId = 0L,
+            foodId = savedId,
+            name = customFood.name,
+            brand = customFood.brand,
+            servingDescription = customFood.servingDescription,
+            servingGrams = customFood.servingGrams,
+            calories = customFood.calories,
+            proteinG = customFood.proteinG,
+            carbsG = customFood.carbsG,
+            fatG = customFood.fatG,
+            fiberG = customFood.fiberG,
+            sugarG = customFood.sugarG,
+            sodiumMg = customFood.sodiumMg,
+            source = ItemSource.USER_ENTERED,
+            confidence = 1.0f,
+            confirmed = true
+        )
+
+        val mealId = mealRepo.saveMeal(meal, listOf(logItem))
+        val loggedMeal = mealRepo.getMealById(mealId)
+        assertNotNull(loggedMeal)
+        assertEquals(380.0, loggedMeal!!.meal.totalCalories, 0.001)
+        assertEquals(1, loggedMeal.items.size)
+        assertEquals(ItemSource.USER_ENTERED, loggedMeal.items[0].source)
+        assertEquals(380.0, loggedMeal.items[0].calories, 0.001)
+        assertEquals(14.0, loggedMeal.items[0].proteinG, 0.001)
     }
 }

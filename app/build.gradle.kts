@@ -115,6 +115,7 @@ dependencies {
     implementation("dev.chrisbanes.haze:haze:1.1.1")
     implementation(libs.androidx.glance)
     implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.glance.material3)
     ksp(libs.hilt.compiler)
     ksp(libs.androidx.room.compiler)
@@ -128,6 +129,7 @@ dependencies {
     testImplementation(libs.androidx.room.testing)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
+    testImplementation(libs.androidx.work.testing)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
 

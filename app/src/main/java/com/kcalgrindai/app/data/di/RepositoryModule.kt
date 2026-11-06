@@ -103,4 +103,10 @@ abstract class RepositoryModule {
     abstract fun bindBillingRepository(
         impl: com.kcalgrindai.app.data.repository.BillingRepositoryImpl
     ): com.kcalgrindai.app.domain.repository.BillingRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSavedMealRepository(
+        impl: com.kcalgrindai.app.data.repository.SavedMealRepositoryImpl
+    ): com.kcalgrindai.app.domain.repository.SavedMealRepository
 }

@@ -121,6 +121,8 @@ fun FoodEntity.toDomain(): FoodItem {
         carbsG = carbsG,
         fatG = fatG,
         fiberG = fiberG,
+        sugarG = sugarG,
+        sodiumMg = sodiumMg,
         barcodeUpc = barcodeUpc,
         isUserCreated = isUserCreated,
         createdAt = createdAt
@@ -141,6 +143,8 @@ fun FoodItem.toEntity(): FoodEntity {
         carbsG = carbsG,
         fatG = fatG,
         fiberG = fiberG,
+        sugarG = sugarG,
+        sodiumMg = sodiumMg,
         barcodeUpc = barcodeUpc,
         isUserCreated = isUserCreated,
         createdAt = createdAt
@@ -185,6 +189,8 @@ fun FoodLogItemEntity.toDomain(): FoodLogItem {
         carbsG = carbsG,
         fatG = fatG,
         fiberG = fiberG,
+        sugarG = sugarG,
+        sodiumMg = sodiumMg,
         source = ItemSource.fromId(source),
         confidence = confidence,
         confirmed = confirmed
@@ -205,6 +211,8 @@ fun FoodLogItem.toEntity(): FoodLogItemEntity {
         carbsG = carbsG,
         fatG = fatG,
         fiberG = fiberG,
+        sugarG = sugarG,
+        sodiumMg = sodiumMg,
         source = source.id,
         confidence = confidence,
         confirmed = confirmed
@@ -399,3 +407,80 @@ fun com.kcalgrindai.app.domain.model.WaterLog.toEntity(): com.kcalgrindai.app.da
     )
 }
 
+
+fun com.kcalgrindai.app.data.local.entity.SavedMealEntity.toDomain(): com.kcalgrindai.app.domain.model.SavedMeal {
+    val mealType = try {
+        com.kcalgrindai.app.domain.model.MealType.valueOf(defaultMealType.uppercase())
+    } catch (_: Exception) {
+        com.kcalgrindai.app.domain.model.MealType.LUNCH
+    }
+    return com.kcalgrindai.app.domain.model.SavedMeal(
+        id = id,
+        name = name,
+        defaultMealType = mealType,
+        createdAt = createdAt,
+        updatedAt = updatedAt
+    )
+}
+
+fun com.kcalgrindai.app.domain.model.SavedMeal.toEntity(): com.kcalgrindai.app.data.local.entity.SavedMealEntity {
+    return com.kcalgrindai.app.data.local.entity.SavedMealEntity(
+        id = id,
+        name = name,
+        defaultMealType = defaultMealType.name,
+        createdAt = createdAt,
+        updatedAt = updatedAt
+    )
+}
+
+fun com.kcalgrindai.app.data.local.entity.SavedMealItemEntity.toDomain(): com.kcalgrindai.app.domain.model.SavedMealItem {
+    val itemSource = try {
+        com.kcalgrindai.app.domain.model.ItemSource.valueOf(source.uppercase())
+    } catch (_: Exception) {
+        com.kcalgrindai.app.domain.model.ItemSource.USER_ENTERED
+    }
+    return com.kcalgrindai.app.domain.model.SavedMealItem(
+        id = id,
+        savedMealId = savedMealId,
+        foodId = foodId,
+        name = name,
+        brand = brand,
+        servingDescription = servingDescription,
+        servingGrams = servingGrams,
+        calories = calories,
+        proteinG = proteinG,
+        carbsG = carbsG,
+        fatG = fatG,
+        fiberG = fiberG,
+        sugarG = sugarG,
+        sodiumMg = sodiumMg,
+        source = itemSource
+    )
+}
+
+fun com.kcalgrindai.app.domain.model.SavedMealItem.toEntity(): com.kcalgrindai.app.data.local.entity.SavedMealItemEntity {
+    return com.kcalgrindai.app.data.local.entity.SavedMealItemEntity(
+        id = id,
+        savedMealId = savedMealId,
+        foodId = foodId,
+        name = name,
+        brand = brand,
+        servingDescription = servingDescription,
+        servingGrams = servingGrams,
+        calories = calories,
+        proteinG = proteinG,
+        carbsG = carbsG,
+        fatG = fatG,
+        fiberG = fiberG,
+        sugarG = sugarG,
+        sodiumMg = sodiumMg,
+        source = source.name
+    )
+}
+
+fun com.kcalgrindai.app.data.local.model.SavedMealWithItemsRelation.toDomain(): com.kcalgrindai.app.domain.model.SavedMealWithItems {
+    return com.kcalgrindai.app.domain.model.SavedMealWithItems(
+        savedMeal = savedMeal.toDomain(),
+        items = items.map { it.toDomain() }
+    )
+}

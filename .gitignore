@@ -59,3 +59,7 @@ firebase-debug.log
 backend/calibration-*.txt
 backend/*.log
 docs-private/
+
+# Root temporary debug screenshots and test dumps
+/*.png
+/*.xml

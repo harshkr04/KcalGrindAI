@@ -150,4 +150,45 @@ class FoodDaoTest {
         val retrieved = foodDao.getFoodById(1L)
         assertNull(retrieved)
     }
+
+    @Test
+    fun customFood_userEnteredSource_andUpdate() = runTest {
+        val customFood = FoodEntity(
+            id = 10L,
+            source = "USER_ENTERED",
+            name = "My Grandma Oatmeal",
+            brand = "Family Recipe",
+            servingDescription = "1 bowl",
+            servingGrams = 200.0,
+            calories = 250.0,
+            proteinG = 8.0,
+            carbsG = 42.0,
+            fatG = 5.0,
+            fiberG = 6.0,
+            sugarG = 12.0,
+            sodiumMg = 150.0,
+            isUserCreated = true,
+            createdAt = 5000L
+        )
+
+        foodDao.insertFood(customFood)
+
+        val retrieved = foodDao.getFoodById(10L)
+        assertNotNull(retrieved)
+        assertEquals("USER_ENTERED", retrieved!!.source)
+        assertEquals(12.0, retrieved.sugarG, 0.001)
+        assertEquals(150.0, retrieved.sodiumMg, 0.001)
+        assertEquals(true, retrieved.isUserCreated)
+
+        val searchResults = foodDao.searchFoods("Grandma")
+        assertEquals(1, searchResults.size)
+        assertEquals("My Grandma Oatmeal", searchResults[0].name)
+
+        val updated = retrieved.copy(calories = 280.0, proteinG = 10.0)
+        foodDao.updateFood(updated)
+
+        val retrievedUpdated = foodDao.getFoodById(10L)
+        assertEquals(280.0, retrievedUpdated!!.calories, 0.001)
+        assertEquals(10.0, retrievedUpdated.proteinG, 0.001)
+    }
 }

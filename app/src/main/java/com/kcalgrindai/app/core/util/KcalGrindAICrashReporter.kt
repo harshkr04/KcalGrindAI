@@ -48,15 +48,10 @@ object KcalGrindAICrashReporter {
     }
 
     /**
-     * Set the authenticated user ID for crash attribution.
+     * User ID collection disabled for privacy and Play Data Safety compliance.
+     * Crash traces remain strictly anonymous with zero user identification.
      */
     fun setUserId(userId: String?) {
-        try {
-            if (isAvailable) {
-                FirebaseCrashlytics.getInstance().setUserId(userId ?: "")
-            }
-        } catch (_: Throwable) {
-            // No-op outside Firebase context
-        }
+        // Explicit no-op: Crashlytics reports remain strictly anonymous without user IDs.
     }
 }

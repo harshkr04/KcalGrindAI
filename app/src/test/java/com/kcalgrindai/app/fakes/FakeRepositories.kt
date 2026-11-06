@@ -655,6 +655,28 @@ class FakeAuthRepository : com.kcalgrindai.app.domain.repository.AuthRepository 
         currentUser = null
         _authState.value = com.kcalgrindai.app.domain.model.AuthState.Unauthenticated
     }
+
+    var sessionFresh: Boolean = true
+
+    override suspend fun checkSessionFreshness(): Result<Unit> {
+        if (!sessionFresh) {
+            return Result.failure(Exception("CREDENTIAL_TOO_OLD_LOGIN_AGAIN [recent-login]"))
+        }
+        if (shouldFail) return Result.failure(Exception(failureMessage))
+        return Result.success(Unit)
+    }
+
+    override suspend fun deleteFirebaseUser(): Result<Unit> {
+        if (shouldFail) return Result.failure(Exception(failureMessage))
+        currentUser = null
+        _authState.value = com.kcalgrindai.app.domain.model.AuthState.Unauthenticated
+        return Result.success(Unit)
+    }
+
+    override suspend fun reauthenticateWithPassword(password: String): Result<Unit> {
+        if (shouldFail) return Result.failure(Exception(failureMessage))
+        return Result.success(Unit)
+    }
 }
 
 class FakeRecipeRepository : com.kcalgrindai.app.domain.repository.RecipeRepository {

@@ -41,6 +41,9 @@ interface MealLogDao {
     @Query("SELECT * FROM meal_logs WHERE date >= :startDate AND date <= :endDate ORDER BY date ASC, loggedAt ASC")
     fun observeMealsWithItemsInRange(startDate: String, endDate: String): Flow<List<MealWithItems>>
 
+    @Query("SELECT * FROM meal_logs WHERE date = :date ORDER BY loggedAt ASC")
+    suspend fun getMealLogsByDate(date: String): List<MealLogEntity>
+
     @Query("SELECT * FROM meal_logs ORDER BY loggedAt ASC")
     suspend fun getAllMealLogs(): List<MealLogEntity>
 

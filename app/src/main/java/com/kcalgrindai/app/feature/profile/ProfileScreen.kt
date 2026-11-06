@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Flag
@@ -56,6 +57,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,6 +68,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -92,10 +95,22 @@ fun ProfileScreen(
     onNavigateToWidgetSettings: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val syncState by viewModel.syncState.collectAsState()
 
     val notificationsEnabled by viewModel.notificationsEnabled.collectAsState()
+    val mealRemindersEnabled by viewModel.mealRemindersEnabled.collectAsState()
+    val hydrationRemindersEnabled by viewModel.hydrationRemindersEnabled.collectAsState()
+    val deductActiveCaloriesEnabled by viewModel.deductActiveCaloriesEnabled.collectAsState()
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            viewModel.setNotificationsEnabled(true)
+        }
+    }
     val themeMode by viewModel.themeMode.collectAsState()
     val hasHealthConnectPermission by viewModel.hasHealthConnectPermission.collectAsState()
 
@@ -122,6 +137,14 @@ fun ProfileScreen(
     var showPersonalInfoDialog by remember { mutableStateOf(false) }
     var showSecurityDialog by remember { mutableStateOf(false) }
     var showAvatarDialog by remember { mutableStateOf(false) }
+    val accountDeletionState by viewModel.accountDeletionState.collectAsState()
+    var reauthPassword by remember { mutableStateOf("") }
+
+    LaunchedEffect(accountDeletionState) {
+        if (accountDeletionState is com.kcalgrindai.app.feature.profile.AccountDeletionUiState.Deleted) {
+            onNavigateToAuth()
+        }
+    }
     val v3 = MaterialTheme.v3Colors
 
     Scaffold(
@@ -849,7 +872,7 @@ fun ProfileScreen(
 
                         CardDivider()
 
-                        // Notifications Row (Persisted to UserPreferencesRepository)
+                        // Notifications Master Switch
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -867,7 +890,7 @@ fun ProfileScreen(
                                     )
                                 )
                                 Text(
-                                    text = "Meal reminders, Insights",
+                                    text = "Meal logging & water reminders",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         color = v3.textSecondary,
                                         fontSize = 12.sp
@@ -877,7 +900,25 @@ fun ProfileScreen(
 
                             Switch(
                                 checked = notificationsEnabled,
-                                onCheckedChange = { viewModel.setNotificationsEnabled(it) },
+                                onCheckedChange = { enable ->
+                                    if (enable) {
+                                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                                            val hasPerm = androidx.core.content.ContextCompat.checkSelfPermission(
+                                                context,
+                                                android.Manifest.permission.POST_NOTIFICATIONS
+                                            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                                            if (!hasPerm) {
+                                                notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                            } else {
+                                                viewModel.setNotificationsEnabled(true)
+                                            }
+                                        } else {
+                                            viewModel.setNotificationsEnabled(true)
+                                        }
+                                    } else {
+                                        viewModel.setNotificationsEnabled(false)
+                                    }
+                                },
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = v3.emeraldAccent,
@@ -885,6 +926,82 @@ fun ProfileScreen(
                                     uncheckedTrackColor = v3.surface
                                 )
                             )
+                        }
+
+                        if (notificationsEnabled) {
+                            // Meal Reminders Sub-Row
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 16.dp, top = 4.dp, bottom = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Meal Reminders",
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontWeight = FontWeight.Normal,
+                                            color = v3.textPrimary,
+                                            fontSize = 13.sp
+                                        )
+                                    )
+                                    Text(
+                                        text = "Breakfast, lunch, and dinner prompts",
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            color = v3.textMuted,
+                                            fontSize = 11.sp
+                                        )
+                                    )
+                                }
+                                Switch(
+                                    checked = mealRemindersEnabled,
+                                    onCheckedChange = { viewModel.setMealRemindersEnabled(it) },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = v3.emeraldAccent,
+                                        uncheckedThumbColor = v3.textMuted,
+                                        uncheckedTrackColor = v3.surface
+                                    )
+                                )
+                            }
+
+                            // Hydration Reminders Sub-Row
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 16.dp, top = 4.dp, bottom = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Hydration Reminders",
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontWeight = FontWeight.Normal,
+                                            color = v3.textPrimary,
+                                            fontSize = 13.sp
+                                        )
+                                    )
+                                    Text(
+                                        text = "Gentle water reminders during the day",
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            color = v3.textMuted,
+                                            fontSize = 11.sp
+                                        )
+                                    )
+                                }
+                                Switch(
+                                    checked = hydrationRemindersEnabled,
+                                    onCheckedChange = { viewModel.setHydrationRemindersEnabled(it) },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = v3.emeraldAccent,
+                                        uncheckedThumbColor = v3.textMuted,
+                                        uncheckedTrackColor = v3.surface
+                                    )
+                                )
+                            }
                         }
 
                         CardDivider()
@@ -1186,6 +1303,47 @@ fun ProfileScreen(
                             }
                         }
 
+                        // Deduct Active Calories Toggle (Phase F - with double counting disclosure)
+                        CardDivider()
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Deduct Active Calories",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Medium,
+                                        color = v3.textPrimary,
+                                        fontSize = 14.sp
+                                    )
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Offset active workout calories from daily intake. Warning: If you already selected an active TDEE multiplier in your profile, deducting active workout calories risks double-counting burned calories.",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = v3.textSecondary,
+                                        fontSize = 11.sp,
+                                        lineHeight = 15.sp
+                                    )
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Switch(
+                                checked = deductActiveCaloriesEnabled,
+                                onCheckedChange = { viewModel.setDeductActiveCaloriesEnabled(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = v3.emeraldAccent,
+                                    uncheckedThumbColor = v3.textMuted,
+                                    uncheckedTrackColor = v3.surface
+                                )
+                            )
+                        }
+
                         // Sync Notification Result Banner
                         when (val s = syncState) {
                             is SyncState.Success -> {
@@ -1293,8 +1451,138 @@ fun ProfileScreen(
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // 7. DELETE ACCOUNT BUTTON (Play Store Compliance)
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable {
+                                viewModel.promptDeleteAccount()
+                            },
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color.Transparent,
+                        border = BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.35f))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 14.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteForever,
+                                contentDescription = "Delete Account",
+                                tint = Color(0xFFEF4444),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Delete Account",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFFEF4444),
+                                    fontSize = 15.sp
+                                )
+                            )
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(120.dp))
                 }
+
+
+    // -------------------------------------------------------------
+    // ACCOUNT DELETION DIALOGS (Play Store Compliance)
+    // -------------------------------------------------------------
+    when (val state = accountDeletionState) {
+        is com.kcalgrindai.app.feature.profile.AccountDeletionUiState.ShowConfirmDialog -> {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissDeleteAccount() },
+                title = { Text("Delete Account?", fontWeight = FontWeight.Bold) },
+                text = {
+                    Text(
+                        "This will permanently delete your account, including all personal details, calorie targets, logged meals, custom foods, weight entries, AI chat history, and cloud sync backups.\n\nThis action is irreversible.",
+                        lineHeight = 20.sp
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.confirmDeleteAccount(onSuccess = onNavigateToAuth) }) {
+                        Text("Permanently Delete", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.dismissDeleteAccount() }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+        is com.kcalgrindai.app.feature.profile.AccountDeletionUiState.ShowReauthDialog -> {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissDeleteAccount() },
+                title = { Text("Confirm Your Password", fontWeight = FontWeight.Bold) },
+                text = {
+                    Column {
+                        Text("For your security, please confirm your password before deleting your account:")
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = reauthPassword,
+                            onValueChange = { reauthPassword = it },
+                            label = { Text("Password") },
+                            visualTransformation = PasswordVisualTransformation(),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.reauthenticateAndDelete(reauthPassword, onSuccess = onNavigateToAuth)
+                        },
+                        enabled = reauthPassword.isNotBlank()
+                    ) {
+                        Text("Verify & Delete", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.dismissDeleteAccount() }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+        is com.kcalgrindai.app.feature.profile.AccountDeletionUiState.InProgress -> {
+            AlertDialog(
+                onDismissRequest = {},
+                title = { Text("Deleting Account…", fontWeight = FontWeight.Bold) },
+                text = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(color = v3.emeraldAccent, modifier = Modifier.size(24.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text("Purging cloud data and local records…")
+                    }
+                },
+                confirmButton = {}
+            )
+        }
+        is com.kcalgrindai.app.feature.profile.AccountDeletionUiState.Error -> {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissDeleteAccountError() },
+                title = { Text("Account Deletion Failed", fontWeight = FontWeight.Bold) },
+                text = { Text(state.message) },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.dismissDeleteAccountError() }) {
+                        Text("OK", fontWeight = FontWeight.Bold)
+                    }
+                }
+            )
+        }
+        else -> {}
+    }
 
                 // DIALOG: Comprehensive Health Profile Edit
                 if (showEditMetricsDialog) {

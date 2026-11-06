@@ -603,6 +603,7 @@ private fun SourceBadge(source: ItemSource) {
         ItemSource.AI -> Triple("AI", v3Colors.emeraldAccent.copy(alpha = 0.18f), v3Colors.emeraldAccent)
         ItemSource.VERIFIED -> Triple("Barcode", Color(0x3338B2AC), Color(0xFF38B2AC))
         ItemSource.MANUAL -> Triple("Manual", Color(0x3360A5FA), Color(0xFF60A5FA))
+        ItemSource.USER_ENTERED -> Triple("Custom", Color(0x33A78BFA), Color(0xFFA78BFA))
         ItemSource.RECIPE, ItemSource.CURATED_RECIPE -> Triple("Recipe", Color(0x33FBBF24), Color(0xFFFBBF24))
     }
 

@@ -30,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -64,9 +65,49 @@ fun MealDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showSaveMealDialog by remember { mutableStateOf(false) }
+    var mealNameInput by remember { mutableStateOf("") }
 
     LaunchedEffect(mealId) {
         viewModel.loadMeal(mealId)
+    }
+
+    if (showSaveMealDialog) {
+        val defaultName = uiState.mealWithItems?.meal?.mealType?.name?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "Meal"
+        AlertDialog(
+            onDismissRequest = { showSaveMealDialog = false },
+            title = { Text("Save as Meal", fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("Save this collection of items to re-log anytime with 1 tap.")
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = mealNameInput,
+                        onValueChange = { mealNameInput = it },
+                        label = { Text("Meal Name") },
+                        placeholder = { Text(defaultName) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val nameToSave = mealNameInput.trim().ifEmpty { defaultName }
+                        showSaveMealDialog = false
+                        viewModel.saveAsMeal(nameToSave)
+                    }
+                ) {
+                    Text("Save", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSaveMealDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     if (showDeleteDialog) {
@@ -174,6 +215,16 @@ fun MealDetailScreen(
                                 viewModel.duplicateMealToToday {
                                     onDuplicateSuccess()
                                 }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        KcalGrindSecondaryButton(
+                            text = if (uiState.isSavedAsTemplate) "Saved as Meal ✓" else "Save as Meal",
+                            onClick = {
+                                val defaultName = uiState.mealWithItems?.meal?.mealType?.name?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "Meal"
+                                mealNameInput = defaultName
+                                showSaveMealDialog = true
                             },
                             modifier = Modifier.fillMaxWidth()
                         )

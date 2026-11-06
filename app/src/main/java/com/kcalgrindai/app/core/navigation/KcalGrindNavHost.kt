@@ -308,14 +308,36 @@ fun KcalGrindNavHost(
                             onNavigateToBarcode = { navController.navigate(KcalGrindRoute.CameraScannerRedesign.route) },
                             onNavigateToPhoto = { navController.navigate("${KcalGrindRoute.CameraScannerRedesign.route}?mode=photo") },
                             onNavigateToVoice = { navController.navigate(KcalGrindRoute.VoiceInput.route) },
-                            onNavigateToText = { navController.navigate(KcalGrindRoute.TextInput.route) }
+                            onNavigateToText = { navController.navigate(KcalGrindRoute.TextInput.route) },
+                            onNavigateToCustomFood = { navController.navigate(KcalGrindRoute.CustomFood.route) },
+                            onNavigateToSavedMeals = { navController.navigate(KcalGrindRoute.SavedMeals.route) }
                         )
                     }
                     KcalGrindRoute.FoodSearch -> {
                         com.kcalgrindai.app.feature.logging.search.FoodSearchScreen(
                             onNavigateBack = { navController.popBackStack() },
                             onNavigateToDetail = { navController.navigate(KcalGrindRoute.FoodDetail.route) },
-                            onNavigateToBarcodeScanner = { navController.navigate(KcalGrindRoute.CameraScannerRedesign.route) }
+                            onNavigateToBarcodeScanner = { navController.navigate(KcalGrindRoute.CameraScannerRedesign.route) },
+                            onNavigateToCustomFood = { navController.navigate(KcalGrindRoute.CustomFood.route) }
+                        )
+                    }
+                    KcalGrindRoute.CustomFood -> {
+                        com.kcalgrindai.app.feature.logging.custom.CustomFoodScreen(
+                            onNavigateBack = { navController.popBackStack() },
+                            onFoodSaved = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+                    KcalGrindRoute.SavedMeals -> {
+                        com.kcalgrindai.app.feature.logging.savedmeals.SavedMealsScreen(
+                            onNavigateBack = { navController.popBackStack() },
+                            onMealLogged = {
+                                navController.navigate(KcalGrindRoute.Diary.route) {
+                                    popUpTo(KcalGrindRoute.Home.route) { saveState = true }
+                                    launchSingleTop = true
+                                }
+                            }
                         )
                     }
                     KcalGrindRoute.FoodDetail -> {
@@ -554,6 +576,17 @@ fun KcalGrindNavHost(
                         popUpTo(KcalGrindRoute.Home.route) { saveState = true }
                         launchSingleTop = true
                     }
+                }
+            )
+        }
+        composable(
+            route = "${KcalGrindRoute.CustomFood.route}?foodId={foodId}",
+            arguments = listOf(navArgument("foodId") { defaultValue = -1L; type = NavType.LongType })
+        ) {
+            com.kcalgrindai.app.feature.logging.custom.CustomFoodScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onFoodSaved = {
+                    navController.popBackStack()
                 }
             )
         }

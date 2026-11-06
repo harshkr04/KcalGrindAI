@@ -1,5 +1,6 @@
 package com.kcalgrindai.app.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -40,6 +41,10 @@ data class FoodLogItemEntity(
     val carbsG: Double,
     val fatG: Double,
     val fiberG: Double,
+    @ColumnInfo(defaultValue = "0.0")
+    val sugarG: Double = 0.0,
+    @ColumnInfo(defaultValue = "0.0")
+    val sodiumMg: Double = 0.0,
     val source: String,
     val confidence: Float? = null,
     val confirmed: Boolean

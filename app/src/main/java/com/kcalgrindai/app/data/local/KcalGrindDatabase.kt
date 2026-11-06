@@ -13,6 +13,7 @@ import com.kcalgrindai.app.data.local.dao.MealLogDao
 import com.kcalgrindai.app.data.local.dao.MessageDao
 import com.kcalgrindai.app.data.local.dao.NutritionGoalDao
 import com.kcalgrindai.app.data.local.dao.RecipeDao
+import com.kcalgrindai.app.data.local.dao.SavedMealDao
 import com.kcalgrindai.app.data.local.dao.UserProfileDao
 import com.kcalgrindai.app.data.local.dao.WaterLogDao
 import com.kcalgrindai.app.data.local.dao.WeightEntryDao
@@ -24,6 +25,8 @@ import com.kcalgrindai.app.data.local.entity.MealLogEntity
 import com.kcalgrindai.app.data.local.entity.MessageEntity
 import com.kcalgrindai.app.data.local.entity.NutritionGoalEntity
 import com.kcalgrindai.app.data.local.entity.RecipeEntity
+import com.kcalgrindai.app.data.local.entity.SavedMealEntity
+import com.kcalgrindai.app.data.local.entity.SavedMealItemEntity
 import com.kcalgrindai.app.data.local.entity.UserProfileEntity
 import com.kcalgrindai.app.data.local.entity.WaterLogEntity
 import com.kcalgrindai.app.data.local.entity.WeightEntryEntity
@@ -40,14 +43,18 @@ import com.kcalgrindai.app.data.local.entity.WeightEntryEntity
         ConversationEntity::class,
         MessageEntity::class,
         WaterLogEntity::class,
-        RecipeEntity::class
+        RecipeEntity::class,
+        SavedMealEntity::class,
+        SavedMealItemEntity::class
     ],
-    version = 5,
+    version = 7,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
-        AutoMigration(from = 4, to = 5)
+        AutoMigration(from = 4, to = 5),
+        AutoMigration(from = 5, to = 6),
+        AutoMigration(from = 6, to = 7)
     ],
     exportSchema = true
 )
@@ -64,6 +71,7 @@ abstract class KcalGrindDatabase : RoomDatabase() {
     abstract fun messageDao(): MessageDao
     abstract fun waterLogDao(): WaterLogDao
     abstract fun recipeDao(): RecipeDao
+    abstract fun savedMealDao(): SavedMealDao
 
     companion object {
         const val DATABASE_NAME = "kcalgrindai.db"

@@ -7,6 +7,7 @@ import com.kcalgrindai.app.domain.model.LogSource
 import com.kcalgrindai.app.domain.model.MealLog
 import com.kcalgrindai.app.domain.model.MealWithFoodItems
 import com.kcalgrindai.app.domain.repository.MealLogRepository
+import com.kcalgrindai.app.domain.repository.SavedMealRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +23,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MealDetailViewModel @Inject constructor(
-    private val mealLogRepository: MealLogRepository
+    private val mealLogRepository: MealLogRepository,
+    private val savedMealRepository: SavedMealRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MealDetailUiState())
@@ -58,7 +60,7 @@ class MealDetailViewModel @Inject constructor(
             LogSource.AI_VOICE -> "AI Voice Log"
             LogSource.AI_TEXT -> "AI Text Log"
             LogSource.BARCODE -> "Barcode Scan"
-            LogSource.MANUAL -> "Manual Log"
+            LogSource.MANUAL, LogSource.USER_ENTERED -> "Manual Log"
             LogSource.SEARCH -> "Manual Search"
             LogSource.RECIPE, LogSource.CURATED_RECIPE -> "Curated Recipe"
         }
@@ -95,6 +97,25 @@ class MealDetailViewModel @Inject constructor(
             val newId = mealLogRepository.saveMeal(newMeal, newItems)
             _uiState.update { it.copy(isDuplicated = true) }
             onSuccess(newId)
+        }
+    }
+
+    fun saveAsMeal(name: String, onSuccess: (Long) -> Unit = {}) {
+        val current = _uiState.value.mealWithItems ?: return
+        val repo = savedMealRepository ?: return
+        viewModelScope.launch {
+            val templateId = repo.saveMealAsTemplate(
+                name = name,
+                mealType = current.meal.mealType,
+                items = current.items
+            )
+            _uiState.update {
+                it.copy(
+                    isSavedAsTemplate = true,
+                    saveSuccessMessage = "Saved \"$name\" to Saved Meals"
+                )
+            }
+            onSuccess(templateId)
         }
     }
 

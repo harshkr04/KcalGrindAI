@@ -103,6 +103,61 @@ class UserPreferencesRepositoryImpl @Inject constructor(
         _widgetPromoDismissed.value = dismissed
     }
 
+    private val _mealRemindersEnabled: MutableStateFlow<Boolean> by lazy {
+        MutableStateFlow(prefs.getBoolean(KEY_MEAL_REMINDERS_ENABLED, true))
+    }
+    override val mealRemindersEnabled: Flow<Boolean>
+        get() = _mealRemindersEnabled.asStateFlow()
+
+    override suspend fun setMealRemindersEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_MEAL_REMINDERS_ENABLED, enabled).apply()
+        _mealRemindersEnabled.value = enabled
+    }
+
+    private val _hydrationRemindersEnabled: MutableStateFlow<Boolean> by lazy {
+        MutableStateFlow(prefs.getBoolean(KEY_HYDRATION_REMINDERS_ENABLED, true))
+    }
+    override val hydrationRemindersEnabled: Flow<Boolean>
+        get() = _hydrationRemindersEnabled.asStateFlow()
+
+    override suspend fun setHydrationRemindersEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_HYDRATION_REMINDERS_ENABLED, enabled).apply()
+        _hydrationRemindersEnabled.value = enabled
+    }
+
+    private val _deductActiveCaloriesEnabled: MutableStateFlow<Boolean> by lazy {
+        MutableStateFlow(prefs.getBoolean(KEY_DEDUCT_ACTIVE_CALORIES, false))
+    }
+    override val deductActiveCaloriesEnabled: Flow<Boolean>
+        get() = _deductActiveCaloriesEnabled.asStateFlow()
+
+    override suspend fun setDeductActiveCaloriesEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_DEDUCT_ACTIVE_CALORIES, enabled).apply()
+        _deductActiveCaloriesEnabled.value = enabled
+    }
+
+    override suspend fun getLastMealReminderDate(mealType: String): String? {
+        return prefs.getString("last_reminder_meal_${mealType.lowercase()}", null)
+    }
+
+    override suspend fun setLastMealReminderDate(mealType: String, date: String) {
+        prefs.edit().putString("last_reminder_meal_${mealType.lowercase()}", date).apply()
+    }
+
+    override suspend fun clearAllPreferences() {
+        prefs.edit().clear().apply()
+        _notificationsEnabled.value = true
+        _themeMode.value = ThemeMode.SYSTEM
+        _darkModeEnabled.value = false
+        _selectedAvatar.value = null
+        _widgetPrivacyEnabled.value = false
+        _widgetPromoDismissed.value = false
+        _mealRemindersEnabled.value = true
+        _hydrationRemindersEnabled.value = true
+        _deductActiveCaloriesEnabled.value = false
+        widgetUpdater?.get()?.clearWidgetDataOnSignOut()
+    }
+
     companion object {
         private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
         private const val KEY_DARK_MODE_ENABLED = "dark_mode_enabled"
@@ -110,5 +165,8 @@ class UserPreferencesRepositoryImpl @Inject constructor(
         private const val KEY_SELECTED_AVATAR = "selected_avatar"
         private const val KEY_WIDGET_PRIVACY_ENABLED = "widget_privacy_enabled"
         private const val KEY_WIDGET_PROMO_DISMISSED = "widget_promo_dismissed"
+        private const val KEY_MEAL_REMINDERS_ENABLED = "meal_reminders_enabled"
+        private const val KEY_HYDRATION_REMINDERS_ENABLED = "hydration_reminders_enabled"
+        private const val KEY_DEDUCT_ACTIVE_CALORIES = "deduct_active_calories"
     }
 }

@@ -1542,6 +1542,179 @@ fastify.get('/sync/pull', async (request, reply) => {
 });
 
 // -------------------------------------------------------------
+// DELETE /account
+// Play Store Account Deletion: Purges cloud sync data & user records.
+// Idempotent: returns 200 even if no records exist.
+// -------------------------------------------------------------
+fastify.delete('/account', async (request, reply) => {
+  const uid = request.user?.uid;
+  if (!uid) {
+    return reply.code(401).send({ error: 'Unauthorized', message: 'User not authenticated' });
+  }
+
+  const result = {
+    purged: true,
+    uid,
+    timestamp: new Date().toISOString(),
+    details: {}
+  };
+
+  try {
+    if (supabase) {
+      // 1. Find meal logs to cascade-delete food log items
+      const { data: mealLogs } = await supabase
+        .from('meal_logs')
+        .select('id')
+        .eq('firebase_uid', uid);
+
+      if (mealLogs && mealLogs.length > 0) {
+        const mealLogIds = mealLogs.map(m => m.id);
+        const { error: itemsErr } = await supabase
+          .from('food_log_items')
+          .delete()
+          .in('meal_log_id', mealLogIds);
+        if (itemsErr) result.details.food_log_items = itemsErr.message;
+      }
+
+      // 2. Delete meal logs
+      const { error: mealsErr } = await supabase
+        .from('meal_logs')
+        .delete()
+        .eq('firebase_uid', uid);
+      if (mealsErr) result.details.meal_logs = mealsErr.message;
+
+      // 3. Delete nutrition goals
+      const { error: goalsErr } = await supabase
+        .from('nutrition_goals')
+        .delete()
+        .eq('firebase_uid', uid);
+      if (goalsErr) result.details.nutrition_goals = goalsErr.message;
+
+      // 4. Delete weight entries
+      const { error: weightErr } = await supabase
+        .from('weight_entries')
+        .delete()
+        .eq('firebase_uid', uid);
+      if (weightErr) result.details.weight_entries = weightErr.message;
+
+      // 5. Delete water logs
+      const { error: waterErr } = await supabase
+        .from('water_logs')
+        .delete()
+        .eq('firebase_uid', uid);
+      if (waterErr) result.details.water_logs = waterErr.message;
+
+      // 6. Delete ai analysis logs
+      const { error: aiErr } = await supabase
+        .from('ai_analysis_log')
+        .delete()
+        .eq('firebase_uid', uid);
+      if (aiErr) result.details.ai_analyses = aiErr.message;
+
+      // 7. Find conversations to cascade-delete messages
+      const { data: convs } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('firebase_uid', uid);
+
+      if (convs && convs.length > 0) {
+        const convIds = convs.map(c => c.id);
+        const { error: msgsErr } = await supabase
+          .from('messages')
+          .delete()
+          .in('conversation_id', convIds);
+        if (msgsErr) result.details.messages = msgsErr.message;
+      }
+
+      // 8. Delete conversations
+      const { error: convsErr } = await supabase
+        .from('conversations')
+        .delete()
+        .eq('firebase_uid', uid);
+      if (convsErr) result.details.conversations = convsErr.message;
+
+      // 9. Delete user profile
+      const { error: profileErr } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('firebase_uid', uid);
+      if (profileErr) result.details.user_profiles = profileErr.message;
+
+      // 10. Delete user subscriptions (entitlement store)
+      try {
+        await supabase
+          .from('user_subscriptions')
+          .delete()
+          .eq('user_id', uid);
+      } catch (_) {}
+
+      // 11. Delete saved meals and saved meal items
+      try {
+        const { data: savedMeals } = await supabase
+          .from('saved_meals')
+          .select('id')
+          .eq('firebase_uid', uid);
+        if (savedMeals && savedMeals.length > 0) {
+          await supabase
+            .from('saved_meal_items')
+            .delete()
+            .in('saved_meal_id', savedMeals.map(m => m.id));
+        }
+        await supabase
+          .from('saved_meals')
+          .delete()
+          .eq('firebase_uid', uid);
+      } catch (_) {}
+
+      // 12. Delete recipes and recipe items
+      try {
+        const { data: recipes } = await supabase
+          .from('recipes')
+          .select('id')
+          .eq('firebase_uid', uid);
+        if (recipes && recipes.length > 0) {
+          await supabase
+            .from('recipe_items')
+            .delete()
+            .in('recipe_id', recipes.map(r => r.id));
+        }
+        await supabase
+          .from('recipes')
+          .delete()
+          .eq('firebase_uid', uid);
+      } catch (_) {}
+
+      // 13. Delete custom foods
+      try {
+        await supabase
+          .from('custom_foods')
+          .delete()
+          .eq('firebase_uid', uid);
+      } catch (_) {}
+
+      // 14. Delete daily goals (if separate from nutrition_goals)
+      try {
+        await supabase
+          .from('daily_goals')
+          .delete()
+          .eq('firebase_uid', uid);
+      } catch (_) {}
+    }
+
+    // Reset rate limiter for this user
+    if (typeof rateLimits !== 'undefined' && rateLimits && typeof rateLimits.delete === 'function') {
+      rateLimits.delete(uid);
+    }
+
+    appendBackendLog(`ACCOUNT PURGED: Successfully purged cloud data for user ${uid}`);
+    return reply.code(200).send(result);
+  } catch (err) {
+    fastify.log.error({ err: err.message, uid }, 'Account purge failed');
+    return reply.code(500).send({ error: 'Account purge failed', details: err.message });
+  }
+});
+
+// -------------------------------------------------------------
 // Start server
 // -------------------------------------------------------------
 const start = async () => {

@@ -68,6 +68,7 @@ enum class LogSource(val id: String) {
     BARCODE("barcode"),
     SEARCH("search"),
     RECIPE("recipe"),
+    USER_ENTERED("USER_ENTERED"),
     CURATED_RECIPE("curated_recipe");
 
     companion object {
@@ -80,10 +81,11 @@ enum class ItemSource(val id: String) {
     AI("ai"),
     VERIFIED("verified"),
     RECIPE("recipe"),
+    USER_ENTERED("USER_ENTERED"),
     CURATED_RECIPE("curated_recipe");
 
     companion object {
-        fun fromId(id: String): ItemSource = entries.find { it.id.equals(id, ignoreCase = true) } ?: MANUAL
+        fun fromId(id: String): ItemSource = entries.find { it.id.equals(id, ignoreCase = true) || it.name.equals(id, ignoreCase = true) } ?: MANUAL
     }
 }
 
@@ -92,10 +94,11 @@ enum class FoodSource(val id: String) {
     OPEN_FOOD_FACTS("openfoodfacts"),
     NUTRITIONIX("nutritionix"),
     CUSTOM("custom"),
+    USER_ENTERED("USER_ENTERED"),
     IFCT("ifct");
 
     companion object {
-        fun fromId(id: String): FoodSource = entries.find { it.id.equals(id, ignoreCase = true) } ?: CUSTOM
+        fun fromId(id: String): FoodSource = entries.find { it.id.equals(id, ignoreCase = true) || it.name.equals(id, ignoreCase = true) } ?: CUSTOM
     }
 }
 

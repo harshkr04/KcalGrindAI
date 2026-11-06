@@ -5,6 +5,7 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -22,7 +23,7 @@ sealed interface HealthConnectAvailability {
 }
 
 sealed interface HealthConnectActivityState {
-    data class Available(val stepsToday: Long, val hasPermission: Boolean) : HealthConnectActivityState
+    data class Available(val stepsToday: Long, val activeCaloriesBurnedToday: Double = 0.0, val hasPermission: Boolean) : HealthConnectActivityState
     data object PermissionRequired : HealthConnectActivityState
     data class Unavailable(val reason: String) : HealthConnectActivityState
 }
@@ -32,7 +33,8 @@ class HealthConnectManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     val stepsPermission: String = HealthPermission.getReadPermission(StepsRecord::class)
-    val requiredPermissions: Set<String> = setOf(stepsPermission)
+    val activeCaloriesPermission: String = HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class)
+    val requiredPermissions: Set<String> = setOf(stepsPermission, activeCaloriesPermission)
 
     fun checkAvailability(): HealthConnectAvailability {
         return try {
@@ -108,12 +110,36 @@ class HealthConnectManager @Inject constructor(
         }
     }
 
+    suspend fun readTodayActiveCaloriesBurned(): Double {
+        val client = getHealthConnectClient() ?: return 0.0
+        if (!hasPermissions()) return 0.0
+
+        return try {
+            val now = Instant.now()
+            val startOfDay = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant()
+            val response = client.aggregate(
+                AggregateRequest(
+                    metrics = setOf(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL),
+                    timeRangeFilter = TimeRangeFilter.between(startOfDay, now)
+                )
+            )
+            response[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories ?: 0.0
+        } catch (_: Exception) {
+            0.0
+        }
+    }
+
     suspend fun getActivityState(): HealthConnectActivityState {
         return when (val availability = checkAvailability()) {
             is HealthConnectAvailability.InstalledAndAvailable -> {
                 if (hasPermissions()) {
                     val steps = readTodaySteps()
-                    HealthConnectActivityState.Available(stepsToday = steps, hasPermission = true)
+                    val activeCalories = readTodayActiveCaloriesBurned()
+                    HealthConnectActivityState.Available(
+                        stepsToday = steps,
+                        activeCaloriesBurnedToday = activeCalories,
+                        hasPermission = true
+                    )
                 } else {
                     HealthConnectActivityState.PermissionRequired
                 }

@@ -260,6 +260,25 @@ object NutritionCalculator {
         )
     }
 
+    /**
+     * Calculates net remaining calories.
+     * If [deductActiveCalories] is enabled, active calories burned (from Health Connect)
+     * are subtracted from net intake (increasing remaining allowance).
+     *
+     * WARNING: If the user already has a moderate/active TDEE activity multiplier configured,
+     * deducting active workout calories will double-count exercise expenditure.
+     */
+    fun calculateNetCalories(
+        targetCalories: Int,
+        consumedCalories: Double,
+        activeCaloriesBurned: Double = 0.0,
+        deductActiveCalories: Boolean = false
+    ): Int {
+        val effectiveBurned = if (deductActiveCalories) max(0.0, activeCaloriesBurned) else 0.0
+        val netConsumed = max(0.0, consumedCalories - effectiveBurned)
+        return max(0, (targetCalories - netConsumed).toInt())
+    }
+
     fun explain(result: CalculationResult): String {
         if (result.basis == TargetBasis.FALLBACK) {
             return "This is a safe starting plan. Add your details any time and we'll refine it."

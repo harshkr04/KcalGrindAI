@@ -15,4 +15,7 @@ interface AuthRepository {
     suspend fun linkWithGoogle(idToken: String): Result<AuthUser>
     suspend fun signOut()
     suspend fun getIdToken(forceRefresh: Boolean = false): String?
+    suspend fun checkSessionFreshness(): Result<Unit>
+    suspend fun deleteFirebaseUser(): Result<Unit>
+    suspend fun reauthenticateWithPassword(password: String): Result<Unit>
 }

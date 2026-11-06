@@ -45,6 +45,12 @@ data class FoodDetailUiState(
     val scaledFiber: Double
         get() = food?.let { ((it.fiberG * servingsMultiplier * 10.0).roundToInt() / 10.0) } ?: 0.0
 
+    val scaledSugar: Double
+        get() = food?.let { ((it.sugarG * servingsMultiplier * 10.0).roundToInt() / 10.0) } ?: 0.0
+
+    val scaledSodium: Double
+        get() = food?.let { ((it.sodiumMg * servingsMultiplier * 10.0).roundToInt() / 10.0) } ?: 0.0
+
     val scaledGrams: Double
         get() = food?.let { ((it.servingGrams * servingsMultiplier * 10.0).roundToInt() / 10.0) } ?: 100.0
 }
@@ -99,6 +105,13 @@ class FoodDetailViewModel @Inject constructor(
             val targetMealWithItems = existingMeals?.find { it.meal.mealType == state.selectedMealType }
 
             val addedCalories = state.scaledCalories.toDouble()
+            val itemSource = if (food.isUserCreated || food.source == com.kcalgrindai.app.domain.model.FoodSource.USER_ENTERED || food.source == com.kcalgrindai.app.domain.model.FoodSource.CUSTOM) {
+                ItemSource.USER_ENTERED
+            } else if (food.source == com.kcalgrindai.app.domain.model.FoodSource.USDA || food.source == com.kcalgrindai.app.domain.model.FoodSource.IFCT || food.source == com.kcalgrindai.app.domain.model.FoodSource.OPEN_FOOD_FACTS) {
+                ItemSource.VERIFIED
+            } else {
+                ItemSource.MANUAL
+            }
 
             if (targetMealWithItems != null) {
                 val logItem = FoodLogItem(
@@ -114,7 +127,9 @@ class FoodDetailViewModel @Inject constructor(
                     carbsG = state.scaledCarbs,
                     fatG = state.scaledFat,
                     fiberG = state.scaledFiber,
-                    source = ItemSource.VERIFIED,
+                    sugarG = state.scaledSugar,
+                    sodiumMg = state.scaledSodium,
+                    source = itemSource,
                     confidence = 1.0f,
                     confirmed = true
                 )
@@ -123,13 +138,14 @@ class FoodDetailViewModel @Inject constructor(
                     targetMealWithItems.meal.copy(totalCalories = targetMealWithItems.meal.totalCalories + addedCalories)
                 )
             } else {
+                val logSource = if (itemSource == ItemSource.USER_ENTERED) LogSource.MANUAL else LogSource.SEARCH
                 val newMeal = MealLog(
                     id = 0L,
                     date = targetDateString,
                     mealType = state.selectedMealType,
                     totalCalories = addedCalories,
                     loggedAt = System.currentTimeMillis(),
-                    source = LogSource.SEARCH,
+                    source = logSource,
                     synced = false
                 )
                 val logItem = FoodLogItem(
@@ -145,7 +161,9 @@ class FoodDetailViewModel @Inject constructor(
                     carbsG = state.scaledCarbs,
                     fatG = state.scaledFat,
                     fiberG = state.scaledFiber,
-                    source = ItemSource.VERIFIED,
+                    sugarG = state.scaledSugar,
+                    sodiumMg = state.scaledSodium,
+                    source = itemSource,
                     confidence = 1.0f,
                     confirmed = true
                 )

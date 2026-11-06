@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
@@ -59,6 +60,7 @@ fun FoodSearchScreen(
     onNavigateBack: () -> Unit,
     onNavigateToDetail: () -> Unit,
     onNavigateToBarcodeScanner: () -> Unit,
+    onNavigateToCustomFood: () -> Unit = {},
     viewModel: FoodSearchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -91,6 +93,28 @@ fun FoodSearchScreen(
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
+
+                    // Create Custom Food shortcut icon
+                    Surface(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .clickable(onClick = onNavigateToCustomFood),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        shadowElevation = 1.dp
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Create Custom Food",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
 
                     // Barcode Scanner shortcut icon
                     Surface(
@@ -494,7 +518,23 @@ fun FoodSearchResultCard(
                         modifier = Modifier.weight(1f, fill = false)
                     )
 
-                    if (food.source == FoodSource.IFCT) {
+                    if (food.isUserCreated || food.source == FoodSource.USER_ENTERED || food.source == FoodSource.CUSTOM) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer
+                        ) {
+                            Text(
+                                text = "Custom",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    } else if (food.source == FoodSource.IFCT) {
                         Spacer(modifier = Modifier.width(6.dp))
                         Surface(
                             shape = RoundedCornerShape(6.dp),

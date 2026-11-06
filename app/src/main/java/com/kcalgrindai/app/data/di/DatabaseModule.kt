@@ -89,4 +89,9 @@ object DatabaseModule {
     fun provideRecipeDao(database: KcalGrindDatabase): com.kcalgrindai.app.data.local.dao.RecipeDao {
         return database.recipeDao()
     }
+
+    @Provides
+    fun provideSavedMealDao(database: KcalGrindDatabase): com.kcalgrindai.app.data.local.dao.SavedMealDao {
+        return database.savedMealDao()
+    }
 }
