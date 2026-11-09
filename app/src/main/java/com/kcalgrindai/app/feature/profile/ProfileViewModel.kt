@@ -140,6 +140,12 @@ class ProfileViewModel @Inject constructor(
 
     fun loadProfile() {
         viewModelScope.launch {
+            // Restore from cloud backup if local database is empty after clear-data/reinstall
+            val localProfile = userProfileRepository.getProfile()
+            if (localProfile == null) {
+                runCatching { syncRepository?.restoreCloudBackup() }
+            }
+
             val streak = mealLogRepository?.getStreakDays() ?: 0
             kotlinx.coroutines.flow.combine(
                 userProfileRepository.observeProfileWithGoal(),
@@ -413,7 +419,19 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _syncState.value = SyncState.Syncing
             safeLog("Starting cloud sync attempt...")
-            syncRepo.fullSync()
+            val localProfile = userProfileRepository.getProfile()
+            val syncTask = if (localProfile == null) {
+                syncRepo.restoreCloudBackup().map { pullResult ->
+                    SyncResult(
+                        push = com.kcalgrindai.app.domain.repository.SyncPushResult(emptyMap(), emptyMap(), emptyMap()),
+                        pull = pullResult,
+                        syncedAt = System.currentTimeMillis()
+                    )
+                }
+            } else {
+                syncRepo.fullSync()
+            }
+            syncTask
                 .onSuccess { result ->
                     safeLog("Cloud sync succeeded: $result")
                     _syncState.value = SyncState.Success(result)

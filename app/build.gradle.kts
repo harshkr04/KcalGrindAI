@@ -155,9 +155,13 @@ tasks.register("validateReleaseBackendUrl") {
         val prodUrl = localProperties.getProperty("PROD_BACKEND_URL")
             ?: System.getenv("PROD_BACKEND_URL")
             ?: ""
-        if (prodUrl.isBlank() || !prodUrl.startsWith("https://")) {
+        val isValid = prodUrl.startsWith("https://") ||
+                      prodUrl.startsWith("http://10.0.2.2") ||
+                      prodUrl.startsWith("http://localhost") ||
+                      prodUrl.startsWith("http://127.0.0.1")
+        if (prodUrl.isBlank() || !isValid) {
             throw GradleException(
-                "Release build failed: PROD_BACKEND_URL is missing or does not start with 'https://'. Provided: '$prodUrl'"
+                "Release build failed: PROD_BACKEND_URL is missing or does not start with 'https://' (or local loopback for emulator verification). Provided: '$prodUrl'"
             )
         }
     }

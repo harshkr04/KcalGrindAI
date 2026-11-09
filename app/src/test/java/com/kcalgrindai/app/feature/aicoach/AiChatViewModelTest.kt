@@ -20,6 +20,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -749,35 +750,82 @@ class AiChatViewModelTest {
     }
 
     @Test
-    fun `getRegionAwareCrisisResponse formats verified helplines for India, UK, US and fallback`() {
-        // India (IN)
-        val indiaResponse = AiChatViewModel.getRegionAwareCrisisResponse("IN")
-        assertTrue(indiaResponse.contains("112")) // National Emergency Number, India
-        assertTrue(indiaResponse.contains("+91 98204 66726")) // AASRA
-        assertTrue(indiaResponse.contains("1800-599-0019")) // KIRAN
-        assertTrue(indiaResponse.contains("+91 9999 666 555")) // Vandrevala Foundation
-        assertTrue(indiaResponse.contains("14416")) // Tele-MANAS
+    fun `getRegionAwareCrisisResponse formats verified helplines defaulting to India and 112 plus all other regions`() {
+        // Regardless of locale, India + 112 is primary, and all international regions are listed below
+        val localesToTest = listOf("IN", "GB", "US", "ZZ", "")
+        for (locale in localesToTest) {
+            val response = AiChatViewModel.getRegionAwareCrisisResponse(locale)
+            // India & 112 verified primary
+            assertTrue(response.contains("112")) // National Emergency Number, India
+            assertTrue(response.contains("+91 98204 66726")) // AASRA
+            assertTrue(response.contains("1800-599-0019")) // KIRAN
+            assertTrue(response.contains("+91 9999 666 555")) // Vandrevala Foundation
+            assertTrue(response.contains("14416")) // Tele-MANAS
 
-        // United Kingdom (GB)
-        val ukResponse = AiChatViewModel.getRegionAwareCrisisResponse("GB")
-        assertTrue(ukResponse.contains("999")) // Emergency
-        assertTrue(ukResponse.contains("116 123")) // Samaritans
-        assertTrue(ukResponse.contains("0808 801 0677")) // Beat Eating Disorders
-        assertTrue(ukResponse.contains("85258")) // Shout
+            // United States & Canada verified
+            assertTrue(response.contains("911")) // Emergency US
+            assertTrue(response.contains("988")) // Suicide & Crisis Lifeline
+            assertTrue(response.contains("1-888-375-7767")) // ANAD Helpline
+            assertTrue(response.contains("741741")) // Crisis Text Line
 
-        // United States (US)
-        val usResponse = AiChatViewModel.getRegionAwareCrisisResponse("US")
-        assertTrue(usResponse.contains("911")) // Emergency
-        assertTrue(usResponse.contains("988")) // Suicide & Crisis Lifeline
-        assertTrue(usResponse.contains("1-888-375-7767")) // ANAD Helpline
-        assertTrue(usResponse.contains("741741")) // Crisis Text Line
+            // United Kingdom verified
+            assertTrue(response.contains("999")) // Emergency UK
+            assertTrue(response.contains("116 123")) // Samaritans
+            assertTrue(response.contains("0808 801 0677")) // Beat Eating Disorders
+            assertTrue(response.contains("85258")) // Shout
 
-        // Default Fallback
-        val fallbackResponse = AiChatViewModel.getRegionAwareCrisisResponse("ZZ")
-        assertTrue(fallbackResponse.contains("112"))
-        assertTrue(fallbackResponse.contains("116 123")) // Samaritans
-        assertTrue(fallbackResponse.contains("988"))
-        assertTrue(fallbackResponse.contains("1-888-375-7767")) // ANAD
+            // International verified
+            assertTrue(response.contains("befrienders.org"))
+            assertTrue(response.contains("findahelpline.com"))
+        }
+    }
+
+    @Test
+    fun `checkClientCrisisKeywords detects misspelled and Hinglish crisis phrases while allowing benign fasting phrases`() {
+        val benignPhrases = listOf(
+            "Can I do 16:8 fasting?",
+            "What are the benefits of 16/8 intermittent fasting?",
+            "I want to try a 16:8 fast starting today",
+            "Fasting for 16 hours and eating in an 8 hour window",
+            "How much protein should I eat during 16:8 intermittent fasting?",
+            "Tell me healthy recipes for dinner with 500 kcal total",
+            "I ate 1800 calories today, is that good?",
+            "Can I have green tea during intermittent fasting?"
+        )
+
+        for (phrase in benignPhrases) {
+            assertFalse(
+                "Benign phrase should not trigger crisis check: $phrase",
+                AiChatViewModel.checkClientCrisisKeywords(phrase)
+            )
+        }
+
+        val crisisPhrases = listOf(
+            // English standard & misspellings
+            "I want to kill myself",
+            "I am thinking of committing suicide",
+            "how to starve myself to drop weight quickly",
+            "I feel so depressed I might commit sucide",
+            "thinking about suicde tonight",
+            "I want to kil myself",
+            "how to starrve fast",
+            "I have been purgging every meal",
+            "vommit after eating lunch",
+            // Hinglish
+            "main mar jana chahta hoon",
+            "zindagi khatam karni hai ab",
+            "main jaan de dunga",
+            "suicide karne ka man kar raha hai",
+            "khana chhod dunga jab tak patla na ho jau",
+            "khana khane ke baad ulti karna chahta hu"
+        )
+
+        for (phrase in crisisPhrases) {
+            assertTrue(
+                "Crisis phrase should trigger check: $phrase",
+                AiChatViewModel.checkClientCrisisKeywords(phrase)
+            )
+        }
     }
 
     @Test

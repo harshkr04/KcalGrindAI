@@ -504,51 +504,34 @@ class AiChatViewModel @Inject constructor(
         )
 
         fun getRegionAwareCrisisResponse(countryCode: String = java.util.Locale.getDefault().country): String {
-            val normalized = countryCode.trim().uppercase()
-            val regionalDetails = when (normalized) {
-                "IN" -> """
-                    Emergency: 112 (National Emergency Number, India)
-                    India Helplines:
-                    • Tele-MANAS (24/7 National Mental Health): 14416 or 1800-891-4416 (telemanas.mohfw.gov.in)
-                    • KIRAN (24/7 Rehabilitation & Mental Health): 1800-599-0019 (disabilityaffairs.gov.in)
-                    • AASRA (24/7 Suicide Prevention): +91 98204 66726 (aasra.info)
-                    • Vandrevala Foundation (24/7 Free Counseling): +91 9999 666 555
-                """.trimIndent()
-
-                "GB", "UK" -> """
-                    Emergency: 999 or 112 (Emergency Services, UK)
-                    United Kingdom Helplines:
-                    • Samaritans (24/7 Free Emotional Support): 116 123 (samaritans.org)
-                    • Beat Eating Disorders Helpline: 0808 801 0677 (Adults) / 0808 801 0711 (Youth) (beateatingdisorders.org.uk)
-                    • Shout Crisis Text Line: Text SHOUT to 85258 (giveusashout.org)
-                """.trimIndent()
-
-                "US" -> """
-                    Emergency: 911 (Emergency Services, US)
-                    United States Helplines:
-                    • 988 Suicide & Crisis Lifeline: Call or text 988 (free, confidential, 24/7 - 988lifeline.org)
-                    • ANAD Eating Disorders Helpline: 1-888-375-7767 (anad.org)
-                    • Crisis Text Line: Text HOME to 741741 (crisistextline.org)
-                    • The Trevor Project: Call 1-866-488-7386 or text START to 678-678
-                """.trimIndent()
-
-                else -> """
-                    Emergency: 112 (Universal / Europe) | 911 (US) | 999 (UK)
-                    International Support Resources:
-                    • 988 Suicide & Crisis Lifeline (US/Canada): Call or text 988 (988lifeline.org)
-                    • Samaritans (UK/ROI): 116 123 (samaritans.org)
-                    • ANAD Eating Disorders Helpline: +1-888-375-7767 (anad.org)
-                    • Tele-MANAS (India): 14416 or 1800-891-4416 (telemanas.mohfw.gov.in)
-                    • Crisis Text Line: Text HOME to 741741 (crisistextline.org)
-                """.trimIndent()
-            }
-
+            // Default to India + 112 primary regardless of device locale; list other regions below
             return """
                 I care deeply about your health and safety, and I cannot provide guidance on extreme restriction, fasting, purging, or self-harm.
 
                 If you are experiencing distress, struggling with eating habits, or feeling overwhelmed, compassionate support is available right now:
 
-                $regionalDetails
+                Emergency: 112 (National Emergency Number, India)
+                India Helplines:
+                • Tele-MANAS (24/7 National Mental Health): 14416 or 1800-891-4416 (telemanas.mohfw.gov.in)
+                • KIRAN (24/7 Rehabilitation & Mental Health): 1800-599-0019 (disabilityaffairs.gov.in)
+                • AASRA (24/7 Suicide Prevention): +91 98204 66726 (aasra.info)
+                • Vandrevala Foundation (24/7 Free Counseling): +91 9999 666 555 (vandrevalafoundation.com)
+
+                United States & Canada:
+                • Emergency: 911
+                • 988 Suicide & Crisis Lifeline: Call or text 988 (988lifeline.org)
+                • National Association of Anorexia Nervosa and Associated Disorders (ANAD): 1-888-375-7767 (anad.org)
+                • Crisis Text Line: Text HOME to 741741 (crisistextline.org)
+
+                United Kingdom:
+                • Emergency: 999 or 112
+                • Samaritans: 116 123 (samaritans.org)
+                • Beat Eating Disorders Helpline: 0808 801 0677 (beateatingdisorders.org.uk)
+                • Shout Crisis Text Line: Text SHOUT to 85258 (giveusashout.org)
+
+                International:
+                • Befrienders Worldwide: befrienders.org
+                • Find A Helpline (worldwide directory): findahelpline.com
 
                 Please reach out to one of these services or speak with a licensed healthcare provider who can support you safely.
             """.trimIndent()
@@ -558,17 +541,21 @@ class AiChatViewModel @Inject constructor(
             get() = getRegionAwareCrisisResponse()
 
         private val CLIENT_CRISIS_PATTERNS = listOf(
-            Regex("""\b(kill\s+myself|commit\s+suicide|end\s+my\s+life|want\s+to\s+die|suicidal)\b""", RegexOption.IGNORE_CASE),
-            Regex("""\b(starve\s+myself|how\s+to\s+starve|starving\s+myself|starve\s+to\s+death|starve\b)""", RegexOption.IGNORE_CASE),
-            Regex("""\b(purge|purging)\b""", RegexOption.IGNORE_CASE),
-            Regex("""\b(make\s+myself\s+throw\s+up|throw\s+up\s+after\s+(eating|dinner|food|meals?))\b""", RegexOption.IGNORE_CASE),
-            Regex("""\b(vomit\s+after\s+(eating|meals?|food))\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(kill\s+myself|kil{1,2}\s+myself|commit\s+suicide|suicid[ea]?|suicde|sucide|end\s+my\s+life|want\s+to\s+die|suicidal)\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(starve\s+myself|starr?v(e|ing)\s+(myself|to\s+death)|how\s+to\s+starr?ve|starving\s+myself|starve\s+to\s+death|starve\b)""", RegexOption.IGNORE_CASE),
+            Regex("""\b(purge|purging|purgg?ing|purg(e|ed))\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(make\s+myself\s+throw\s*up|throw\s*up\s+after\s+(eating|dinner|food|meals?))\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(vom+it(ing)?\s+after\s+(eating|meals?|food))\b""", RegexOption.IGNORE_CASE),
             Regex("""\b(laxatives?\s+(to\s+empty|after|for\s+weight)|empty\s+my\s+stomach\s+(with\s+laxatives?|after))\b""", RegexOption.IGNORE_CASE),
             Regex("""\b(chew\s+and\s+spit)\b""", RegexOption.IGNORE_CASE),
-            Regex("""\b(hide\s+(my\s+)?(anorexia|bulimia|eating\s+disorder)|anorexia|bulimia)\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(hide\s+(my\s+)?(anorexia|bulimia|eating\s+disorder)|anorexia|bulimia|anorexic|bulimic)\b""", RegexOption.IGNORE_CASE),
             Regex("""\b(punish\s+myself\s+by\s+(not\s+eating|starving))\b""", RegexOption.IGNORE_CASE),
             Regex("""\b(\d+[- ]day\s+(water\s+)?fast|water\s+fast(ing)?|dry\s+fast(ing)?|fast\s+(for\s+)?(7|10|14|21|30)\s+days)\b""", RegexOption.IGNORE_CASE),
-            Regex("""\b(eat(ing)?\s+(only\s+)?(0|50|100|200|300|500)\s+calories(\s+a\s+day)?)\b""", RegexOption.IGNORE_CASE)
+            Regex("""\b(eat(ing)?\s+(only\s+)?(0|50|100|200|300|500)\s+calories(\s+a\s+day)?)\b""", RegexOption.IGNORE_CASE),
+            // Hinglish crisis patterns
+            Regex("""\b(mar\s+ja(na|un|unga|ungi|na\s+chahta|na\s+chahti)|jaan\s+de\s+(dunga|dungi|dena)|zindagi\s+khatam|suicide\s+karn(a|i|e))\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(khana\s+(chhod\s+(dunga|dungi|dena)|chhodna|chhod\s+diya)|bhukh(a|i)\s+rah(na|unga|ungi))\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(khana\s+khane\s+ke\s+baad\s+(ulti|vomit)|ulti\s+karn(a|i)\s+khana\s+ke\s+baad)\b""", RegexOption.IGNORE_CASE)
         )
 
         internal fun checkClientCrisisKeywords(text: String): Boolean {

@@ -230,17 +230,24 @@ fun ProfileScreen(
                 }
             }
             is ProfileUiState.Empty -> {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(v3.background)
                         .padding(paddingValues),
-                    contentAlignment = Alignment.Center
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "No profile found. Please complete onboarding.",
+                        text = "No local profile found.",
                         color = v3.textSecondary
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { viewModel.onSyncNow() }
+                    ) {
+                        Text("Restore Cloud Backup")
+                    }
                 }
             }
             is ProfileUiState.Content -> {

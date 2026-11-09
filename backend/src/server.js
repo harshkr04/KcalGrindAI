@@ -707,14 +707,28 @@ export const CRISIS_SUPPORT_RESPONSE = `I care deeply about your health and safe
 
 If you are experiencing distress, struggling with eating habits, or feeling overwhelmed, compassionate support is available right now:
 
+Emergency: 112 (National Emergency Number, India)
 India Helplines:
-• AASRA (24/7 Suicide Prevention & Emotional Crisis): +91 98204 66726 (aasra.info)
-• KIRAN (Mental Health Helpline by Govt. of India / MSJE): 1800-599-0019
-• Vandrevala Foundation (24/7 Mental Health Crisis Line): +91 9999 666 555
+• Tele-MANAS (24/7 National Mental Health): 14416 or 1800-891-4416 (telemanas.mohfw.gov.in)
+• KIRAN (24/7 Rehabilitation & Mental Health): 1800-599-0019 (disabilityaffairs.gov.in)
+• AASRA (24/7 Suicide Prevention): +91 98204 66726 (aasra.info)
+• Vandrevala Foundation (24/7 Free Counseling): +91 9999 666 555 (vandrevalafoundation.com)
 
-US & International Helplines:
-• 988 Suicide & Crisis Lifeline: Call or text 988 (free, confidential, 24/7)
-• NEDA / ANAD Eating Disorders Helpline: 1-888-375-7767 (anad.org)
+United States & Canada:
+• Emergency: 911
+• 988 Suicide & Crisis Lifeline: Call or text 988 (988lifeline.org)
+• National Association of Anorexia Nervosa and Associated Disorders (ANAD): 1-888-375-7767 (anad.org)
+• Crisis Text Line: Text HOME to 741741 (crisistextline.org)
+
+United Kingdom:
+• Emergency: 999 or 112
+• Samaritans: 116 123 (samaritans.org)
+• Beat Eating Disorders Helpline: 0808 801 0677 (beateatingdisorders.org.uk)
+• Shout Crisis Text Line: Text SHOUT to 85258 (giveusashout.org)
+
+International:
+• Befrienders Worldwide: befrienders.org
+• Find A Helpline (worldwide directory): findahelpline.com
 
 Please reach out to one of these services or speak with a licensed healthcare provider who can support you safely.`;
 
@@ -725,17 +739,21 @@ export function checkCoachSafetyCrisis(text = '', messages = []) {
   ].join(' ').toLowerCase();
 
   const crisisPatterns = [
-    /\b(kill\s+myself|commit\s+suicide|end\s+my\s+life|want\s+to\s+die|suicidal)\b/i,
-    /\b(starve\s+myself|how\s+to\s+starve|starving\s+myself|starve\s+to\s+death|starve\b)/i,
-    /\b(purge|purging)\b/i,
-    /\b(make\s+myself\s+throw\s+up|throw\s+up\s+after\s+(eating|dinner|food|meals?))\b/i,
-    /\b(vomit\s+after\s+(eating|meals?|food))\b/i,
+    /\b(kill\s+myself|kil{1,2}\s+myself|commit\s+suicide|suicid[ea]?|suicde|sucide|end\s+my\s+life|want\s+to\s+die|suicidal)\b/i,
+    /\b(starve\s+myself|starr?v(e|ing)\s+(myself|to\s+death)|how\s+to\s+starr?ve|starving\s+myself|starve\s+to\s+death|starve\b)/i,
+    /\b(purge|purging|purgg?ing|purg(e|ed))\b/i,
+    /\b(make\s+myself\s+throw\s*up|throw\s*up\s+after\s+(eating|dinner|food|meals?))\b/i,
+    /\b(vom+it(ing)?\s+after\s+(eating|meals?|food))\b/i,
     /\b(laxatives?\s+(to\s+empty|after|for\s+weight)|empty\s+my\s+stomach\s+(with\s+laxatives?|after))\b/i,
     /\b(chew\s+and\s+spit)\b/i,
-    /\b(hide\s+(my\s+)?(anorexia|bulimia|eating\s+disorder)|anorexia|bulimia)\b/i,
+    /\b(hide\s+(my\s+)?(anorexia|bulimia|eating\s+disorder)|anorexia|bulimia|anorexic|bulimic)\b/i,
     /\b(punish\s+myself\s+by\s+(not\s+eating|starving))\b/i,
     /\b(\d+[- ]day\s+(water\s+)?fast|water\s+fast(ing)?|dry\s+fast(ing)?|fast\s+(for\s+)?(7|10|14|21|30)\s+days)\b/i,
-    /\b(eat(ing)?\s+(only\s+)?(0|50|100|200|300|500)\s+calories(\s+a\s+day)?)\b/i
+    /\b(eat(ing)?\s+(only\s+)?(0|50|100|200|300|500)\s+calories(\s+a\s+day)?)\b/i,
+    // Hinglish patterns
+    /\b(mar\s+ja(na|un|unga|ungi|na\s+chahta|na\s+chahti)|jaan\s+de\s+(dunga|dungi|dena)|zindagi\s+khatam|suicide\s+karn(a|i|e))\b/i,
+    /\b(khana\s+(chhod\s+(dunga|dungi|dena)|chhodna|chhod\s+diya)|bhukh(a|i)\s+rah(na|unga|ungi))\b/i,
+    /\b(khana\s+khane\s+ke\s+baad\s+(ulti|vomit)|ulti\s+karn(a|i)\s+khana\s+ke\s+baad)\b/i
   ];
 
   return crisisPatterns.some(pattern => pattern.test(combined));

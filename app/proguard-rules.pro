@@ -66,6 +66,11 @@
 -keep class * extends androidx.glance.appwidget.GlanceAppWidgetReceiver { *; }
 -keep class com.kcalgrindai.app.feature.widget.** { *; }
 
+# Health Connect
+-keep class androidx.health.connect.client.** { *; }
+-keep class androidx.health.connect.client.records.** { *; }
+-keep class com.kcalgrindai.app.data.health.** { *; }
+
 # Firebase & Crashlytics
 -keepattributes *Annotation*,SourceFile,LineNumberTable
 -keep public class * extends java.lang.Exception
