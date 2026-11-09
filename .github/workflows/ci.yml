@@ -120,7 +120,7 @@ jobs:
           GEMINI_API_KEY: mock-ci-gemini-key
           ALLOW_DEV_TOKENS: 'false'
         run: |
-          node --test test-account-deletion.js test-auth-middleware.js test-gemini-client-unit.js test-gemini-structure.js test-test-token-production-gate.js test-ai-coach-quota.js test-ai-coach-shared-quota.js test-production-fail-closed.js test-gemini-fallback.js test-coach-safety.js test-photo-cap.js test-canary-logging.js
+          node --test --test-concurrency=1 test-account-deletion.js test-auth-middleware.js test-gemini-client-unit.js test-gemini-structure.js test-test-token-production-gate.js test-ai-coach-quota.js test-ai-coach-shared-quota.js test-production-fail-closed.js test-gemini-fallback.js test-coach-safety.js test-photo-cap.js test-canary-logging.js
           node scripts/audit-purge-completeness.js
 
   postgres-integration-tests:
