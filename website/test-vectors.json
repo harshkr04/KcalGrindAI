@@ -1,0 +1,194 @@
+[
+{
+  "id": "male_lose",
+  "input": {
+    "weightKg": 75.0,
+    "heightCm": 175.0,
+    "age": 28,
+    "goal": "lose",
+    "activity": "moderate",
+    "goalWeightKg": 70.0,
+    "sex": "male"
+  },
+  "output": {
+    "calories": 2070,
+    "proteinG": 135,
+    "carbsG": 239,
+    "fatG": 64,
+    "waterLiters": 2.6,
+    "waterGlasses": 9,
+    "bmr": 1626,
+    "tdee": 2520,
+    "delta": -450,
+    "floored": false
+  }
+},
+{
+  "id": "female_maintain",
+  "input": {
+    "weightKg": 60.0,
+    "heightCm": 162.0,
+    "age": 32,
+    "goal": "maintain",
+    "activity": "light",
+    "goalWeightKg": 60.0,
+    "sex": "female"
+  },
+  "output": {
+    "calories": 1890,
+    "proteinG": 96,
+    "carbsG": 244,
+    "fatG": 59,
+    "waterLiters": 1.9,
+    "waterGlasses": 6,
+    "bmr": 1375,
+    "tdee": 1890,
+    "delta": 0,
+    "floored": false
+  }
+},
+{
+  "id": "male_muscle",
+  "input": {
+    "weightKg": 80.0,
+    "heightCm": 182.0,
+    "age": 22,
+    "goal": "muscle",
+    "activity": "very",
+    "goalWeightKg": 85.0,
+    "sex": "male"
+  },
+  "output": {
+    "calories": 3270,
+    "proteinG": 160,
+    "carbsG": 428,
+    "fatG": 102,
+    "waterLiters": 3.0,
+    "waterGlasses": 10,
+    "bmr": 1750,
+    "tdee": 3018,
+    "delta": 250,
+    "floored": false
+  }
+},
+{
+  "id": "unspecified_gain",
+  "input": {
+    "weightKg": 70.0,
+    "heightCm": 170.0,
+    "age": 40,
+    "goal": "gain",
+    "activity": "sedentary",
+    "goalWeightKg": 75.0,
+    "sex": null
+  },
+  "output": {
+    "calories": 2130,
+    "proteinG": 119,
+    "carbsG": 265,
+    "fatG": 66,
+    "waterLiters": 2.1,
+    "waterGlasses": 7,
+    "bmr": 1485,
+    "tdee": 1781,
+    "delta": 350,
+    "floored": false
+  }
+},
+{
+  "id": "female_low_weight_floor",
+  "input": {
+    "weightKg": 40.0,
+    "heightCm": 145.0,
+    "age": 60,
+    "goal": "lose",
+    "activity": "sedentary",
+    "goalWeightKg": 35.0,
+    "sex": "female"
+  },
+  "output": {
+    "calories": 1200,
+    "proteinG": 72,
+    "carbsG": 145,
+    "fatG": 37,
+    "waterLiters": 1.8,
+    "waterGlasses": 6,
+    "bmr": 928,
+    "tdee": 1114,
+    "delta": -450,
+    "floored": true
+  }
+},
+{
+  "id": "male_low_weight_floor",
+  "input": {
+    "weightKg": 45.0,
+    "heightCm": 155.0,
+    "age": 50,
+    "goal": "lose",
+    "activity": "sedentary",
+    "goalWeightKg": 40.0,
+    "sex": "male"
+  },
+  "output": {
+    "calories": 1500,
+    "proteinG": 81,
+    "carbsG": 188,
+    "fatG": 47,
+    "waterLiters": 1.8,
+    "waterGlasses": 6,
+    "bmr": 1091,
+    "tdee": 1309,
+    "delta": -450,
+    "floored": true
+  }
+},
+{
+  "id": "male_healthier",
+  "input": {
+    "weightKg": 90.0,
+    "heightCm": 180.0,
+    "age": 35,
+    "goal": "healthier",
+    "activity": "moderate",
+    "goalWeightKg": 90.0,
+    "sex": "male"
+  },
+  "output": {
+    "calories": 2750,
+    "proteinG": 135,
+    "carbsG": 359,
+    "fatG": 86,
+    "waterLiters": 3.1,
+    "waterGlasses": 10,
+    "bmr": 1772,
+    "tdee": 2747,
+    "delta": 0,
+    "floored": false
+  }
+},
+{
+  "id": "female_nutrition",
+  "input": {
+    "weightKg": 55.0,
+    "heightCm": 165.0,
+    "age": 25,
+    "goal": "nutrition",
+    "activity": "light",
+    "goalWeightKg": 55.0,
+    "sex": "female"
+  },
+  "output": {
+    "calories": 1900,
+    "proteinG": 88,
+    "carbsG": 254,
+    "fatG": 59,
+    "waterLiters": 1.8,
+    "waterGlasses": 6,
+    "bmr": 1378,
+    "tdee": 1895,
+    "delta": 0,
+    "floored": false
+  }
+}
+]

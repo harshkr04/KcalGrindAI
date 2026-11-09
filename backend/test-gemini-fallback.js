@@ -4,15 +4,26 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 test('Gemini Model Config & Fallback Verification', async (t) => {
-  const { executeGeminiWithFallback, fastify } = await import('./src/server.js');
+  const { executeGeminiWithFallback, fastify, geminiClient } = await import('./src/server.js');
 
   await t.test('Primary model failure cleanly falls back to fallback model via executeGeminiWithFallback', async () => {
     const originalPrimary = process.env.GEMINI_PRIMARY_MODEL;
     const originalFallback = process.env.GEMINI_FALLBACK_MODEL;
+    const originalGenerateContent = geminiClient?.models?.generateContent;
 
     // Set deliberately invalid primary model ID to prove failover
     process.env.GEMINI_PRIMARY_MODEL = 'deliberately-invalid-primary-model-404';
     process.env.GEMINI_FALLBACK_MODEL = 'gemini-3.5-flash-lite';
+
+    // In CI or mock environment, mock generateContent to simulate primary 404 failure and fallback success
+    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.includes('mock') && geminiClient?.models) {
+      geminiClient.models.generateContent = async (req) => {
+        if (req.model === 'deliberately-invalid-primary-model-404') {
+          throw new Error('Model deliberately-invalid-primary-model-404 not found (404)');
+        }
+        return { text: 'pong from fallback model' };
+      };
+    }
 
     try {
       console.log('  Testing fallback with invalid primary:', process.env.GEMINI_PRIMARY_MODEL);
@@ -26,6 +37,9 @@ test('Gemini Model Config & Fallback Verification', async (t) => {
       assert.ok(result.response.text, 'Response text must be present from fallback model');
       console.log('  ✓ Deliberately invalid primary triggered clean failover to gemini-3.5-flash-lite (Response:', result.response.text.trim().substring(0, 30), ')');
     } finally {
+      if (originalGenerateContent && geminiClient?.models) {
+        geminiClient.models.generateContent = originalGenerateContent;
+      }
       if (originalPrimary !== undefined) process.env.GEMINI_PRIMARY_MODEL = originalPrimary;
       else delete process.env.GEMINI_PRIMARY_MODEL;
 

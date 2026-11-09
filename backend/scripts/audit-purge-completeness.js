@@ -39,7 +39,8 @@ export const CANONICAL_PURGE_TABLES = [
   'recipe_items',
   'custom_foods',
   'user_subscriptions',
-  'ai_coach_daily_usage'
+  'ai_coach_daily_usage',
+  'ai_photo_daily_usage'
 ];
 
 /**

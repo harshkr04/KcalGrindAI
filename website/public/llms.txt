@@ -1,0 +1,21 @@
+# KcalGrind
+
+> High-performance, privacy-first nutrition and calorie tracker engineered for Android 10+ with on-device storage, Gemini 2.5 Flash AI multimodal food recognition, and native home-screen widgets.
+
+## Overview
+KcalGrind is a mobile application that simplifies calorie and macronutrient logging through on-device database caching and multimodal AI vision. Your food log is stored on your device and works offline. When signed in, your food log, saved meals, and profile sync to your account.
+
+## Key Capabilities
+- **Multimodal AI Food Scanner:** Analyze food photos, voice logs, and freeform text descriptions using Google Gemini 2.5 Flash via a secure server proxy. Photos and audio are not saved to the user account or stored on backend servers.
+- **Nutritional Datasets:** References USDA FoodData Central and the Indian Food Composition Tables (IFCT 2017) from the National Institute of Nutrition (ICMR-NIN), Hyderabad.
+- **On-Device Storage:** Local database guarantees full offline diary and custom food access.
+- **Home Screen Widgets:** Interactive Android home-screen widgets (4x2, 2x2, 4x1) for quick energy tracking, water logging, and a privacy toggle directly from the launcher.
+- **Health Connect Integration:** Read-only synchronization for steps and active calories burned.
+- **AI Nutrition Coach:** Sproutling nutrition intelligence provides non-punitive, supportive dietary guidance (not medical advice).
+- **Privacy & Security:** Cleartext HTTP disabled in release builds, anonymous crash reporting, and full user account deletion with remote data purge.
+
+## Architecture & Technical Specifications
+- Android App: Kotlin, Jetpack Compose ("Vitality Flow"), Hilt, Room database, Health Connect.
+- Backend Proxy: Fastify (Node.js) on Google Cloud Run, verifying Firebase Auth Bearer tokens, with strict per-user rate limiting and shared Supabase quota enforcement.
+- AI Foundation: Google Gemini 2.5 Flash for multimodal photo analysis, text parsing, and conversational coaching.
+- Legal & Compliance: GDPR/CCPA and Google Play Account Deletion compliant (`DELETE /account` cascading purge across all user tables).

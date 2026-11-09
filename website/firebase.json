@@ -1,0 +1,29 @@
+{
+  "hosting": {
+    "public": "dist",
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "rewrites": [
+      {
+        "source": "/privacy",
+        "destination": "/privacy/index.html"
+      },
+      {
+        "source": "/privacy/**",
+        "destination": "/privacy/index.html"
+      },
+      {
+        "source": "/delete-account",
+        "destination": "/delete-account/index.html"
+      },
+      {
+        "source": "/delete-account/**",
+        "destination": "/delete-account/index.html"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
