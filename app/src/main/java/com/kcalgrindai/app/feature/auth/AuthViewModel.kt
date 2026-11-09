@@ -4,6 +4,7 @@ import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kcalgrindai.app.domain.repository.AuthRepository
+import com.kcalgrindai.app.domain.repository.SyncRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +17,8 @@ private val EMAIL_REGEX = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val syncRepository: SyncRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
@@ -133,19 +135,22 @@ class AuthViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = {
+                    if (!state.isSignUpMode) {
+                        runCatching { syncRepository?.restoreCloudBackup() }
+                    }
                     _uiState.update { it.copy(isLoading = false, authSuccess = true) }
                 },
                 onFailure = { error ->
-                    val userMessage = when {
-                        error.message?.contains("password", ignoreCase = true) == true ->
-                            "Invalid email or password."
-                        error.message?.contains("collision", ignoreCase = true) == true ||
-                        error.message?.contains("already in use", ignoreCase = true) == true ->
-                            "An account with this email already exists."
-                        error.message?.contains("network", ignoreCase = true) == true ->
-                            "Network error. Please check your internet connection."
-                        else -> error.localizedMessage ?: "Authentication failed. Please try again."
-                    }
+                    val flow = if (state.isSignUpMode) "email_signup" else "email_signin"
+                    com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.recordException(
+                        error,
+                        mapOf(
+                            "auth_flow" to flow,
+                            "error_type" to (error::class.simpleName ?: "UnknownException"),
+                            "error_detail" to (error.message?.take(200) ?: "unknown")
+                        )
+                    )
+                    val userMessage = resolveEmailErrorMessage(error, state.isSignUpMode)
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -167,7 +172,12 @@ class AuthViewModel @Inject constructor(
     }
 
     fun onGoogleSignInFailure(message: String) {
-        _uiState.update { it.copy(isLoading = false, errorMessage = message) }
+        com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.recordException(
+            RuntimeException("Google Sign-In Failure: $message"),
+            mapOf("auth_flow" to "google_client", "error_detail" to message.take(200))
+        )
+        val userMessage = resolveGoogleFailureMessage(message)
+        _uiState.update { it.copy(isLoading = false, errorMessage = userMessage) }
     }
 
     fun onGoogleSignInSuccess(idToken: String) {
@@ -180,13 +190,23 @@ class AuthViewModel @Inject constructor(
             val result = authRepository.signInWithGoogle(idToken)
             result.fold(
                 onSuccess = {
+                    runCatching { syncRepository?.restoreCloudBackup() }
                     _uiState.update { it.copy(isLoading = false, authSuccess = true) }
                 },
                 onFailure = { error ->
+                    com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.recordException(
+                        error,
+                        mapOf(
+                            "auth_flow" to "google_firebase_auth",
+                            "error_type" to (error::class.simpleName ?: "UnknownException"),
+                            "error_detail" to (error.message?.take(200) ?: "unknown")
+                        )
+                    )
+                    val userMessage = resolveGoogleErrorMessage(error)
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            errorMessage = error.localizedMessage ?: "Google sign in failed."
+                            errorMessage = userMessage
                         )
                     }
                 }
@@ -204,14 +224,91 @@ class AuthViewModel @Inject constructor(
                     _uiState.update { it.copy(isLoading = false, authSuccess = true) }
                 },
                 onFailure = { error ->
+                    com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.recordException(
+                        error,
+                        mapOf(
+                            "auth_flow" to "guest_auth",
+                            "error_type" to (error::class.simpleName ?: "UnknownException"),
+                            "error_detail" to (error.message?.take(200) ?: "unknown")
+                        )
+                    )
+                    val userMessage = resolveGuestErrorMessage(error)
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            errorMessage = error.localizedMessage ?: "Failed to continue as guest."
+                            errorMessage = userMessage
                         )
                     }
                 }
             )
+        }
+    }
+
+    companion object {
+        fun resolveEmailErrorMessage(
+            error: Throwable,
+            isSignUpMode: Boolean,
+            isDebug: Boolean = com.kcalgrindai.app.BuildConfig.DEBUG
+        ): String {
+            val msg = error.message.orEmpty()
+            return when {
+                msg.contains("password", ignoreCase = true) || msg.contains("credential", ignoreCase = true) ->
+                    "Invalid email or password."
+                msg.contains("collision", ignoreCase = true) || msg.contains("already in use", ignoreCase = true) ->
+                    "An account with this email already exists."
+                msg.contains("user-not-found", ignoreCase = true) || msg.contains("no user", ignoreCase = true) ->
+                    "No account found with this email."
+                msg.contains("badly formatted", ignoreCase = true) || msg.contains("invalid email", ignoreCase = true) ->
+                    "Please enter a valid email address."
+                msg.contains("network", ignoreCase = true) ->
+                    "Network error. Please check your internet connection."
+                isDebug ->
+                    error.localizedMessage ?: "Authentication failed. Please try again."
+                else ->
+                    if (isSignUpMode) "Unable to create account right now. Please try again later."
+                    else "Unable to sign in right now. Please try again later."
+            }
+        }
+
+        fun resolveGoogleErrorMessage(
+            error: Throwable,
+            isDebug: Boolean = com.kcalgrindai.app.BuildConfig.DEBUG
+        ): String {
+            val msg = error.message.orEmpty()
+            return when {
+                msg.contains("network", ignoreCase = true) ->
+                    "Network error. Please check your internet connection."
+                isDebug ->
+                    error.localizedMessage ?: "Google sign in failed."
+                else ->
+                    "Unable to sign in with Google right now. Please try again later."
+            }
+        }
+
+        fun resolveGoogleFailureMessage(
+            message: String,
+            isDebug: Boolean = com.kcalgrindai.app.BuildConfig.DEBUG
+        ): String {
+            return if (isDebug) {
+                message
+            } else {
+                "Google sign in was unsuccessful. Please try again."
+            }
+        }
+
+        fun resolveGuestErrorMessage(
+            error: Throwable,
+            isDebug: Boolean = com.kcalgrindai.app.BuildConfig.DEBUG
+        ): String {
+            val msg = error.message.orEmpty()
+            return when {
+                msg.contains("network", ignoreCase = true) ->
+                    "Network error. Please check your internet connection."
+                isDebug ->
+                    error.localizedMessage ?: "Failed to continue as guest."
+                else ->
+                    "Unable to continue as guest right now. Please try again later."
+            }
         }
     }
 }
