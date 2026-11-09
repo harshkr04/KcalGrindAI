@@ -1,9 +1,9 @@
-# Kcal Grind AI — User Flows
+# KcalGrind — User Flows
 
 ## 1. Core loop (the one that must work perfectly)
 
 ```
-User eats → opens Kcal Grind AI → taps AI/Add → picks photo/voice/text/barcode/search
+User eats → opens KcalGrind → taps AI/Add → picks photo/voice/text/barcode/search
    → AI analyzes → user reviews/edits/confirms → logged
    → Home + Diary + Insights update instantly (same Room data)
 ```

@@ -1,4 +1,4 @@
-# Kcal Grind AI — App Architecture
+# KcalGrind — App Architecture
 
 ## 1. Style: Clean Architecture + MVVM, single module to start
 

@@ -1,4 +1,4 @@
-# Kcal Grind AI — Database Design
+# KcalGrind — Database Design
 
 ## 1. Source of truth rule
 

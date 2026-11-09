@@ -1,4 +1,4 @@
-# Security Policy
+﻿# Security Policy
 
 ## Supported Versions
 
@@ -13,7 +13,7 @@ Only the latest commit on the `main` branch is actively supported with security 
 
 ## Reporting a Vulnerability
 
-We take the security of Kcal Grind AI and user health data seriously. If you discover a security vulnerability or sensitive information exposure, please report it privately.
+We take the security of KcalGrind and user health data seriously. If you discover a security vulnerability or sensitive information exposure, please report it privately.
 
 **Please DO NOT open a public GitHub issue.**
 
@@ -59,7 +59,7 @@ When auditing or submitting pull requests, pay close attention to the following 
    - Atomic AI Coach quota reservation (`tryReserveAiCoachQuota`) prevents race condition abuse of Gemini 2.5 Flash API quotas.
 
 5. **Health & Personal Data Storage:**
-   - **Android Health Connect (`HealthConnectManager.kt`):** Only requests minimum required permissions (`READ_STEPS`, `READ_ACTIVE_CALORIES_BURNED`). Data must remain on-device unless cloud backup is explicitly activated.
+   - **Android Health Connect (`HealthConnectManager.kt`):** Only requests minimum required permissions (`READ_STEPS`). Data must remain on-device unless cloud backup is explicitly activated.
    - **Local Database (`KcalGrindDatabase.kt`):** Room SQLite database must never be accessible via unencrypted cloud backup. `android:allowBackup="false"` and `data_extraction_rules.xml` must remain intact.
    - **Crash Reporting (`KcalGrindAICrashReporter.kt`):** User IDs must never be attached to Crashlytics stack traces (`setUserId` is an explicit no-op).
 
@@ -70,6 +70,13 @@ When auditing or submitting pull requests, pay close attention to the following 
 7. **Account Deletion & Data Removal (`DeleteAccountUseCase.kt`, `server.js`):**
    - `DELETE /account` must completely cascade and purge all relational user rows across all 16 tables.
    - The Android client must verify session freshness before initiating destructive remote calls to prevent partial state corruption.
+
+---
+
+8. **Network Security & Cleartext Traffic Disallowance:**
+   - **Cleartext Traffic Disabled in Release:** Release builds strictly disallow unencrypted cleartext HTTP traffic via `android:usesCleartextTraffic="false"` in `AndroidManifest.xml` and `app/src/main/res/xml/network_security_config.xml` (`<base-config cleartextTrafficPermitted="false" />`).
+   - All production communications (AI proxy, Firebase, Supabase, Health Connect) require encrypted TLS 1.2+ HTTPS.
+   - Unencrypted cleartext endpoints (`10.0.2.2`, `localhost`, `127.0.0.1`) are permitted strictly in debug build variants (`app/src/debug/res/xml/network_security_config.xml`) for local emulator development (specifically permitting `http://10.0.2.2:8000` to connect to the local development Fastify proxy backend), while release builds block all cleartext HTTP traffic without exception.
 
 ---
 

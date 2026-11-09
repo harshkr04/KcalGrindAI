@@ -7,11 +7,11 @@ Configure two base subscription products in Google Play Console under **Monetize
 
 | Plan | Product ID | Base Plan ID | Billing Period | Target Price | Free Trial |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Kcal Grind Pro Monthly** | `kcalgrind_pro_monthly` | `p1m` | 1 Month | `[SET_MONTHLY_PRICE]` | 7 days |
-| **Kcal Grind Pro Annual** | `kcalgrind_pro_annual` | `p1y` | 1 Year | `[SET_ANNUAL_PRICE]` | 7 days |
+| **KcalGrind Pro Monthly** | `kcalgrind_pro_monthly` | `p1m` | 1 Month | `[SET_MONTHLY_PRICE]` | 7 days |
+| **KcalGrind Pro Annual** | `kcalgrind_pro_annual` | `p1y` | 1 Year | `[SET_ANNUAL_PRICE]` | 7 days |
 
 #### Configuration Details:
-1. **Name:** Kcal Grind Pro Monthly / Annual
+1. **Name:** KcalGrind Pro Monthly / Annual
 2. **Benefits list:**
    - 50 Gemini 2.5 Flash AI Coach messages per day
    - Unlimited AI meal photo scanning & nutrition decomposition

@@ -1,16 +1,16 @@
 # Google Play Data Safety Form Mapping Guide
 
-**Application:** Kcal Grind (AI Nutrition & Calorie Tracker)  
+**Application:** KcalGrind (AI Nutrition & Calorie Tracker)  
 **Package:** `com.kcalgrindai.app`  
 **Play Console Section:** Policy and Programs -> App Content -> Data Safety  
 
 ---
 
 ## 1. Executive Data Safety Summary
-- **Data Encrypted in Transit:** **Yes** (All cloud communications use HTTPS / TLS 1.3 with AES-256 encrypted connections).
+- **Data Encrypted in Transit & Cleartext Disallowed:** **Yes** (All cloud communications use HTTPS / TLS 1.2+ with AES-256 encrypted connections. Release builds strictly disallow all cleartext HTTP traffic via `android:usesCleartextTraffic="false"` in `AndroidManifest.xml` and production `<base-config cleartextTrafficPermitted="false" />` in `app/src/main/res/xml/network_security_config.xml`).
 - **User Data Deletion Mechanism:** **Yes** (Users can request immediate and permanent deletion of all data via in-app **Profile -> Delete Account** and via the web request URL `https://kcalgrind.app/delete-account`, documented in `Docs/WEB_ACCOUNT_DELETION_PAGE.md`).
 - **Data Shared with Third Parties:** **No**. User personal data, nutrition logs, photos, and chat messages are never sold, rented, or shared with third-party advertising networks or data brokers.
-- **Children's Policy:** Kcal Grind is not directed to children under 13.
+- **Children's Policy:** KcalGrind is not directed to children under 13.
 - **Device Backups & Data Extraction:** `android:allowBackup="false"` is enforced in `AndroidManifest.xml`. Furthermore, Android 12+ `dataExtractionRules` and full backup rules explicitly exclude all Room SQLite databases and SharedPreferences/DataStore, preventing cloud backup or device-to-device transfer of private nutrition or health records.
 - **AI Processing & Gemini Paid Tier:** The backend authenticates to Google GenAI / Gemini 2.5 Flash via a paid-tier API key. Under Google Cloud terms of service, paid-tier usage ensures customer content (meal photos, transcripts, chat queries) is processed ephemerally and is **never** used for model training or improvement.
 
@@ -46,7 +46,7 @@
 ### Section 2: Data Usage & Sharing Details
 For each data type declared above:
 1. **Data Collection:** Select **Collected** (Data is transmitted off the device to developer servers / Firebase / Cloud Run proxy).
-2. **Data Sharing:** Select **Not Shared** (Kcal Grind does not share user data with third parties outside essential service providers providing infrastructure under developer control).
+2. **Data Sharing:** Select **Not Shared** (KcalGrind does not share user data with third parties outside essential service providers providing infrastructure under developer control).
 3. **Is this data processed ephemerally?**
    - For **Photos & Audio**: Select **Yes** (The images and voice clips are processed in-memory by Gemini 2.5 Flash and not saved to long-term storage buckets).
    - For **Profile, Weight & Food Logs**: Select **No** (Stored in database for user historical tracking until deleted).

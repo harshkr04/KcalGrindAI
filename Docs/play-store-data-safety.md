@@ -1,6 +1,6 @@
 # Google Play Store — Data Safety Form Response Guide
 
-This document provides exact answers to enter into the Google Play Console **Data Safety** questionnaire for Kcal Grind AI.
+This document provides exact answers to enter into the Google Play Console **Data Safety** questionnaire for KcalGrind.
 
 ---
 

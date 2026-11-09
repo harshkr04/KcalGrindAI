@@ -1,4 +1,4 @@
-# Kcal Grind AI Backend — Google Cloud Run & Secret Manager Deployment Guide
+# KcalGrind Backend — Google Cloud Run & Secret Manager Deployment Guide
 
 > [!IMPORTANT]
 > **Current Status: Infrastructure Prepared — Deployment Pending.**
@@ -6,7 +6,7 @@
 > **Remote deployment to Google Cloud Run has NOT been executed yet.** The backend is currently running on localhost (`http://localhost:8000` / `http://10.0.2.2:8000` on Android emulator).
 > Once Google Cloud credentials and gcloud CLI are provisioned, run `backend/deploy-cloud-run.sh` and populate the resulting URL into `local.properties` as `PROD_BACKEND_URL`.
 
-This document outlines the architecture, secret management, and step-by-step procedures for deploying the Kcal Grind AI Proxy backend off localhost and onto Google Cloud Run when ready.
+This document outlines the architecture, secret management, and step-by-step procedures for deploying the KcalGrind Proxy backend off localhost and onto Google Cloud Run when ready.
 
 ---
 

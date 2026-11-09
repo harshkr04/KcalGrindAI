@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea or enhancement for Kcal Grind AI
+about: Suggest an idea or enhancement for KcalGrind
 title: '[FEATURE] '
 labels: ['enhancement']
 assignees: ''

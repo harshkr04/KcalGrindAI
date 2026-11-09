@@ -32,10 +32,15 @@ render_frames/
 backend/.env
 backend/node_modules/
 backend/data/
+backend/data/*
 backend/data/ai_coach_usage.json
 backend/data/user_timezones.json
+data/
+data/*
 data/ai_coach_usage.json
 data/user_timezones.json
+*.tmp.*
+*.tmp.*_*
 
 
 # Release Keystores & Signing Secrets

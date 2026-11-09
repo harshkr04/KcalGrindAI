@@ -1,6 +1,6 @@
-# Contributing to Kcal Grind AI
+# Contributing to KcalGrind
 
-Thank you for your interest in contributing to Kcal Grind AI! We welcome contributions from developers, designers, and open-source contributors of all skill levels.
+Thank you for your interest in contributing to KcalGrind! We welcome contributions from developers, designers, and open-source contributors of all skill levels.
 
 ---
 

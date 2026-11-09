@@ -1,4 +1,4 @@
-# Kcal Grind AI — Development Workflow
+# KcalGrind — Development Workflow
 
 ## 1. Phase gating
 
