@@ -38,7 +38,7 @@ class OnboardingStep1To4ViewModelsTest {
     @Test
     fun testWelcomeViewModelResetsDraft() {
         val viewModel = WelcomeViewModel(sessionManager)
-        assertEquals("Kcal Grind AI", viewModel.uiState.value.title)
+        assertEquals("KcalGrind", viewModel.uiState.value.title)
 
         sessionManager.updateGoal(GoalType.MUSCLE)
         assertEquals(GoalType.MUSCLE, sessionManager.getSnapshot().goal)

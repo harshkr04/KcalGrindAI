@@ -76,7 +76,7 @@ class SubscriptionViewModel @Inject constructor(
                             isPro = true,
                             activePlanId = result.planId,
                             activeExpiresAtMs = result.expiresAtMs,
-                            alertMessage = "Successfully subscribed to Kcal Grind Pro! All features unlocked.",
+                            alertMessage = "Successfully subscribed to KcalGrind Pro! All features unlocked.",
                             isAlertSuccess = true
                         )
                     }
@@ -115,7 +115,7 @@ class SubscriptionViewModel @Inject constructor(
                             isPro = true,
                             activePlanId = result.planId,
                             activeExpiresAtMs = result.expiresAtMs,
-                            alertMessage = "Purchases restored successfully! Kcal Grind Pro is active.",
+                            alertMessage = "Purchases restored successfully! KcalGrind Pro is active.",
                             isAlertSuccess = true
                         )
                     }

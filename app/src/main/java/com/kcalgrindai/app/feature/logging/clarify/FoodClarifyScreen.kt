@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.kcalgrindai.app.core.designsystem.KcalGrindWarning
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -85,12 +86,12 @@ fun FoodClarifyScreen(
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            color = Color(0xFFF59E0B).copy(alpha = 0.12f)
+            color = KcalGrindWarning.copy(alpha = 0.12f)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     text = "AI isn't completely sure",
-                    color = Color(0xFFF59E0B),
+                    color = KcalGrindWarning,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                 )
                 Spacer(modifier = Modifier.height(4.dp))

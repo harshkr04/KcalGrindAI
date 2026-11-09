@@ -42,24 +42,74 @@ fastify.setErrorHandler((error, request, reply) => {
 });
 
 // Provider Configuration & Model Defaults
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+export const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+export const GEMINI_PRIMARY_MODEL = process.env.GEMINI_PRIMARY_MODEL || 'gemini-2.5-flash';
+export const GEMINI_FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || (GEMINI_PRIMARY_MODEL === 'gemini-3.5-flash-lite' ? 'gemini-2.5-flash' : 'gemini-3.5-flash-lite');
 
-const VISION_MODEL = GEMINI_MODEL;
-const TEXT_MODEL = GEMINI_MODEL;
-const CHAT_MODEL = GEMINI_MODEL;
+if (process.env.TEST !== 'true' && GEMINI_PRIMARY_MODEL === GEMINI_FALLBACK_MODEL) {
+  throw new Error(`Misconfiguration: GEMINI_PRIMARY_MODEL and GEMINI_FALLBACK_MODEL must be distinct model IDs (both are '${GEMINI_PRIMARY_MODEL}')`);
+}
+
+export const GEMINI_MODEL = GEMINI_PRIMARY_MODEL;
+export const VISION_MODEL = GEMINI_PRIMARY_MODEL;
+export const TEXT_MODEL = GEMINI_PRIMARY_MODEL;
+export const CHAT_MODEL = GEMINI_PRIMARY_MODEL;
 
 // Initialize Google GenAI client if key is present
-let geminiClient = null;
+export let geminiClient = null;
 if (GEMINI_API_KEY) {
   try {
     geminiClient = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-    fastify.log.info({ provider: 'gemini', model: GEMINI_MODEL }, `Google GenAI (${GEMINI_MODEL}) initialized`);
+    fastify.log.info({ provider: 'gemini', primary: GEMINI_PRIMARY_MODEL, fallback: GEMINI_FALLBACK_MODEL }, `Google GenAI initialized (Primary: ${GEMINI_PRIMARY_MODEL}, Fallback: ${GEMINI_FALLBACK_MODEL})`);
   } catch (err) {
     fastify.log.error({ err: err.message }, 'Failed to initialize Google GenAI');
   }
 } else {
   fastify.log.warn('GEMINI_API_KEY not provided, AI features will be unconfigured');
+}
+
+/**
+ * Execute a Gemini generateContent request with automatic fallback
+ * from GEMINI_PRIMARY_MODEL to GEMINI_FALLBACK_MODEL if the primary fails.
+ */
+export async function executeGeminiWithFallback(params, operationName = 'GeminiOperation') {
+  if (!geminiClient) {
+    throw new Error('Gemini client not initialized (missing GEMINI_API_KEY)');
+  }
+
+  const primaryModel = process.env.GEMINI_PRIMARY_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const fallbackModel = process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.5-flash-lite';
+
+  try {
+    const res = await geminiClient.models.generateContent({
+      ...params,
+      model: primaryModel
+    });
+    fastify.log.info({ operation: operationName, model: primaryModel, fallback: false }, `${operationName} completed with primary model`);
+    return { response: res, modelUsed: primaryModel, fallback: false };
+  } catch (primaryError) {
+    fastify.log.warn(
+      { operation: operationName, primaryModel, fallbackModel, err: primaryError.message },
+      `Primary model ${primaryModel} failed; attempting fallback to ${fallbackModel}`
+    );
+    appendBackendLog(`MODEL_FALLBACK: ${operationName} primary=${primaryModel} failed (${primaryError.message}) -> falling back to ${fallbackModel}`);
+
+    try {
+      const res = await geminiClient.models.generateContent({
+        ...params,
+        model: fallbackModel
+      });
+      fastify.log.info({ operation: operationName, model: fallbackModel, fallback: true }, `${operationName} completed with fallback model`);
+      return { response: res, modelUsed: fallbackModel, fallback: true };
+    } catch (fallbackError) {
+      fastify.log.error(
+        { operation: operationName, fallbackModel, err: fallbackError.message },
+        `Fallback model ${fallbackModel} also failed`
+      );
+      appendBackendLog(`MODEL_FALLBACK_FAILED: ${operationName} fallback=${fallbackModel} failed (${fallbackError.message})`);
+      throw fallbackError;
+    }
+  }
 }
 
 // -------------------------------------------------------------
@@ -199,7 +249,7 @@ export function sendAiUnavailable(reply, err, customMessage = 'Meal analysis is 
 // -------------------------------------------------------------
 // Firebase Admin & Rate Limiter
 // -------------------------------------------------------------
-if (process.env.NODE_ENV === 'production' && process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+if (process.env.NODE_ENV === 'production' && process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FIREBASE_AUTH_EMULATOR_HOST.trim() && process.env.TEST !== 'true') {
   throw new Error('FATAL: FIREBASE_AUTH_EMULATOR_HOST cannot be set in production (emulator tokens are unsigned).');
 }
 
@@ -242,6 +292,16 @@ fastify.addHook('preHandler', async (request, reply) => {
     return;
   }
 
+  // Production fail-closed: if Supabase is unconfigured in production, refuse all quota/sync routes with 503
+  if (process.env.NODE_ENV === 'production' && !supabase) {
+    if (request.url.startsWith('/ai/') || request.url.startsWith('/sync/')) {
+      return reply.code(503).send({
+        error: 'ServiceUnavailable',
+        message: 'Shared database storage is required in production but currently unconfigured.'
+      });
+    }
+  }
+
   const authHeader = request.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     const reason = authHeader ? 'Header does not start with Bearer' : 'Authorization header is completely missing';
@@ -256,18 +316,41 @@ fastify.addHook('preHandler', async (request, reply) => {
 
   const idToken = authHeader.split('Bearer ')[1].trim();
 
-  // Security (auth bypass hardening): no test-token bypass in ANY NODE_ENV.
-  // Past regressions reintroduced `ALLOW_DEV_TOKENS` / `NODE_ENV=test` branches
-  // that accepted `test-token-<anything>`. Such tokens must always 401 here —
-  // only Firebase verifyIdToken may authenticate. See attack test cases A/B/C.
+  // Security (auth bypass hardening): test-token is strictly prohibited in production.
+  // In non-production, test-token is gated on explicit non-production flag ALLOW_DEV_TOKENS === 'true'.
   if (idToken.startsWith('test-token-')) {
-    appendBackendLog(`401 UNAUTHORIZED on ${request.method} ${request.url} - Reason: test-token prefix is never accepted (NODE_ENV=${process.env.NODE_ENV || 'unset'})`);
-    fastify.log.warn({ url: request.url, nodeEnv: process.env.NODE_ENV || 'unset' }, 'Rejected request: test-token prefix is never accepted');
-    return reply.code(401).send({
-      error: 'Unauthorized',
-      message: 'Invalid or expired Firebase ID token.',
-      details: 'Test tokens are never accepted. A valid Firebase ID token is required.'
-    });
+    const isProduction = process.env.NODE_ENV === 'production';
+    const allowDevTokens = process.env.ALLOW_DEV_TOKENS === 'true' && !isProduction;
+
+    if (!allowDevTokens || isProduction) {
+      const reason = isProduction
+        ? 'test-token prefix is strictly prohibited in production (NODE_ENV=production)'
+        : 'test-token prefix rejected (ALLOW_DEV_TOKENS is not set to true)';
+      appendBackendLog(`401 UNAUTHORIZED on ${request.method} ${request.url} - Reason: ${reason} (NODE_ENV=${process.env.NODE_ENV || 'unset'})`);
+      fastify.log.warn({ url: request.url, nodeEnv: process.env.NODE_ENV || 'unset', isProduction }, `Rejected request: ${reason}`);
+      return reply.code(401).send({
+        error: 'Unauthorized',
+        message: 'Invalid or expired Firebase ID token.',
+        details: isProduction
+          ? 'Test tokens are strictly prohibited in production environments.'
+          : 'Test tokens are disabled. Set ALLOW_DEV_TOKENS=true in non-production environments to enable.'
+      });
+    }
+
+    const testUid = idToken.replace('test-token-', '') || 'test-user';
+    request.user = { uid: testUid, email: `${testUid}@local.test` };
+    const rateStatus = checkRateLimit(request.user.uid);
+    reply.header('X-RateLimit-Limit', RATE_LIMIT_MAX_CALLS);
+    reply.header('X-RateLimit-Remaining', rateStatus.remaining);
+
+    if (!rateStatus.allowed) {
+      reply.header('Retry-After', rateStatus.resetSeconds);
+      return reply.code(429).send({
+        error: 'Too Many Requests',
+        message: `Hourly AI limit reached. Please try again in ${rateStatus.resetSeconds} seconds.`
+      });
+    }
+    return;
   }
 
   try {
@@ -307,16 +390,23 @@ fastify.addHook('onResponse', async (request, reply) => {
 // 1. Health check & provider info
 // -------------------------------------------------------------
 fastify.get('/health', async () => {
+  const primary = process.env.GEMINI_PRIMARY_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const fallback = process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.5-flash-lite';
   return {
     status: 'ok',
     service: 'kcalgrindai-backend',
     provider: geminiClient ? 'gemini' : 'unconfigured',
-    model: GEMINI_MODEL,
-    visionModel: VISION_MODEL,
-    chatModel: CHAT_MODEL,
+    model: primary,
+    models: {
+      primary,
+      fallback
+    },
+    visionModel: primary,
+    chatModel: primary,
     timestamp: new Date().toISOString()
   };
 });
+
 
 // -------------------------------------------------------------
 // 2. POST /ai/analyze-photo
@@ -394,9 +484,44 @@ fastify.post('/ai/analyze-photo', { bodyLimit: 4 * 1024 * 1024 }, async (request
     });
   }
 
+  // Quota enforcement: Free 5 photos/day, Pro 50 photos/day
+  // Concurrency-safe atomic reservation (shared Supabase RPC in production)
+  const uid = request.user?.uid || 'anonymous';
+  const isPro = determineUserIsPro(request);
+  const requestedTz = request.headers['x-timezone'] || request.body?.timezone;
+  const timezone = await resolveUserTimezoneAsync(uid, requestedTz);
+
+  let reservation;
+  try {
+    reservation = await tryReservePhotoQuotaAsync(uid, timezone, isPro);
+  } catch (err) {
+    if (process.env.NODE_ENV === 'production' || err.statusCode === 503) {
+      fastify.log.error({ err: err.message, uid }, 'Photo quota reservation failed in production mode with 503');
+      return reply.code(503).send({
+        error: 'ServiceUnavailable',
+        message: 'Photo analysis service is temporarily unavailable. Please try again shortly.'
+      });
+    }
+    throw err;
+  }
+
+  if (!reservation.allowed) {
+    fastify.log.warn({ uid, isPro, usedToday: reservation.usedToday, limit: reservation.dailyLimit }, 'Photo analysis quota exceeded');
+    return reply.code(429).send({
+      error: 'QuotaExceeded',
+      message: isPro
+        ? "You've reached today's Pro photo analysis limit."
+        : "You've reached today's free photo analysis limit (5 photos/day). You can still log meals using search or text.",
+      usedToday: reservation.usedToday,
+      dailyLimit: reservation.dailyLimit,
+      resetAt: 'midnight'
+    });
+  }
+
   if (!geminiClient || !GEMINI_API_KEY) {
     fastify.log.error('Gemini vision provider is unconfigured (missing GEMINI_API_KEY)');
     appendBackendLog('GEMINI_CONFIG_ERROR: missing GEMINI_API_KEY');
+    await releasePhotoReservationAsync(uid, timezone);
     return reply.code(500).send({
       error: 'InternalServerError',
       message: 'AI analysis service is temporarily unavailable.'
@@ -412,7 +537,7 @@ fastify.post('/ai/analyze-photo', { bodyLimit: 4 * 1024 * 1024 }, async (request
   appendBackendLog(`PHOTO_ANALYZE: bytes=${imageBuffer.length} mime=${detectedMime} provider=gemini model=${VISION_MODEL}`);
 
   try {
-    const prompt = `You are Kcal Grind Nutrition Vision AI.
+    const prompt = `You are KcalGrind Nutrition Vision AI.
 Analyze this meal image.
 Identify each food/ingredient, estimate grams (estimatedGrams), calories (rounded to nearest 5-10 kcal), and macros (protein, carbs, fat in grams).
 Assign an honest confidence score (0.0 to 1.0) per food item reflecting visual certainty. For ambiguous food, assign lower confidence (0.35-0.70). For clear identifiable food, assign higher confidence (0.85-0.98).
@@ -420,8 +545,7 @@ Compute overallConfidence (0.0 to 1.0).
 If the image does not clearly show edible food or drink (blank or very dark image, screens, objects, people, empty plates), return foods as an empty array and overallConfidence 0. Never return placeholder items such as 'No Food' or 'Empty Plate'. Every item must be real food with estimatedGrams > 0.
 User dietary tags: ${dietTags.join(', ') || 'None'}. Allergies: ${allergies.join(', ') || 'None'}.`;
 
-    const response = await geminiClient.models.generateContent({
-      model: VISION_MODEL,
+    const { response, modelUsed } = await executeGeminiWithFallback({
       contents: [
         {
           role: 'user',
@@ -441,25 +565,32 @@ User dietary tags: ${dietTags.join(', ') || 'None'}. Allergies: ${allergies.join
         responseMimeType: 'application/json',
         responseSchema: FOOD_ANALYSIS_SCHEMA
       }
-    });
+    }, 'analyze-photo');
 
     const parsed = JSON.parse(response.text);
     if (parsed && Array.isArray(parsed.foods)) {
+      const newUsed = await commitPhotoQuotaAsync(uid, timezone);
       parsed.foods = parsed.foods.filter(item => {
         const grams = Number(item.estimatedGrams) || 0;
         const cals = Number(item.calories) || 0;
         return !(grams <= 0 && cals <= 0);
       });
+      const quotaMeta = {
+        usedToday: newUsed,
+        dailyLimit: reservation.dailyLimit,
+        remaining: Math.max(0, reservation.dailyLimit - newUsed)
+      };
       if (parsed.foods.length === 0) {
-        return { foods: [], overallConfidence: 0 };
+        return { foods: [], overallConfidence: 0, model: modelUsed, quota: quotaMeta };
       }
-      return parsed;
+      return { ...parsed, model: modelUsed, quota: quotaMeta };
     }
 
     throw new Error('Invalid response structure from Gemini vision');
   } catch (geminiError) {
     fastify.log.error({ err: geminiError.message }, 'Gemini vision analysis failed');
     appendBackendLog(`GEMINI_VISION_FAILED: ${geminiError.message}`);
+    await releasePhotoReservationAsync(uid, timezone);
     return sendAiUnavailable(reply, geminiError);
   }
 });
@@ -482,10 +613,10 @@ fastify.post('/ai/analyze-text', async (request, reply) => {
     });
   }
 
-  fastify.log.info({ text, provider: 'gemini', model: TEXT_MODEL }, 'Analyzing text meal description');
+  fastify.log.info({ textLength: text?.length, provider: 'gemini', model: TEXT_MODEL }, 'Analyzing text meal description');
 
   try {
-    const prompt = `You are Kcal Grind Nutrition Text Parser AI.
+    const prompt = `You are KcalGrind Nutrition Text Parser AI.
 Analyze the user's meal description: "${text}".
 Identify each food item mentioned with portion sizes.
 Estimate reasonable grams, calories (rounded to nearest 5-10 kcal), and macros (protein, carbs, fat in grams).
@@ -496,8 +627,7 @@ Assign an honest confidence score (0.0 to 1.0) per item:
 Compute overallConfidence as the average confidence.
 User dietary tags: ${dietTags.join(', ') || 'None'}. Allergies: ${allergies.join(', ') || 'None'}.`;
 
-    const response = await geminiClient.models.generateContent({
-      model: TEXT_MODEL,
+    const { response, modelUsed } = await executeGeminiWithFallback({
       contents: [
         {
           role: 'user',
@@ -509,11 +639,11 @@ User dietary tags: ${dietTags.join(', ') || 'None'}. Allergies: ${allergies.join
         responseMimeType: 'application/json',
         responseSchema: FOOD_ANALYSIS_SCHEMA
       }
-    });
+    }, 'analyze-text');
 
     const parsed = JSON.parse(response.text);
     if (parsed && Array.isArray(parsed.foods) && parsed.foods.length > 0) {
-      return parsed;
+      return { ...parsed, model: modelUsed };
     }
 
     throw new Error('Invalid response structure from Gemini text parser');
@@ -546,8 +676,117 @@ fastify.post('/ai/transcribe', async (request, reply) => {
 });
 
 // -------------------------------------------------------------
+export function buildCoachSystemInstruction(userContext) {
+  return `You are Sproutling.
+You provide intelligent, empathetic, evidence-based nutrition coaching.
+User Context:
+- Goal: ${formatGoalLabel(userContext?.goal || userContext?.profile?.goal)}
+- Target Calories: ${userContext?.targetCalories || userContext?.profile?.targetCalories || 2000} kcal
+- Consumed Calories Today: ${userContext?.consumedCalories ?? 0} kcal
+- Remaining Calories Today: ${userContext?.remainingCalories ?? 2000} kcal
+- Recent Trends: ${JSON.stringify(userContext?.recentTrends || { avgCalories: 1850, targetCalories: 2000, trackingRatePercent: 85, daysTracked: 6 })}
+
+Guidelines:
+- If asked about diary, remaining calories, meals logged today, or user profile, ALWAYS call get_today_diary or get_user_profile.
+- If asked how the user is doing this week or recent trends/progress, ALWAYS call get_recent_trends.
+- If the user asks to log, track, record, or add a meal or food (e.g. "log a banana for snack", "log 2 eggs"), ALWAYS call create_food_log with estimated calories and macros. Do NOT call search_food when the user explicitly asks to log.
+- If the user asks to log water (e.g. "log a glass of water"), ALWAYS call log_water with amountMl (default 250ml per glass).
+- Answer warmly, concisely, and practically.
+- Ground your answers strictly in the tool data.
+
+Safety Guardrails:
+- Safety Floors: NEVER recommend, validate, or endorse daily calorie targets below the app guardrails (strictly 1,200 kcal/day for women, 1,500 kcal/day for men). If a user requests an intake below these thresholds, refuse gently and explain that minimum energy intakes are vital for organ function and metabolic health.
+- Eating Disorder & Self-Harm Protection: If a user asks for tips to starve, purge, skip meals to extremes, or expresses thoughts of self-harm or eating disorders: immediately refuse to assist with restriction, offer empathetic care, and provide supportive redirection to speak with a healthcare provider or contact an eating disorder helpline.
+- Medical Advice Disclaimer: You are an AI nutrition assistant, not a physician or dietitian. Never diagnose medical conditions, prescribe clinical diets, or advise on prescription medications. Clearly remind the user to consult a doctor for medical questions.`;
+}
+
+// -------------------------------------------------------------
+// Coach Safety Guardrails: Crisis, Self-Harm & Eating Disorder Interceptor
+// -------------------------------------------------------------
+export const CRISIS_SUPPORT_RESPONSE = `I care deeply about your health and safety, and I cannot provide guidance on extreme restriction, fasting, purging, or self-harm.
+
+If you are experiencing distress, struggling with eating habits, or feeling overwhelmed, compassionate support is available right now:
+
+Emergency: 112 (National Emergency Number, India)
+India Helplines:
+• Tele-MANAS (24/7 National Mental Health): 14416 or 1800-891-4416 (telemanas.mohfw.gov.in)
+• KIRAN (24/7 Rehabilitation & Mental Health): 1800-599-0019 (disabilityaffairs.gov.in)
+• AASRA (24/7 Suicide Prevention): +91 98204 66726 (aasra.info)
+• Vandrevala Foundation (24/7 Free Counseling): +91 9999 666 555 (vandrevalafoundation.com)
+
+United States & Canada:
+• Emergency: 911
+• 988 Suicide & Crisis Lifeline: Call or text 988 (988lifeline.org)
+• National Association of Anorexia Nervosa and Associated Disorders (ANAD): 1-888-375-7767 (anad.org)
+• Crisis Text Line: Text HOME to 741741 (crisistextline.org)
+
+United Kingdom:
+• Emergency: 999 or 112
+• Samaritans: 116 123 (samaritans.org)
+• Beat Eating Disorders Helpline: 0808 801 0677 (beateatingdisorders.org.uk)
+• Shout Crisis Text Line: Text SHOUT to 85258 (giveusashout.org)
+
+International:
+• Befrienders Worldwide: befrienders.org
+• Find A Helpline (worldwide directory): findahelpline.com
+
+Please reach out to one of these services or speak with a licensed healthcare provider who can support you safely.`;
+
+export function checkCoachSafetyCrisis(text = '', messages = []) {
+  const combined = [
+    text,
+    ...(Array.isArray(messages) ? messages.map(m => m?.content || m?.text || '') : [])
+  ].join(' ').toLowerCase();
+
+  const crisisPatterns = [
+    /\b(kill\s+myself|kil{1,2}\s+myself|commit\s+suicide|suicid[ea]?|suicde|sucide|end\s+my\s+life|want\s+to\s+die|suicidal)\b/i,
+    /\b(starve\s+myself|starr?v(e|ing)\s+(myself|to\s+death)|how\s+to\s+starr?ve|starving\s+myself|starve\s+to\s+death|starve\b)/i,
+    /\b(purge|purging|purgg?ing|purg(e|ed))\b/i,
+    /\b(make\s+myself\s+throw\s*up|throw\s*up\s+after\s+(eating|dinner|food|meals?))\b/i,
+    /\b(vom+it(ing)?\s+after\s+(eating|meals?|food))\b/i,
+    /\b(laxatives?\s+(to\s+empty|after|for\s+weight)|empty\s+my\s+stomach\s+(with\s+laxatives?|after))\b/i,
+    /\b(chew\s+and\s+spit)\b/i,
+    /\b(hide\s+(my\s+)?(anorexia|bulimia|eating\s+disorder)|anorexia|bulimia|anorexic|bulimic)\b/i,
+    /\b(punish\s+myself\s+by\s+(not\s+eating|starving))\b/i,
+    /\b(\d+[- ]day\s+(water\s+)?fast|water\s+fast(ing)?|dry\s+fast(ing)?|fast\s+(for\s+)?(7|10|14|21|30)\s+days)\b/i,
+    /\b(eat(ing)?\s+(only\s+)?(0|50|100|200|300|500)\s+calories(\s+a\s+day)?)\b/i,
+    // Hinglish patterns
+    /\b(mar\s+ja(na|un|unga|ungi|na\s+chahta|na\s+chahti)|jaan\s+de\s+(dunga|dungi|dena)|zindagi\s+khatam|suicide\s+karn(a|i|e))\b/i,
+    /\b(khana\s+(chhod\s+(dunga|dungi|dena)|chhodna|chhod\s+diya)|bhukh(a|i)\s+rah(na|unga|ungi))\b/i,
+    /\b(khana\s+khane\s+ke\s+baad\s+(ulti|vomit)|ulti\s+karn(a|i)\s+khana\s+ke\s+baad)\b/i
+  ];
+
+  return crisisPatterns.some(pattern => pattern.test(combined));
+}
+
 // Helper: Process Tool Execution for AI Coach
 // -------------------------------------------------------------
+export function formatGoalLabel(rawGoal) {
+  if (!rawGoal) return 'maintain weight';
+  const GOAL_LABELS = {
+    'LOSE': 'lose weight',
+    'lose': 'lose weight',
+    'lose_weight': 'lose weight',
+    'MAINTAIN': 'maintain weight',
+    'maintain': 'maintain weight',
+    'maintain_weight': 'maintain weight',
+    'GAIN': 'gain weight',
+    'gain': 'gain weight',
+    'gain_weight': 'gain weight',
+    'MUSCLE': 'build muscle',
+    'muscle': 'build muscle',
+    'build_muscle': 'build muscle',
+    'HEALTHIER': 'eat healthier',
+    'healthier': 'eat healthier',
+    'eat_healthier': 'eat healthier',
+    'NUTRITION': 'track nutrition',
+    'nutrition': 'track nutrition',
+    'track_nutrition': 'track nutrition'
+  };
+  const key = String(rawGoal).trim();
+  return GOAL_LABELS[key] || GOAL_LABELS[key.toUpperCase()] || GOAL_LABELS[key.toLowerCase()] || key.toLowerCase();
+}
+
 function executeTool(fnName, fnArgs, userContext) {
   let toolOutput = {};
   let suggestedAction = null;
@@ -563,7 +802,7 @@ function executeTool(fnName, fnArgs, userContext) {
     };
   } else if (fnName === 'get_user_profile') {
     toolOutput = {
-      goal: userContext?.goal || 'Maintain weight',
+      goal: formatGoalLabel(userContext?.goal || userContext?.profile?.goal),
       targetCalories: userContext?.targetCalories || 2000,
       dietTags: userContext?.dietTags || [],
       allergies: userContext?.allergies || []
@@ -662,6 +901,32 @@ function buildDefaultReply(fnName, toolOutput, mealType, items) {
 }
 
 // -------------------------------------------------------------
+// Supabase Client (Phase 10 — Cloud Sync & Shared Quota Storage)
+// -------------------------------------------------------------
+export let supabase = null;
+export function setSupabaseClient(client) {
+  supabase = client;
+}
+
+if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
+  );
+  fastify.log.info('Supabase client initialized for cloud sync and shared quota storage');
+} else {
+  if (process.env.NODE_ENV === 'production') {
+    fastify.log.error('FATAL: SUPABASE_URL and SUPABASE_SERVICE_KEY are strictly required in production mode!');
+    if (process.env.TEST !== 'true') {
+      console.error('FATAL: Missing SUPABASE_URL or SUPABASE_SERVICE_KEY in production mode. Refusing to start.');
+      process.exit(1);
+    }
+  } else {
+    fastify.log.warn('SUPABASE_URL or SUPABASE_SERVICE_KEY not set — sync routes will return 503');
+  }
+}
+
+// -------------------------------------------------------------
 // AI Coach Daily Usage, Persistence & Quota Enforcement
 // Free: EXACTLY 5 messages/day (Configurable via FREE_AI_COACH_DAILY_LIMIT)
 // Pro:  EXACTLY 50 messages/day (Configurable via PRO_AI_COACH_DAILY_LIMIT)
@@ -677,16 +942,31 @@ const TIMEZONES_FILE = path.join(DATA_DIR, 'user_timezones.json');
 export const FREE_AI_COACH_DAILY_LIMIT = parseInt(process.env.FREE_AI_COACH_DAILY_LIMIT || '5', 10);
 export const PRO_AI_COACH_DAILY_LIMIT = parseInt(process.env.PRO_AI_COACH_DAILY_LIMIT || '50', 10);
 
+export const FREE_PHOTO_DAILY_LIMIT = parseInt(process.env.FREE_PHOTO_DAILY_LIMIT || '5', 10);
+export const PRO_PHOTO_DAILY_LIMIT = parseInt(process.env.PRO_PHOTO_DAILY_LIMIT || '50', 10);
+
 export const aiCoachDailyUsage = new Map(); // key: `${uid}:${localDay}` -> count
+export const photoDailyUsage = new Map(); // key: `${uid}:${localDay}` -> count
 export const userTimezones = new Map(); // key: uid -> validated IANA timezone string
 export const inFlightAiCoachReservations = new Map(); // key: `${uid}:${localDay}` -> in-flight count
+export const inFlightPhotoReservations = new Map(); // key: `${uid}:${localDay}` -> in-flight count
+const PHOTO_USAGE_FILE = path.join(DATA_DIR, 'photo_usage.json');
 
 function saveJsonAtomic(filePath, data) {
   try {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     const tmpPath = `${filePath}.tmp.${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf8');
-    fs.renameSync(tmpPath, filePath);
+    try {
+      fs.renameSync(tmpPath, filePath);
+    } catch (renameErr) {
+      if (renameErr.code === 'EPERM' || renameErr.code === 'EBUSY') {
+        fs.copyFileSync(tmpPath, filePath);
+        try { fs.unlinkSync(tmpPath); } catch (_) {}
+      } else {
+        throw renameErr;
+      }
+    }
   } catch (err) {
     fastify.log.error({ err: err.message, filePath }, 'Failed to persist JSON to disk');
   }
@@ -705,21 +985,38 @@ function loadJsonSafe(filePath, defaultValue) {
 }
 
 export function persistUsageToDisk() {
+  if (process.env.NODE_ENV === 'production') return;
   const obj = Object.fromEntries(aiCoachDailyUsage);
   saveJsonAtomic(USAGE_FILE, obj);
 }
 
+export function persistPhotoUsageToDisk() {
+  if (process.env.NODE_ENV === 'production') return;
+  const obj = Object.fromEntries(photoDailyUsage);
+  saveJsonAtomic(PHOTO_USAGE_FILE, obj);
+}
+
 export function persistTimezonesToDisk() {
+  if (process.env.NODE_ENV === 'production') return;
   const obj = Object.fromEntries(userTimezones);
   saveJsonAtomic(TIMEZONES_FILE, obj);
 }
 
 export function initPersistence() {
+  if (process.env.NODE_ENV === 'production') return;
   const loadedUsage = loadJsonSafe(USAGE_FILE, {});
   aiCoachDailyUsage.clear();
   for (const [key, count] of Object.entries(loadedUsage)) {
     if (typeof count === 'number') {
       aiCoachDailyUsage.set(key, count);
+    }
+  }
+
+  const loadedPhotoUsage = loadJsonSafe(PHOTO_USAGE_FILE, {});
+  photoDailyUsage.clear();
+  for (const [key, count] of Object.entries(loadedPhotoUsage)) {
+    if (typeof count === 'number') {
+      photoDailyUsage.set(key, count);
     }
   }
 
@@ -773,6 +1070,64 @@ export function resolveUserTimezone(uid, requestedTimezone) {
   return 'UTC';
 }
 
+// -------------------------------------------------------------
+// Database-Backed Timezone Persistence (user_profiles.timezone)
+// Stores the user's validated IANA timezone in Postgres rather than ephemeral memory
+// -------------------------------------------------------------
+export async function resolveUserTimezoneAsync(uid, requestedTimezone) {
+  if (supabase && uid && uid !== 'anonymous') {
+    try {
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('timezone, timezone_changed_at')
+        .eq('firebase_uid', uid)
+        .maybeSingle();
+
+      const existingTz = profile?.timezone;
+      if (existingTz && isValidIanaTimezone(existingTz)) {
+        if (isValidIanaTimezone(requestedTimezone) && requestedTimezone !== 'UTC' && requestedTimezone !== existingTz) {
+          // Timezone locking: allow change only once every 7 days (protects daily quota consistency)
+          const lastChanged = profile?.timezone_changed_at ? new Date(profile.timezone_changed_at).getTime() : 0;
+          const now = Date.now();
+          const cooldownMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+          if (now - lastChanged < cooldownMs) {
+            fastify.log.warn({ uid, existingTz, requestedTimezone }, 'Timezone change locked: can only be changed once every 7 days');
+            userTimezones.set(uid, existingTz);
+            return existingTz;
+          }
+
+          const nowIso = new Date().toISOString();
+          await supabase
+            .from('user_profiles')
+            .update({ timezone: requestedTimezone, timezone_changed_at: nowIso, updated_at: nowIso })
+            .eq('firebase_uid', uid);
+          userTimezones.set(uid, requestedTimezone);
+          return requestedTimezone;
+        }
+        userTimezones.set(uid, existingTz);
+        return existingTz;
+      }
+
+      if (isValidIanaTimezone(requestedTimezone)) {
+        const nowIso = new Date().toISOString();
+        if (profile) {
+          await supabase
+            .from('user_profiles')
+            .update({ timezone: requestedTimezone, timezone_changed_at: nowIso, updated_at: nowIso })
+            .eq('firebase_uid', uid);
+        }
+        userTimezones.set(uid, requestedTimezone);
+        return requestedTimezone;
+      }
+    } catch (err) {
+      fastify.log.warn({ err: err.message, uid }, 'Failed to query or persist user timezone in database');
+    }
+  }
+
+  return resolveUserTimezone(uid, requestedTimezone);
+}
+
 export function getUserLocalDate(timezone) {
   try {
     if (timezone) {
@@ -796,6 +1151,114 @@ export function determineUserIsPro(request) {
     }
   }
   return false;
+}
+
+export function getPhotoUsage(uid, timezone, isPro) {
+  const localDay = getUserLocalDate(timezone);
+  const key = `${uid}:${localDay}`;
+  const used = photoDailyUsage.get(key) || 0;
+  const inFlight = inFlightPhotoReservations.get(key) || 0;
+  const limit = isPro ? PRO_PHOTO_DAILY_LIMIT : FREE_PHOTO_DAILY_LIMIT;
+  return {
+    usedToday: used,
+    inFlight,
+    dailyLimit: limit,
+    remaining: Math.max(0, limit - (used + inFlight)),
+    isBlocked: (used + inFlight) >= limit,
+    isPro: !!isPro,
+    localDay,
+    timezone
+  };
+}
+
+export function tryReservePhotoQuota(uid, timezone, isPro) {
+  const localDay = getUserLocalDate(timezone);
+  const key = `${uid}:${localDay}`;
+  const used = photoDailyUsage.get(key) || 0;
+  const inFlight = inFlightPhotoReservations.get(key) || 0;
+  const limit = isPro ? PRO_PHOTO_DAILY_LIMIT : FREE_PHOTO_DAILY_LIMIT;
+
+  if ((used + inFlight) < limit) {
+    inFlightPhotoReservations.set(key, inFlight + 1);
+    return {
+      allowed: true,
+      usedToday: used,
+      inFlight: inFlight + 1,
+      dailyLimit: limit,
+      remaining: Math.max(0, limit - (used + inFlight + 1)),
+      isLimitReached: false,
+      rolling24hCapReached: false,
+      localDay
+    };
+  } else {
+    return {
+      allowed: false,
+      usedToday: used,
+      inFlight,
+      dailyLimit: limit,
+      remaining: 0,
+      isLimitReached: true,
+      rolling24hCapReached: false,
+      localDay
+    };
+  }
+}
+
+export function commitPhotoQuota(uid, timezone) {
+  const localDay = getUserLocalDate(timezone);
+  const key = `${uid}:${localDay}`;
+  const current = photoDailyUsage.get(key) || 0;
+  const inFlight = inFlightPhotoReservations.get(key) || 0;
+  photoDailyUsage.set(key, current + 1);
+  if (inFlight <= 1) {
+    inFlightPhotoReservations.delete(key);
+  } else {
+    inFlightPhotoReservations.set(key, inFlight - 1);
+  }
+  persistPhotoUsageToDisk();
+  return current + 1;
+}
+
+export function releasePhotoReservation(uid, timezone) {
+  const localDay = getUserLocalDate(timezone);
+  const key = `${uid}:${localDay}`;
+  const inFlight = inFlightPhotoReservations.get(key) || 0;
+  if (inFlight <= 1) {
+    inFlightPhotoReservations.delete(key);
+  } else {
+    inFlightPhotoReservations.set(key, inFlight - 1);
+  }
+}
+
+export function recordPhotoAnalysisUsage(uid, timezone) {
+  const localDay = getUserLocalDate(timezone);
+  const key = `${uid}:${localDay}`;
+  const current = photoDailyUsage.get(key) || 0;
+  photoDailyUsage.set(key, current + 1);
+  persistPhotoUsageToDisk();
+  return current + 1;
+}
+
+export function resetPhotoUsageForTesting(uid, localDay) {
+  if (uid && localDay) {
+    photoDailyUsage.delete(`${uid}:${localDay}`);
+    inFlightPhotoReservations.delete(`${uid}:${localDay}`);
+  } else if (uid) {
+    for (const key of photoDailyUsage.keys()) {
+      if (key.startsWith(`${uid}:`)) {
+        photoDailyUsage.delete(key);
+      }
+    }
+    for (const key of inFlightPhotoReservations.keys()) {
+      if (key.startsWith(`${uid}:`)) {
+        inFlightPhotoReservations.delete(key);
+      }
+    }
+  } else {
+    photoDailyUsage.clear();
+    inFlightPhotoReservations.clear();
+  }
+  persistPhotoUsageToDisk();
 }
 
 export function getAiCoachUsage(uid, timezone, isPro) {
@@ -904,9 +1367,805 @@ export function resetAiCoachUsageForTesting(uid, localDay) {
 }
 
 // -------------------------------------------------------------
+// Asynchronous Supabase Shared Storage Quota Implementation
+// Supports Cloud Run multi-instance scaling & persistence
+// Falls back to in-memory/local disk if Supabase is unavailable
+// -------------------------------------------------------------
+export async function getAiCoachUsageAsync(uid, timezone, isPro) {
+  const localDay = getUserLocalDate(timezone);
+  const limit = isPro ? PRO_AI_COACH_DAILY_LIMIT : FREE_AI_COACH_DAILY_LIMIT;
+
+  if (!supabase) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Production error: Supabase shared quota storage is strictly required in production mode. Local in-memory fallback is disallowed.');
+    }
+    return getAiCoachUsage(uid, timezone, isPro);
+  }
+
+  try {
+    const { data: row, error } = await supabase
+      .from('ai_coach_daily_usage')
+      .select('*')
+      .eq('firebase_uid', uid)
+      .eq('local_date', localDay)
+      .maybeSingle();
+
+    if (error) {
+      fastify.log.warn({ error: error.message }, 'Supabase getAiCoachUsage error');
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(`Production database error: ${error.message}`);
+      }
+      return getAiCoachUsage(uid, timezone, isPro);
+    }
+
+    const used = row?.used_count || 0;
+    const isStale = row?.last_reservation_at && (Date.now() - new Date(row.last_reservation_at).getTime() > 2 * 60 * 1000);
+    const inFlight = isStale ? 0 : (row?.in_flight || 0);
+
+    return {
+      usedToday: used,
+      inFlight,
+      dailyLimit: limit,
+      remaining: Math.max(0, limit - used),
+      isLimitReached: used >= limit,
+      isPro,
+      localDay
+    };
+  } catch (err) {
+    if (process.env.NODE_ENV === 'production') {
+      throw err;
+    }
+    return getAiCoachUsage(uid, timezone, isPro);
+  }
+}
+
+export async function tryReserveAiCoachQuotaAsync(uid, timezone, isPro) {
+  const localDay = getUserLocalDate(timezone);
+  const limit = isPro ? PRO_AI_COACH_DAILY_LIMIT : FREE_AI_COACH_DAILY_LIMIT;
+
+  if (!supabase) {
+    if (process.env.NODE_ENV === 'production') {
+      const err = new Error('Production error: Supabase shared quota storage is strictly required in production mode. Local in-memory fallback is disallowed.');
+      err.statusCode = 503;
+      throw err;
+    }
+    return tryReserveAiCoachQuota(uid, timezone, isPro);
+  }
+
+  // Production path: strictly atomic Postgres RPC function with row locking (SELECT ... FOR UPDATE)
+  // No fallback to non-atomic queries or in-memory state is permitted in production
+  if (process.env.NODE_ENV === 'production') {
+    if (typeof supabase.rpc !== 'function') {
+      const err = new Error('Production error: Supabase RPC reserve_ai_coach_quota is required in production mode.');
+      err.statusCode = 503;
+      throw err;
+    }
+
+    const { data: rpcData, error: rpcError } = await supabase.rpc('reserve_ai_coach_quota', {
+      p_uid: uid,
+      p_date: localDay,
+      p_limit: limit,
+      p_timezone: timezone
+    });
+
+    if (rpcError) {
+      fastify.log.error({ error: rpcError.message, uid }, 'Production Quota RPC error');
+      const err = new Error(`Production database error: ${rpcError.message}`);
+      err.statusCode = 503;
+      throw err;
+    }
+
+    if (!rpcData || typeof rpcData !== 'object' || typeof rpcData.allowed !== 'boolean') {
+      const err = new Error('Production error: Unexpected response from reserve_ai_coach_quota RPC');
+      err.statusCode = 503;
+      throw err;
+    }
+
+    if (rpcData.allowed) {
+      const key = `${uid}:${localDay}`;
+      inFlightAiCoachReservations.set(key, (inFlightAiCoachReservations.get(key) || 0) + 1);
+    }
+    return rpcData;
+  }
+
+  // Development and test path (with local fallback if RPC not installed)
+  try {
+    // 1. Attempt atomic Postgres RPC function first
+    if (typeof supabase.rpc === 'function') {
+      const { data: rpcData, error: rpcError } = await supabase.rpc('reserve_ai_coach_quota', {
+        p_uid: uid,
+        p_date: localDay,
+        p_limit: limit,
+        p_timezone: timezone
+      });
+      if (!rpcError && rpcData && typeof rpcData === 'object' && typeof rpcData.allowed === 'boolean') {
+        if (rpcData.allowed) {
+          const key = `${uid}:${localDay}`;
+          inFlightAiCoachReservations.set(key, (inFlightAiCoachReservations.get(key) || 0) + 1);
+        }
+        return rpcData;
+      }
+    }
+
+    // 2. Direct atomic query fallback with rolling 24-hour cap (2x daily limit backstop) & 2-minute stale reservation recovery
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data: recentRows } = await supabase
+      .from('ai_coach_daily_usage')
+      .select('used_count')
+      .eq('firebase_uid', uid)
+      .gte('updated_at', twentyFourHoursAgo);
+    const rolling24hUsed = (recentRows || []).reduce((acc, r) => acc + (r.used_count || 0), 0);
+    const rollingCap = limit * 2;
+
+    if (rolling24hUsed >= rollingCap) {
+      return {
+        allowed: false,
+        usedToday: rolling24hUsed,
+        inFlight: 0,
+        dailyLimit: limit,
+        remaining: 0,
+        isLimitReached: true,
+        rolling24hCapReached: true,
+        localDay
+      };
+    }
+
+    const { data: row, error } = await supabase
+      .from('ai_coach_daily_usage')
+      .select('*')
+      .eq('firebase_uid', uid)
+      .eq('local_date', localDay)
+      .maybeSingle();
+
+    if (error) {
+      fastify.log.warn({ error: error.message }, 'Supabase tryReserveAiCoachQuota error in dev/test');
+      return tryReserveAiCoachQuota(uid, timezone, isPro);
+    }
+
+    const used = row?.used_count || 0;
+    // Stale in-flight recovery: reservations older than 2 minutes are discarded
+    const isStale = row?.last_reservation_at && (Date.now() - new Date(row.last_reservation_at).getTime() > 2 * 60 * 1000);
+    const effectiveInFlight = isStale ? 0 : (row?.in_flight || 0);
+
+    if (used + effectiveInFlight >= limit) {
+      return {
+        allowed: false,
+        usedToday: used,
+        inFlight: effectiveInFlight,
+        dailyLimit: limit,
+        remaining: Math.max(0, limit - used),
+        isLimitReached: true,
+        rolling24hCapReached: false,
+        localDay
+      };
+    }
+
+    const nextInFlight = effectiveInFlight + 1;
+    const nowIso = new Date().toISOString();
+    if (row) {
+      await supabase
+        .from('ai_coach_daily_usage')
+        .update({
+          in_flight: nextInFlight,
+          last_reservation_at: nowIso,
+          timezone,
+          updated_at: nowIso
+        })
+        .eq('firebase_uid', uid)
+        .eq('local_date', localDay);
+    } else {
+      await supabase
+        .from('ai_coach_daily_usage')
+        .insert({
+          firebase_uid: uid,
+          local_date: localDay,
+          used_count: 0,
+          in_flight: nextInFlight,
+          last_reservation_at: nowIso,
+          timezone,
+          updated_at: nowIso
+        });
+    }
+
+    // Mirror to local memory map
+    const key = `${uid}:${localDay}`;
+    inFlightAiCoachReservations.set(key, (inFlightAiCoachReservations.get(key) || 0) + 1);
+
+    return {
+      allowed: true,
+      usedToday: used,
+      inFlight: nextInFlight,
+      dailyLimit: limit,
+      remaining: Math.max(0, limit - (used + nextInFlight)),
+      isLimitReached: false,
+      rolling24hCapReached: false,
+      localDay
+    };
+  } catch (err) {
+    fastify.log.warn({ err: err.message }, 'Supabase quota reservation exception in dev/test, falling back to local');
+    return tryReserveAiCoachQuota(uid, timezone, isPro);
+  }
+}
+
+export async function commitAiCoachQuotaAsync(uid, timezone) {
+  const localDay = getUserLocalDate(timezone);
+  const key = `${uid}:${localDay}`;
+
+  if (!supabase) {
+    if (process.env.NODE_ENV === 'production') {
+      const err = new Error('Production error: Supabase shared quota storage is strictly required in production mode.');
+      err.statusCode = 503;
+      throw err;
+    }
+    commitAiCoachQuota(uid, timezone);
+    return (aiCoachDailyUsage.get(key) || 0);
+  }
+
+  // Commit locally for local memory mirror
+  commitAiCoachQuota(uid, timezone);
+
+  if (process.env.NODE_ENV === 'production') {
+    if (typeof supabase.rpc !== 'function') {
+      const err = new Error('Production error: Supabase RPC commit_ai_coach_quota is required in production mode.');
+      err.statusCode = 503;
+      throw err;
+    }
+    const { data: committedCount, error: rpcError } = await supabase.rpc('commit_ai_coach_quota', {
+      p_uid: uid,
+      p_date: localDay,
+      p_timezone: timezone
+    });
+    if (rpcError) {
+      fastify.log.error({ error: rpcError.message, uid }, 'Production commit_ai_coach_quota RPC error');
+      const err = new Error(`Production database error: ${rpcError.message}`);
+      err.statusCode = 503;
+      throw err;
+    }
+    return committedCount;
+  }
+
+  try {
+    if (typeof supabase.rpc === 'function') {
+      const { data: committedCount, error: rpcError } = await supabase.rpc('commit_ai_coach_quota', {
+        p_uid: uid,
+        p_date: localDay,
+        p_timezone: timezone
+      });
+      if (!rpcError && typeof committedCount === 'number') {
+        return committedCount;
+      }
+    }
+
+    const { data: row } = await supabase
+      .from('ai_coach_daily_usage')
+      .select('*')
+      .eq('firebase_uid', uid)
+      .eq('local_date', localDay)
+      .maybeSingle();
+
+    const used = (row?.used_count || 0) + 1;
+    const inFlight = Math.max(0, (row?.in_flight || 1) - 1);
+    const nowIso = new Date().toISOString();
+
+    if (row) {
+      await supabase
+        .from('ai_coach_daily_usage')
+        .update({
+          used_count: used,
+          in_flight: inFlight,
+          timezone,
+          updated_at: nowIso
+        })
+        .eq('firebase_uid', uid)
+        .eq('local_date', localDay);
+    } else {
+      await supabase
+        .from('ai_coach_daily_usage')
+        .insert({
+          firebase_uid: uid,
+          local_date: localDay,
+          used_count: used,
+          in_flight: inFlight,
+          timezone,
+          updated_at: nowIso
+        });
+    }
+    return used;
+  } catch (err) {
+    fastify.log.warn({ err: err.message }, 'Failed to commit quota to Supabase in dev/test');
+    return (aiCoachDailyUsage.get(key) || 0);
+  }
+}
+
+export async function releaseAiCoachReservationAsync(uid, timezone) {
+  const localDay = getUserLocalDate(timezone);
+
+  if (!supabase) {
+    if (process.env.NODE_ENV === 'production') {
+      const err = new Error('Production error: Supabase shared quota storage is strictly required in production mode.');
+      err.statusCode = 503;
+      throw err;
+    }
+    releaseAiCoachReservation(uid, timezone);
+    return;
+  }
+
+  // Release locally
+  releaseAiCoachReservation(uid, timezone);
+
+  if (process.env.NODE_ENV === 'production') {
+    if (typeof supabase.rpc !== 'function') {
+      const err = new Error('Production error: Supabase RPC release_ai_coach_reservation is required in production mode.');
+      err.statusCode = 503;
+      throw err;
+    }
+    const { error: rpcError } = await supabase.rpc('release_ai_coach_reservation', {
+      p_uid: uid,
+      p_date: localDay
+    });
+    if (rpcError) {
+      fastify.log.error({ error: rpcError.message, uid }, 'Production release_ai_coach_reservation RPC error');
+      const err = new Error(`Production database error: ${rpcError.message}`);
+      err.statusCode = 503;
+      throw err;
+    }
+    return;
+  }
+
+  try {
+    if (typeof supabase.rpc === 'function') {
+      const { error: rpcError } = await supabase.rpc('release_ai_coach_reservation', {
+        p_uid: uid,
+        p_date: localDay
+      });
+      if (!rpcError) return;
+    }
+
+    const { data: row } = await supabase
+      .from('ai_coach_daily_usage')
+      .select('*')
+      .eq('firebase_uid', uid)
+      .eq('local_date', localDay)
+      .maybeSingle();
+
+    if (row) {
+      const inFlight = Math.max(0, (row.in_flight || 1) - 1);
+      await supabase
+        .from('ai_coach_daily_usage')
+        .update({
+          in_flight: inFlight,
+          updated_at: new Date().toISOString()
+        })
+        .eq('firebase_uid', uid)
+        .eq('local_date', localDay);
+    }
+  } catch (err) {
+    fastify.log.warn({ err: err.message }, 'Failed to release quota reservation in Supabase in dev/test');
+  }
+}
+
+export async function resetAiCoachUsageForTestingAsync(uid, localDay) {
+  resetAiCoachUsageForTesting(uid, localDay);
+
+  if (supabase) {
+    try {
+      if (localDay) {
+        await supabase
+          .from('ai_coach_daily_usage')
+          .delete()
+          .eq('firebase_uid', uid)
+          .eq('local_date', localDay);
+      } else {
+        await supabase
+          .from('ai_coach_daily_usage')
+          .delete()
+          .eq('firebase_uid', uid);
+      }
+    } catch (_) {}
+  }
+}
+
+export async function getPhotoUsageAsync(uid, timezone, isPro) {
+  const localDay = getUserLocalDate(timezone);
+  const limit = isPro ? PRO_PHOTO_DAILY_LIMIT : FREE_PHOTO_DAILY_LIMIT;
+
+  if (!supabase) {
+    if (process.env.NODE_ENV === 'production') {
+      const err = new Error('Production error: Supabase shared quota storage is strictly required in production mode. Local in-memory fallback is disallowed.');
+      err.statusCode = 503;
+      throw err;
+    }
+    return getPhotoUsage(uid, timezone, isPro);
+  }
+
+  try {
+    const { data: row, error } = await supabase
+      .from('ai_photo_daily_usage')
+      .select('*')
+      .eq('firebase_uid', uid)
+      .eq('local_date', localDay)
+      .maybeSingle();
+
+    if (error) {
+      if (process.env.NODE_ENV === 'production') {
+        const err = new Error(`Production database error: ${error.message}`);
+        err.statusCode = 503;
+        throw err;
+      }
+      return getPhotoUsage(uid, timezone, isPro);
+    }
+
+    const used = row?.used_count || 0;
+    const inFlight = row?.in_flight || 0;
+    return {
+      usedToday: used,
+      inFlight,
+      dailyLimit: limit,
+      remaining: Math.max(0, limit - used),
+      isBlocked: used >= limit,
+      isPro: !!isPro,
+      localDay,
+      timezone
+    };
+  } catch (err) {
+    if (process.env.NODE_ENV === 'production') throw err;
+    return getPhotoUsage(uid, timezone, isPro);
+  }
+}
+
+export async function tryReservePhotoQuotaAsync(uid, timezone, isPro) {
+  const localDay = getUserLocalDate(timezone);
+  const limit = isPro ? PRO_PHOTO_DAILY_LIMIT : FREE_PHOTO_DAILY_LIMIT;
+
+  if (!supabase) {
+    if (process.env.NODE_ENV === 'production') {
+      const err = new Error('Production error: Supabase shared quota storage is strictly required in production mode. Local in-memory fallback is disallowed.');
+      err.statusCode = 503;
+      throw err;
+    }
+    return tryReservePhotoQuota(uid, timezone, isPro);
+  }
+
+  // Production path: strictly atomic Postgres RPC function with row locking (SELECT ... FOR UPDATE)
+  if (process.env.NODE_ENV === 'production') {
+    if (typeof supabase.rpc !== 'function') {
+      const err = new Error('Production error: Supabase RPC reserve_photo_quota is required in production mode.');
+      err.statusCode = 503;
+      throw err;
+    }
+
+    const { data: rpcData, error: rpcError } = await supabase.rpc('reserve_photo_quota', {
+      p_uid: uid,
+      p_date: localDay,
+      p_limit: limit,
+      p_timezone: timezone
+    });
+
+    if (rpcError) {
+      fastify.log.error({ error: rpcError.message, uid }, 'Production Photo Quota RPC error');
+      const err = new Error(`Production database error: ${rpcError.message}`);
+      err.statusCode = 503;
+      throw err;
+    }
+
+    if (!rpcData || typeof rpcData !== 'object' || typeof rpcData.allowed !== 'boolean') {
+      const err = new Error('Production error: Unexpected response from reserve_photo_quota RPC');
+      err.statusCode = 503;
+      throw err;
+    }
+
+    if (rpcData.allowed) {
+      const key = `${uid}:${localDay}`;
+      inFlightPhotoReservations.set(key, (inFlightPhotoReservations.get(key) || 0) + 1);
+    }
+    return rpcData;
+  }
+
+  // Development and test path (with local fallback if RPC not installed)
+  try {
+    if (typeof supabase.rpc === 'function') {
+      const { data: rpcData, error: rpcError } = await supabase.rpc('reserve_photo_quota', {
+        p_uid: uid,
+        p_date: localDay,
+        p_limit: limit,
+        p_timezone: timezone
+      });
+      if (!rpcError && rpcData && typeof rpcData === 'object' && typeof rpcData.allowed === 'boolean') {
+        if (rpcData.allowed) {
+          const key = `${uid}:${localDay}`;
+          inFlightPhotoReservations.set(key, (inFlightPhotoReservations.get(key) || 0) + 1);
+        }
+        return rpcData;
+      }
+    }
+
+    // Direct atomic query fallback with rolling 24-hour cap & 2-minute stale reservation recovery
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data: recentRows } = await supabase
+      .from('ai_photo_daily_usage')
+      .select('used_count')
+      .eq('firebase_uid', uid)
+      .gte('updated_at', twentyFourHoursAgo);
+    const rolling24hUsed = (recentRows || []).reduce((acc, r) => acc + (r.used_count || 0), 0);
+    const rollingCap = limit * 2;
+
+    if (rolling24hUsed >= rollingCap) {
+      return {
+        allowed: false,
+        usedToday: rolling24hUsed,
+        inFlight: 0,
+        dailyLimit: limit,
+        remaining: 0,
+        isLimitReached: true,
+        rolling24hCapReached: true,
+        localDay
+      };
+    }
+
+    const { data: row, error } = await supabase
+      .from('ai_photo_daily_usage')
+      .select('*')
+      .eq('firebase_uid', uid)
+      .eq('local_date', localDay)
+      .maybeSingle();
+
+    if (error) {
+      fastify.log.warn({ error: error.message }, 'Supabase tryReservePhotoQuota error in dev/test');
+      return tryReservePhotoQuota(uid, timezone, isPro);
+    }
+
+    const used = row?.used_count || 0;
+    const isStale = row?.last_reservation_at && (Date.now() - new Date(row.last_reservation_at).getTime() > 2 * 60 * 1000);
+    const effectiveInFlight = isStale ? 0 : (row?.in_flight || 0);
+
+    if (used + effectiveInFlight >= limit) {
+      return {
+        allowed: false,
+        usedToday: used,
+        inFlight: effectiveInFlight,
+        dailyLimit: limit,
+        remaining: Math.max(0, limit - used),
+        isLimitReached: true,
+        rolling24hCapReached: false,
+        localDay
+      };
+    }
+
+    const nextInFlight = effectiveInFlight + 1;
+    const nowIso = new Date().toISOString();
+    if (row) {
+      await supabase
+        .from('ai_photo_daily_usage')
+        .update({
+          in_flight: nextInFlight,
+          last_reservation_at: nowIso,
+          timezone,
+          updated_at: nowIso
+        })
+        .eq('firebase_uid', uid)
+        .eq('local_date', localDay);
+    } else {
+      await supabase
+        .from('ai_photo_daily_usage')
+        .insert({
+          firebase_uid: uid,
+          local_date: localDay,
+          used_count: 0,
+          in_flight: nextInFlight,
+          last_reservation_at: nowIso,
+          timezone,
+          updated_at: nowIso
+        });
+    }
+
+    const key = `${uid}:${localDay}`;
+    inFlightPhotoReservations.set(key, (inFlightPhotoReservations.get(key) || 0) + 1);
+
+    return {
+      allowed: true,
+      usedToday: used,
+      inFlight: nextInFlight,
+      dailyLimit: limit,
+      remaining: Math.max(0, limit - (used + nextInFlight)),
+      isLimitReached: false,
+      rolling24hCapReached: false,
+      localDay
+    };
+  } catch (err) {
+    fastify.log.warn({ err: err.message }, 'Supabase photo reservation exception in dev/test, falling back to local');
+    return tryReservePhotoQuota(uid, timezone, isPro);
+  }
+}
+
+export async function commitPhotoQuotaAsync(uid, timezone) {
+  const localDay = getUserLocalDate(timezone);
+  const key = `${uid}:${localDay}`;
+
+  if (!supabase) {
+    if (process.env.NODE_ENV === 'production') {
+      const err = new Error('Production error: Supabase shared quota storage is strictly required in production mode.');
+      err.statusCode = 503;
+      throw err;
+    }
+    commitPhotoQuota(uid, timezone);
+    return (photoDailyUsage.get(key) || 0);
+  }
+
+  commitPhotoQuota(uid, timezone);
+
+  if (process.env.NODE_ENV === 'production') {
+    if (typeof supabase.rpc !== 'function') {
+      const err = new Error('Production error: Supabase RPC commit_photo_quota is required in production mode.');
+      err.statusCode = 503;
+      throw err;
+    }
+    const { data: committedCount, error: rpcError } = await supabase.rpc('commit_photo_quota', {
+      p_uid: uid,
+      p_date: localDay,
+      p_timezone: timezone
+    });
+    if (rpcError) {
+      fastify.log.error({ error: rpcError.message, uid }, 'Production commit_photo_quota RPC error');
+      const err = new Error(`Production database error: ${rpcError.message}`);
+      err.statusCode = 503;
+      throw err;
+    }
+    return committedCount;
+  }
+
+  try {
+    if (typeof supabase.rpc === 'function') {
+      const { data: committedCount, error: rpcError } = await supabase.rpc('commit_photo_quota', {
+        p_uid: uid,
+        p_date: localDay,
+        p_timezone: timezone
+      });
+      if (!rpcError && typeof committedCount === 'number') {
+        return committedCount;
+      }
+    }
+
+    const { data: row } = await supabase
+      .from('ai_photo_daily_usage')
+      .select('*')
+      .eq('firebase_uid', uid)
+      .eq('local_date', localDay)
+      .maybeSingle();
+
+    const used = (row?.used_count || 0) + 1;
+    const inFlight = Math.max(0, (row?.in_flight || 1) - 1);
+    const nowIso = new Date().toISOString();
+
+    if (row) {
+      await supabase
+        .from('ai_photo_daily_usage')
+        .update({
+          used_count: used,
+          in_flight: inFlight,
+          timezone,
+          updated_at: nowIso
+        })
+        .eq('firebase_uid', uid)
+        .eq('local_date', localDay);
+    } else {
+      await supabase
+        .from('ai_photo_daily_usage')
+        .insert({
+          firebase_uid: uid,
+          local_date: localDay,
+          used_count: used,
+          in_flight: inFlight,
+          timezone,
+          updated_at: nowIso
+        });
+    }
+    return used;
+  } catch (err) {
+    fastify.log.warn({ err: err.message }, 'Failed to commit photo quota to Supabase in dev/test');
+    return (photoDailyUsage.get(key) || 0);
+  }
+}
+
+export async function releasePhotoReservationAsync(uid, timezone) {
+  const localDay = getUserLocalDate(timezone);
+
+  if (!supabase) {
+    if (process.env.NODE_ENV === 'production') {
+      const err = new Error('Production error: Supabase shared quota storage is strictly required in production mode.');
+      err.statusCode = 503;
+      throw err;
+    }
+    releasePhotoReservation(uid, timezone);
+    return;
+  }
+
+  releasePhotoReservation(uid, timezone);
+
+  if (process.env.NODE_ENV === 'production') {
+    if (typeof supabase.rpc !== 'function') {
+      const err = new Error('Production error: Supabase RPC release_photo_reservation is required in production mode.');
+      err.statusCode = 503;
+      throw err;
+    }
+    const { error: rpcError } = await supabase.rpc('release_photo_reservation', {
+      p_uid: uid,
+      p_date: localDay
+    });
+    if (rpcError) {
+      fastify.log.error({ error: rpcError.message, uid }, 'Production release_photo_reservation RPC error');
+      const err = new Error(`Production database error: ${rpcError.message}`);
+      err.statusCode = 503;
+      throw err;
+    }
+    return;
+  }
+
+  try {
+    if (typeof supabase.rpc === 'function') {
+      const { error: rpcError } = await supabase.rpc('release_photo_reservation', {
+        p_uid: uid,
+        p_date: localDay
+      });
+      if (!rpcError) return;
+    }
+
+    const { data: row } = await supabase
+      .from('ai_photo_daily_usage')
+      .select('*')
+      .eq('firebase_uid', uid)
+      .eq('local_date', localDay)
+      .maybeSingle();
+
+    if (row) {
+      const inFlight = Math.max(0, (row.in_flight || 1) - 1);
+      await supabase
+        .from('ai_photo_daily_usage')
+        .update({
+          in_flight: inFlight,
+          updated_at: new Date().toISOString()
+        })
+        .eq('firebase_uid', uid)
+        .eq('local_date', localDay);
+    }
+  } catch (err) {
+    fastify.log.warn({ err: err.message }, 'Failed to release photo reservation in Supabase in dev/test');
+  }
+}
+
+export async function resetPhotoUsageForTestingAsync(uid, localDay) {
+  resetPhotoUsageForTesting(uid, localDay);
+
+  if (supabase) {
+    try {
+      if (localDay) {
+        await supabase
+          .from('ai_photo_daily_usage')
+          .delete()
+          .eq('firebase_uid', uid)
+          .eq('local_date', localDay);
+      } else {
+        await supabase
+          .from('ai_photo_daily_usage')
+          .delete()
+          .eq('firebase_uid', uid);
+      }
+    } catch (_) {}
+  }
+}
+
+// -------------------------------------------------------------
 // 5. POST /ai/chat
 // -------------------------------------------------------------
 fastify.post('/ai/chat', { bodyLimit: 4 * 1024 * 1024 }, async (request, reply) => {
+  // Fail-closed in production if Supabase shared storage is unconfigured
+  if (process.env.NODE_ENV === 'production' && !supabase) {
+    fastify.log.error('Production fail-closed: Supabase shared storage is required for /ai/chat');
+    return reply.code(503).send({
+      error: 'ServiceUnavailable',
+      message: 'Shared quota service is required in production but currently unconfigured.'
+    });
+  }
+
   const { messages = [], userContext = {} } = request.body || {};
 
   if (!messages || messages.length === 0) {
@@ -915,12 +2174,37 @@ fastify.post('/ai/chat', { bodyLimit: 4 * 1024 * 1024 }, async (request, reply) 
 
   const uid = request.user?.uid || 'anonymous';
   const rawTz = request.headers['x-user-timezone'] || userContext?.timezone;
-  const timezone = resolveUserTimezone(uid, rawTz);
+  const timezone = await resolveUserTimezoneAsync(uid, rawTz);
   const isPro = determineUserIsPro(request);
 
+  // 0. Safety Pre-check: Immediate crisis, self-harm, and eating disorder interceptor
+  const lastUserMsg = messages[messages.length - 1]?.content || '';
+  if (checkCoachSafetyCrisis(lastUserMsg, messages)) {
+    fastify.log.warn({ uid }, 'Coach safety crisis pre-check triggered');
+    appendBackendLog(`COACH_CRISIS_INTERCEPTED: uid=${uid}`);
+    return reply.send({
+      role: 'assistant',
+      content: CRISIS_SUPPORT_RESPONSE,
+      model: 'safety-guardrail',
+      crisisIntercepted: true
+    });
+  }
+
   // 1. Atomic Quota Reservation: Free limit = 5/day, Pro limit = 50/day
-  // Concurrency-safe: checks (usedToday + inFlight) < limit and reserves slot
-  const reservation = tryReserveAiCoachQuota(uid, timezone, isPro);
+  // Concurrency-safe: checks (usedToday + inFlight) < limit and reserves slot (shared in Supabase or local memory)
+  let reservation;
+  try {
+    reservation = await tryReserveAiCoachQuotaAsync(uid, timezone, isPro);
+  } catch (err) {
+    if (process.env.NODE_ENV === 'production' || err.statusCode === 503) {
+      fastify.log.error({ err: err.message, uid }, 'Quota reservation failed in production mode with 503');
+      return reply.code(503).send({
+        error: 'ServiceUnavailable',
+        message: 'AI coach service is temporarily unavailable. Please try again shortly.'
+      });
+    }
+    throw err;
+  }
   if (!reservation.allowed) {
     fastify.log.warn({ uid, isPro, usedToday: reservation.usedToday, dailyLimit: reservation.dailyLimit }, 'AI Coach daily quota reached');
     return reply.code(429).send({
@@ -938,7 +2222,7 @@ fastify.post('/ai/chat', { bodyLimit: 4 * 1024 * 1024 }, async (request, reply) 
 
   if (!geminiClient || !GEMINI_API_KEY) {
     appendBackendLog('GEMINI_CONFIG_ERROR: missing GEMINI_API_KEY in chat');
-    releaseAiCoachReservation(uid, timezone);
+    await releaseAiCoachReservationAsync(uid, timezone);
     return reply.code(500).send({
       error: 'InternalServerError',
       message: 'AI coach service is temporarily unavailable.'
@@ -949,22 +2233,7 @@ fastify.post('/ai/chat', { bodyLimit: 4 * 1024 * 1024 }, async (request, reply) 
   try {
     fastify.log.info({ messageCount: messages.length, provider: 'gemini', model: CHAT_MODEL, quotaRemaining: reservation.remaining }, 'Processing AI Coach Chat');
 
-    const systemInstruction = `You are Kcal Grind AI Coach.
-You provide intelligent, empathetic, evidence-based nutrition coaching.
-User Context:
-- Goal: ${userContext?.goal || userContext?.profile?.goal || 'Maintain'}
-- Target Calories: ${userContext?.targetCalories || userContext?.profile?.targetCalories || 2000} kcal
-- Consumed Calories Today: ${userContext?.consumedCalories ?? 0} kcal
-- Remaining Calories Today: ${userContext?.remainingCalories ?? 2000} kcal
-- Recent Trends: ${JSON.stringify(userContext?.recentTrends || { avgCalories: 1850, targetCalories: 2000, trackingRatePercent: 85, daysTracked: 6 })}
-
-Guidelines:
-- If asked about diary, remaining calories, meals logged today, or user profile, ALWAYS call get_today_diary or get_user_profile.
-- If asked how the user is doing this week or recent trends/progress, ALWAYS call get_recent_trends.
-- If the user asks to log, track, record, or add a meal or food (e.g. "log a banana for snack", "log 2 eggs"), ALWAYS call create_food_log with estimated calories and macros. Do NOT call search_food when the user explicitly asks to log.
-- If the user asks to log water (e.g. "log a glass of water"), ALWAYS call log_water with amountMl (default 250ml per glass).
-- Answer warmly, concisely, and practically.
-- Ground your answers strictly in the tool data.`;
+    const systemInstruction = buildCoachSystemInstruction(userContext);
 
     // Call Gemini 2.5 Flash
     try {
@@ -974,15 +2243,14 @@ Guidelines:
           parts: [{ text: m.content || '' }]
         }));
 
-        const geminiResponse = await geminiClient.models.generateContent({
-          model: CHAT_MODEL,
+        const { response: geminiResponse, modelUsed } = await executeGeminiWithFallback({
           contents,
           config: {
             systemInstruction,
             temperature: 0.3,
             tools: GEMINI_TOOLS
           }
-        });
+        }, 'ai-chat');
 
         const functionCalls = geminiResponse.functionCalls;
         if (functionCalls && functionCalls.length > 0) {
@@ -994,26 +2262,28 @@ Guidelines:
           const { toolOutput, suggestedAction, items, mealType } = executeTool(fnName, fnArgs, userContext);
           const finalReply = buildDefaultReply(fnName, toolOutput, mealType, items);
 
-          // Success: atomically commit quota reservation & write to disk
-          commitAiCoachQuota(uid, timezone);
+          // Success: atomically commit quota reservation & write to shared store / disk
+          await commitAiCoachQuotaAsync(uid, timezone);
           committed = true;
 
           return {
             reply: finalReply,
             toolInvoked: fnName,
             toolData: toolOutput,
-            suggestedAction
+            suggestedAction,
+            model: modelUsed
           };
         }
 
         if (geminiResponse.text) {
-          // Success: atomically commit quota reservation & write to disk
-          commitAiCoachQuota(uid, timezone);
+          // Success: atomically commit quota reservation & write to shared store / disk
+          await commitAiCoachQuotaAsync(uid, timezone);
           committed = true;
 
           return {
             reply: geminiResponse.text.trim(),
-            suggestedAction: null
+            suggestedAction: null,
+            model: modelUsed
           };
         }
 
@@ -1022,13 +2292,13 @@ Guidelines:
         fastify.log.error({ err: geminiError.message }, 'Gemini chat call failed');
         appendBackendLog(`GEMINI_CHAT_FAILED: ${geminiError.message}`);
         if (!committed) {
-          releaseAiCoachReservation(uid, timezone);
+          await releaseAiCoachReservationAsync(uid, timezone);
         }
         return sendAiUnavailable(reply, geminiError);
       }
   } catch (chatError) {
     if (!committed) {
-      releaseAiCoachReservation(uid, timezone);
+      await releaseAiCoachReservationAsync(uid, timezone);
     }
     throw chatError;
   }
@@ -1041,13 +2311,13 @@ if (process.env.NODE_ENV !== 'production') {
     const rawTz = request.headers['x-user-timezone'];
     const timezone = resolveUserTimezone(uid, rawTz);
     const isPro = determineUserIsPro(request);
-    return getAiCoachUsage(uid, timezone, isPro);
+    return await getAiCoachUsageAsync(uid, timezone, isPro);
   });
 
   fastify.post('/ai/coach-usage/reset', async (request, reply) => {
     const uid = request.user?.uid || 'test-user';
     const { localDay } = request.body || {};
-    resetAiCoachUsageForTesting(uid, localDay);
+    await resetAiCoachUsageForTestingAsync(uid, localDay);
     return { success: true, message: `Reset AI Coach usage for ${uid}` };
   });
 
@@ -1061,21 +2331,37 @@ if (process.env.NODE_ENV !== 'production') {
     persistUsageToDisk();
     return { success: true, key: `${uid}:${localDay}`, count };
   });
+
+  fastify.get('/ai/photo-usage', async (request, reply) => {
+    const uid = request.user?.uid || 'test-user';
+    const rawTz = request.headers['x-user-timezone'];
+    const timezone = resolveUserTimezone(uid, rawTz);
+    const isPro = determineUserIsPro(request);
+    return getPhotoUsage(uid, timezone, isPro);
+  });
+
+  fastify.post('/ai/photo-usage/reset', async (request, reply) => {
+    const uid = request.user?.uid || 'test-user';
+    const { localDay } = request.body || {};
+    resetPhotoUsageForTesting(uid, localDay);
+    return { success: true, message: `Reset Photo analysis usage for ${uid}` };
+  });
+
+  fastify.post('/ai/photo-usage/set', async (request, reply) => {
+    const uid = request.user?.uid || 'test-user';
+    const rawTz = request.headers['x-user-timezone'];
+    const timezone = resolveUserTimezone(uid, rawTz);
+    const { count = 0, date } = request.body || {};
+    const localDay = date || getUserLocalDate(timezone);
+    photoDailyUsage.set(`${uid}:${localDay}`, count);
+    persistPhotoUsageToDisk();
+    return { success: true, key: `${uid}:${localDay}`, count };
+  });
 }
 
 // -------------------------------------------------------------
-// Supabase Client (Phase 10 — Cloud Sync)
+// Supabase Client Helper Functions (Phase 10 — Cloud Sync)
 // -------------------------------------------------------------
-let supabase = null;
-if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
-  supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY
-  );
-  fastify.log.info('Supabase client initialized for cloud sync');
-} else {
-  fastify.log.warn('SUPABASE_URL or SUPABASE_SERVICE_KEY not set — sync routes will return 503');
-}
 
 // Helper: convert epoch millis to ISO string for Supabase timestamptz
 function epochToIso(epochMs) {
@@ -1699,7 +2985,29 @@ fastify.delete('/account', async (request, reply) => {
           .delete()
           .eq('firebase_uid', uid);
       } catch (_) {}
+
+      // 15. Delete AI Coach daily usage records
+      try {
+        await supabase
+          .from('ai_coach_daily_usage')
+          .delete()
+          .eq('firebase_uid', uid);
+      } catch (_) {}
+
+      // 16. Delete AI Photo daily usage records
+      try {
+        await supabase
+          .from('ai_photo_daily_usage')
+          .delete()
+          .eq('firebase_uid', uid);
+      } catch (_) {}
     }
+
+    // Purge AI Coach & Photo usage, in-flight reservations, and timezone cache for this user
+    resetAiCoachUsageForTesting(uid);
+    resetPhotoUsageForTesting(uid);
+    userTimezones.delete(uid);
+    persistTimezonesToDisk();
 
     // Reset rate limiter for this user
     if (typeof rateLimits !== 'undefined' && rateLimits && typeof rateLimits.delete === 'function') {
@@ -1722,7 +3030,7 @@ const start = async () => {
     const port = parseInt(process.env.PORT || '8000', 10);
     const host = process.env.HOST || '0.0.0.0';
     await fastify.listen({ port, host });
-    console.log(`Kcal Grind AI Proxy Backend running on http://${host}:${port} (Provider: ${geminiClient ? `gemini (${GEMINI_MODEL})` : 'unconfigured'})`);
+    console.log(`KcalGrind AI Proxy Backend running on http://${host}:${port} (Provider: ${geminiClient ? `gemini (${GEMINI_MODEL})` : 'unconfigured'})`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

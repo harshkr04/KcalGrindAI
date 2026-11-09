@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Delete Account & Data — KcalGrind</title>
+    <meta name="description" content="Request permanent deletion of your KcalGrind account and data." />
+    <link rel="icon" type="image/svg+xml" href="/assets/sproutling/ic_sproutling_active.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Roboto+Flex:opsz,wght@8..144,400;8..144,500&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #121513;
+        --surface: #181c19;
+        --border: rgba(255, 255, 255, 0.08);
+        --text-primary: #eef2ef;
+        --text-secondary: #a6b2aa;
+        --text-muted: #828e86;
+        --accent: #3ea877;
+        --alert-bg: #221a1a;
+        --alert-border: rgba(214, 84, 84, 0.3);
+        --alert-text: #f0a8a8;
+        --card-bg: #1c211e;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f7f9f7;
+          --surface: #ffffff;
+          --border: rgba(0, 0, 0, 0.08);
+          --text-primary: #131714;
+          --text-secondary: #4a544d;
+          --text-muted: #616c64;
+          --accent: #205c41;
+          --alert-bg: #fdf2f2;
+          --alert-border: rgba(220, 38, 38, 0.25);
+          --alert-text: #991b1b;
+          --card-bg: #ffffff;
+        }
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        background-color: var(--bg);
+        color: var(--text-primary);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: 15px;
+        line-height: 1.65;
+        padding: 32px 16px 64px;
+      }
+      .container {
+        max-width: 720px;
+        margin: 0 auto;
+      }
+      header {
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 24px;
+        margin-bottom: 32px;
+      }
+      .brand-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      .brand-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-primary);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 16px;
+      }
+      .nav-links a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 13px;
+        margin-left: 16px;
+      }
+      .nav-links a:hover {
+        color: var(--accent);
+      }
+      h1, h2, h3 {
+        font-family: 'Roboto Flex', 'Inter', sans-serif;
+        color: var(--text-primary);
+        font-weight: 500;
+      }
+      h1 { font-size: 28px; line-height: 1.25; margin-bottom: 8px; }
+      h2 { font-size: 19px; line-height: 1.35; margin-top: 32px; margin-bottom: 12px; }
+      p { margin-bottom: 14px; color: var(--text-secondary); }
+      ol, ul { margin-left: 20px; margin-bottom: 16px; color: var(--text-secondary); }
+      li { margin-bottom: 6px; }
+      strong { color: var(--text-primary); font-weight: 500; }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .meta-box {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 24px;
+      }
+      .alert-box {
+        background: var(--alert-bg);
+        border: 1px solid var(--alert-border);
+        border-radius: 8px;
+        padding: 16px;
+        margin: 24px 0;
+      }
+      .alert-box h3 {
+        color: var(--alert-text);
+        font-size: 14px;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .alert-box p {
+        color: var(--text-secondary);
+        font-size: 14px;
+        margin-bottom: 0;
+      }
+      .card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+      code {
+        font-family: monospace;
+        font-size: 13px;
+        background: rgba(125, 125, 125, 0.15);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      footer {
+        margin-top: 48px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="brand-row">
+          <a href="/" class="brand-link">
+            <img src="/assets/sproutling/ic_sproutling_active.svg" width="24" height="24" alt="KcalGrind" />
+            <span>KcalGrind</span>
+          </a>
+          <nav class="nav-links">
+            <a href="/">Home</a>
+            <a href="/privacy">Privacy Policy</a>
+          </nav>
+        </div>
+        <h1>Request Account &amp; Data Deletion</h1>
+        <div class="meta-box">
+          KcalGrind &bull; Android Edition &bull; Account &amp; Data Deletion Policy
+        </div>
+      </header>
+
+      <main>
+        <p>
+          At KcalGrind, you have complete ownership and control over your personal and health records. You can permanently delete your account and all associated records at any time.
+        </p>
+
+        <div class="alert-box">
+          <h3>Important: Google Play Subscriptions</h3>
+          <p>
+            Deleting your KcalGrind account does <strong>not</strong> automatically cancel any active subscription in Google Play. Active subscriptions must be cancelled separately through Google Play: open the <strong>Google Play Store</strong> app &rarr; tap your <strong>Profile icon</strong> &rarr; <strong>Payments &amp; subscriptions</strong> &rarr; <strong>Subscriptions</strong> &rarr; select <strong>KcalGrind</strong> &rarr; tap <strong>Cancel subscription</strong>.
+          </p>
+        </div>
+
+        <h2>Option 1: Instant In-App Deletion (Recommended)</h2>
+        <p>If you have KcalGrind installed on your Android device, you can delete your account immediately:</p>
+        <ol>
+          <li>Open the <strong>KcalGrind</strong> app on your device.</li>
+          <li>Tap the <strong>Profile</strong> tab in the bottom navigation bar.</li>
+          <li>Scroll down to the <strong>Danger Zone</strong> section and tap <strong>Delete Account</strong>.</li>
+          <li>Review the confirmation summary explaining what data will be wiped.</li>
+          <li>Tap <strong>Permanently Delete</strong> and confirm your authentication prompt if requested.</li>
+        </ol>
+        <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+          In-app deletion takes effect immediately: your local on-device database, all cloud user-bound records, reminders, and authentication credentials are wiped.
+        </p>
+
+        <h2>Option 2: Request Deletion by Email (Without App Installed)</h2>
+        <p>If you have uninstalled the app or cannot access your Android device, submit an account deletion request by email:</p>
+        
+        <div class="card">
+          <p><strong>Send email to:</strong> <a href="mailto:support@kcalgrind.app">support@kcalgrind.app</a></p>
+          <p><strong>Subject line:</strong> <code>Account Deletion Request - [Your Registered Email]</code></p>
+          <p><strong>Please include:</strong></p>
+          <ul>
+            <li>Your registered account email address.</li>
+            <li>A clear statement: <em>"Please permanently delete my KcalGrind account and all associated data."</em></li>
+          </ul>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 0;">
+            Email deletion requests are verified and processed within 30 days in compliance with Google Play Developer Policy and global privacy standards.
+          </p>
+        </div>
+
+        <h2>What Happens When Your Account is Deleted</h2>
+        <ul>
+          <li><strong>Authentication:</strong> Your user identity and Firebase Auth credentials are removed.</li>
+          <li><strong>Cloud Proxy &amp; Server Data:</strong> All server-side quota records, chat histories, and usage tokens tied to your user identifier are permanently purged.</li>
+          <li><strong>Local Storage:</strong> Your local database on your device (stored meals, custom foods, weight entries) is deleted during in-app deletion.</li>
+          <li><strong>AI Inference:</strong> Photo and voice meal analyses are not saved to your account and are not stored on our servers.</li>
+        </ul>
+
+        <h2>Contact</h2>
+        <p>
+          For privacy inquiries or verification of deletion status, contact:
+        </p>
+        <p>
+          Data Protection: <a href="mailto:privacy@kcalgrind.app">privacy@kcalgrind.app</a><br />
+          Support: <a href="mailto:support@kcalgrind.app">support@kcalgrind.app</a>
+        </p>
+      </main>
+
+      <footer>
+        &copy; 2026 KcalGrind. All rights reserved. &bull; <a href="/">Return to Home</a>
+      </footer>
+    </div>
+  </body>
+</html>

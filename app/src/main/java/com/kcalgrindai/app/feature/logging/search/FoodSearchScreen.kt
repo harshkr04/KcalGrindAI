@@ -48,6 +48,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import com.kcalgrindai.app.core.designsystem.components.CircleIconButton
+import com.kcalgrindai.app.core.designsystem.components.FoodImageBadge
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -117,23 +119,20 @@ fun FoodSearchScreen(
                     Spacer(modifier = Modifier.width(8.dp))
 
                     // Barcode Scanner shortcut icon
-                    Surface(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .clickable(onClick = onNavigateToBarcodeScanner),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                        shadowElevation = 1.dp
+                    CircleIconButton(
+                        onClick = onNavigateToBarcodeScanner,
+                        visualSize = 42.dp,
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        shadowElevation = 1.dp,
+                        contentDescription = "Scan Barcode"
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.QrCodeScanner,
-                                contentDescription = "Scan Barcode",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.QrCodeScanner,
+                            contentDescription = "Scan Barcode",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
 
@@ -465,7 +464,7 @@ fun FoodSearchScreen(
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        text = if (uiState.selectedTab == FoodSearchTab.FAVORITES) "Tap the star icon on any food to save it as a favorite." else "Unified database including USDA FoodData Central, Indian regional foods (IFCT 2017), and verified brands.",
+                                        text = if (uiState.selectedTab == FoodSearchTab.FAVORITES) "Tap the star icon on any food to save it as a favorite." else "Unified database including USDA FoodData Central, ICMR-NIN IFCT tables for single-ingredient staples, curated Indian regional recipes, and verified brands.",
                                         style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                     )
@@ -505,6 +504,14 @@ fun FoodSearchResultCard(
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            FoodImageBadge(
+                foodName = food.name,
+                foodId = food.id,
+                size = 42.dp,
+                shape = RoundedCornerShape(10.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -534,14 +541,14 @@ fun FoodSearchResultCard(
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
-                    } else if (food.source == FoodSource.IFCT) {
+                    } else if (food.source == FoodSource.IFCT || food.source == FoodSource.CURATED_RECIPE) {
                         Spacer(modifier = Modifier.width(6.dp))
                         Surface(
                             shape = RoundedCornerShape(6.dp),
                             color = MaterialTheme.colorScheme.secondaryContainer
                         ) {
                             Text(
-                                text = "IFCT India",
+                                text = if (food.source == FoodSource.IFCT) "IFCT India" else "Indian Recipe",
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     color = MaterialTheme.colorScheme.primary,
                                     fontSize = 10.sp,
@@ -589,7 +596,7 @@ fun FoodSearchResultCard(
                     Icon(
                         imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
                         contentDescription = "Favorite",
-                        tint = if (isFavorite) Color(0xFFF59E0B) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                        tint = if (isFavorite) com.kcalgrindai.app.core.designsystem.KcalGrindStarAmber else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                         modifier = Modifier.size(20.dp)
                     )
                 }

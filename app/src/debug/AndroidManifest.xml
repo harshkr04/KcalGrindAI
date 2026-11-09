@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <application
-        android:networkSecurityConfig="@xml/network_security_config" />
+        android:networkSecurityConfig="@xml/network_security_config">
+        <receiver
+            android:name="com.kcalgrindai.app.debug.DemoDataSeederReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.kcalgrindai.app.action.SEED_DEMO_DATA" />
+            </intent-filter>
+        </receiver>
+    </application>
 </manifest>

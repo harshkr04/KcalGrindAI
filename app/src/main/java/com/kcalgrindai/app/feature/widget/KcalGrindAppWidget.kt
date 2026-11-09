@@ -45,6 +45,30 @@ import com.kcalgrindai.app.feature.widget.action.LogWaterActionCallback
 import com.kcalgrindai.app.feature.widget.action.WidgetActions
 import com.kcalgrindai.app.feature.widget.di.WidgetEntryPoint
 import dagger.hilt.android.EntryPointAccessors
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetSurfaceDay
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetSurfaceNight
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetTextPrimaryDay
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetTextPrimaryNight
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetTextSecondaryDay
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetTextSecondaryNight
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetEnergyActiveDay
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetEnergyActiveNight
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetEnergyTrackDay
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetEnergyTrackNight
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetActionAddDay
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetActionAddNight
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetActionAddIconDay
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetActionAddIconNight
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetActionAiDay
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetActionAiNight
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetActionWaterDay
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetActionWaterNight
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetMacroProteinDay
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetMacroProteinNight
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetMacroCarbsDay
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetMacroCarbsNight
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetMacroFatDay
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetMacroFatNight
 import kotlinx.coroutines.flow.firstOrNull
 import kotlin.math.roundToInt
 
@@ -56,20 +80,20 @@ class KcalGrindAppWidget : GlanceAppWidget() {
         val EXPANDED_4X2 = DpSize(250.dp, 110.dp)
 
         // Color tokens matching approved V3 Graphite & Emerald design system
-        val SurfaceColor = ColorProvider(day = Color(0xFFFFFFFF), night = Color(0xFF191D1B))
-        val PrimaryTextColor = ColorProvider(day = Color(0xFF171C19), night = Color(0xFFF4F6F4))
-        val SecondaryTextColor = ColorProvider(day = Color(0xFF505A53), night = Color(0xFFB2BAB5))
-        val EnergyActiveColor = ColorProvider(day = Color(0xFF16834D), night = Color(0xFF38C77B))
-        val EnergyTrackColor = ColorProvider(day = Color(0xFFDCE3DE), night = Color(0xFF2B332E))
+        val SurfaceColor = ColorProvider(day = KcalGrindWidgetSurfaceDay, night = KcalGrindWidgetSurfaceNight)
+        val PrimaryTextColor = ColorProvider(day = KcalGrindWidgetTextPrimaryDay, night = KcalGrindWidgetTextPrimaryNight)
+        val SecondaryTextColor = ColorProvider(day = KcalGrindWidgetTextSecondaryDay, night = KcalGrindWidgetTextSecondaryNight)
+        val EnergyActiveColor = ColorProvider(day = KcalGrindWidgetEnergyActiveDay, night = KcalGrindWidgetEnergyActiveNight)
+        val EnergyTrackColor = ColorProvider(day = KcalGrindWidgetEnergyTrackDay, night = KcalGrindWidgetEnergyTrackNight)
 
-        val ActionAddColor = ColorProvider(day = Color(0xFF16834D), night = Color(0xFF38C77B))
-        val ActionAddIconColor = ColorProvider(day = Color(0xFFFFFFFF), night = Color(0xFF101211))
-        val ActionAiColor = ColorProvider(day = Color(0xFF313C9F), night = Color(0xFFBDC2FF))
-        val ActionWaterColor = ColorProvider(day = Color(0xFF10663C), night = Color(0xFF16834D))
+        val ActionAddColor = ColorProvider(day = KcalGrindWidgetActionAddDay, night = KcalGrindWidgetActionAddNight)
+        val ActionAddIconColor = ColorProvider(day = KcalGrindWidgetActionAddIconDay, night = KcalGrindWidgetActionAddIconNight)
+        val ActionAiColor = ColorProvider(day = KcalGrindWidgetActionAiDay, night = KcalGrindWidgetActionAiNight)
+        val ActionWaterColor = ColorProvider(day = KcalGrindWidgetActionWaterDay, night = KcalGrindWidgetActionWaterNight)
 
-        val MacroProteinColor = ColorProvider(day = Color(0xFF16834D), night = Color(0xFF38C77B))
-        val MacroCarbsColor = ColorProvider(day = Color(0xFFD97706), night = Color(0xFFFBBF24))
-        val MacroFatColor = ColorProvider(day = Color(0xFF0284C7), night = Color(0xFF38BDF8))
+        val MacroProteinColor = ColorProvider(day = KcalGrindWidgetMacroProteinDay, night = KcalGrindWidgetMacroProteinNight)
+        val MacroCarbsColor = ColorProvider(day = KcalGrindWidgetMacroCarbsDay, night = KcalGrindWidgetMacroCarbsNight)
+        val MacroFatColor = ColorProvider(day = KcalGrindWidgetMacroFatDay, night = KcalGrindWidgetMacroFatNight)
     }
 
     override val sizeMode = SizeMode.Responsive(
@@ -174,7 +198,7 @@ class KcalGrindAppWidget : GlanceAppWidget() {
                 Spacer(modifier = GlanceModifier.width(6.dp))
                 Column(modifier = GlanceModifier.defaultWeight()) {
                     Text(
-                        text = "Kcal Grind",
+                        text = "KcalGrind",
                         style = TextStyle(
                             color = PrimaryTextColor,
                             fontSize = 11.sp,
@@ -330,7 +354,7 @@ class KcalGrindAppWidget : GlanceAppWidget() {
                     Spacer(modifier = GlanceModifier.width(8.dp))
                     Column {
                         Text(
-                            text = "Kcal Grind AI",
+                            text = "KcalGrind",
                             style = TextStyle(
                                 color = PrimaryTextColor,
                                 fontSize = 13.sp,

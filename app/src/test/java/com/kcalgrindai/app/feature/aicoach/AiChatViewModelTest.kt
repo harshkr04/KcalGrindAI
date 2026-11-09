@@ -20,6 +20,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -561,6 +562,303 @@ class AiChatViewModelTest {
         assertEquals(1900, aiCoachRepository.lastRemainingCalories)
         assertEquals(1900, aiCoachRepository.lastTargetCalories)
         assertNull(viewModel.uiState.value.errorMessage)
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `quota reached 429 sets friendly message and re-enables input`() = runTest {
+        aiCoachRepository.sendError = com.kcalgrindai.app.domain.model.AICoachQuotaExceededException(
+            "You've reached today's free AI Coach limit. Your messages reset tomorrow."
+        )
+        val viewModel = AiChatViewModel(
+            aiCoachRepository,
+            userProfileRepository,
+            nutritionGoalRepository,
+            mealLogRepository,
+            waterLogRepository,
+            weightRepository
+        )
+
+        val collectJob = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.onInputChanged("What should I eat?")
+        viewModel.sendMessage()
+        advanceUntilIdle()
+
+        // Input must be re-enabled (isSending = false)
+        org.junit.Assert.assertFalse(viewModel.uiState.value.isSending)
+        assertEquals(
+            "You've reached today's free AI Coach limit. Your messages reset tomorrow.",
+            viewModel.uiState.value.errorMessage
+        )
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `service unavailable 503 on normal text provides deterministic summary and re-enables input`() = runTest {
+        nutritionGoalRepository.saveGoal(createTestGoal(2000))
+        aiCoachRepository.sendError = RuntimeException("HTTP 503 Service Unavailable")
+        val viewModel = AiChatViewModel(
+            aiCoachRepository,
+            userProfileRepository,
+            nutritionGoalRepository,
+            mealLogRepository,
+            waterLogRepository,
+            weightRepository
+        )
+
+        val collectJob = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.onInputChanged("Give me meal suggestions")
+        viewModel.sendMessage()
+        advanceUntilIdle()
+
+        // Input must be re-enabled (isSending = false)
+        org.junit.Assert.assertFalse(viewModel.uiState.value.isSending)
+        assertEquals(
+            "Sproutling needs an internet connection",
+            viewModel.uiState.value.errorMessage
+        )
+        // Saved message must contain the deterministic offline summary with no food suggestions
+        val messages = aiCoachRepository.getMessagesForConversation(viewModel.uiState.value.conversationId)
+        val assistantMsg = messages.firstOrNull { it.role == com.kcalgrindai.app.domain.model.MessageRole.ASSISTANT }
+        assertNotNull(assistantMsg)
+        assertTrue(assistantMsg!!.text.startsWith("Sproutling needs an internet connection."))
+        assertTrue(assistantMsg.text.contains("Today's remaining budget:"))
+        assertTrue(assistantMsg.text.contains("Calories:"))
+        assertTrue(!assistantMsg.text.contains("Chicken"))
+        assertTrue(!assistantMsg.text.contains("Salmon"))
+        assertTrue(!assistantMsg.text.contains("Oatmeal"))
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `normal text offline returns deterministic remaining budget without food suggestions`() = runTest {
+        nutritionGoalRepository.saveGoal(createTestGoal(2200))
+        aiCoachRepository.sendError = java.io.IOException("Unable to resolve host")
+        val viewModel = AiChatViewModel(
+            aiCoachRepository,
+            userProfileRepository,
+            nutritionGoalRepository,
+            mealLogRepository,
+            waterLogRepository,
+            weightRepository
+        )
+
+        val collectJob = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.onInputChanged("What should I eat?")
+        viewModel.sendMessage()
+        advanceUntilIdle()
+
+        org.junit.Assert.assertFalse(viewModel.uiState.value.isSending)
+        assertEquals(
+            "Sproutling needs an internet connection",
+            viewModel.uiState.value.errorMessage
+        )
+        val messages = aiCoachRepository.getMessagesForConversation(viewModel.uiState.value.conversationId)
+        val assistantMsg = messages.firstOrNull { it.role == com.kcalgrindai.app.domain.model.MessageRole.ASSISTANT }
+        assertNotNull(assistantMsg)
+        assertTrue(assistantMsg!!.text.startsWith("Sproutling needs an internet connection."))
+        assertTrue(assistantMsg.text.contains("Today's remaining budget:"))
+        assertTrue(assistantMsg.text.contains("Calories: 2200 kcal left (Target: 2200 kcal, Consumed: 0 kcal)"))
+        assertTrue(assistantMsg.text.contains("Protein:"))
+        assertTrue(assistantMsg.text.contains("Carbs:"))
+        assertTrue(assistantMsg.text.contains("Fat:"))
+        // Zero food suggestions or persona text
+        assertTrue(!assistantMsg.text.contains("Chicken"))
+        assertTrue(!assistantMsg.text.contains("Salmon"))
+        assertTrue(!assistantMsg.text.contains("Oatmeal"))
+        assertTrue(!assistantMsg.text.contains("fitness journey"))
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `crisis text offline shows supportive message with verified region-aware helplines`() = runTest {
+        aiCoachRepository.sendError = java.io.IOException("Network unreachable")
+        val viewModel = AiChatViewModel(
+            aiCoachRepository,
+            userProfileRepository,
+            nutritionGoalRepository,
+            mealLogRepository,
+            waterLogRepository,
+            weightRepository
+        )
+
+        val collectJob = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.onInputChanged("I want to starve myself and die")
+        viewModel.sendMessage()
+        advanceUntilIdle()
+
+        org.junit.Assert.assertFalse(viewModel.uiState.value.isSending)
+        val messages = aiCoachRepository.getMessagesForConversation(viewModel.uiState.value.conversationId)
+        val assistantMsg = messages.firstOrNull { it.role == com.kcalgrindai.app.domain.model.MessageRole.ASSISTANT }
+        assertNotNull(assistantMsg)
+        
+        // Verified region-aware helplines (US environment in Robolectric)
+        assertTrue(assistantMsg!!.text.contains("988")) // Suicide & Crisis Lifeline
+        assertTrue(assistantMsg.text.contains("1-888-375-7767")) // ANAD Eating Disorders Helpline
+        assertTrue(assistantMsg.text.contains("741741")) // Crisis Text Line
+        assertTrue(assistantMsg.text.contains("911")) // US Emergency
+
+        // Must not contain meal suggestions or calorie budget
+        assertTrue(!assistantMsg.text.contains("Grilled Herb Chicken"))
+        assertTrue(!assistantMsg.text.contains("budget"))
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `crisis text on 503 shows supportive message with verified region-aware helplines`() = runTest {
+        aiCoachRepository.sendError = RuntimeException("HTTP 503 Service Unavailable")
+        val viewModel = AiChatViewModel(
+            aiCoachRepository,
+            userProfileRepository,
+            nutritionGoalRepository,
+            mealLogRepository,
+            waterLogRepository,
+            weightRepository
+        )
+
+        val collectJob = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.onInputChanged("How do I purge all my calories after dinner?")
+        viewModel.sendMessage()
+        advanceUntilIdle()
+
+        org.junit.Assert.assertFalse(viewModel.uiState.value.isSending)
+        val messages = aiCoachRepository.getMessagesForConversation(viewModel.uiState.value.conversationId)
+        val assistantMsg = messages.firstOrNull { it.role == com.kcalgrindai.app.domain.model.MessageRole.ASSISTANT }
+        assertNotNull(assistantMsg)
+
+        // Verified helplines
+        assertTrue(assistantMsg!!.text.contains("988"))
+        assertTrue(assistantMsg.text.contains("1-888-375-7767"))
+        assertTrue(assistantMsg.text.contains("911"))
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `getRegionAwareCrisisResponse formats verified helplines defaulting to India and 112 plus all other regions`() {
+        // Regardless of locale, India + 112 is primary, and all international regions are listed below
+        val localesToTest = listOf("IN", "GB", "US", "ZZ", "")
+        for (locale in localesToTest) {
+            val response = AiChatViewModel.getRegionAwareCrisisResponse(locale)
+            // India & 112 verified primary
+            assertTrue(response.contains("112")) // National Emergency Number, India
+            assertTrue(response.contains("+91 98204 66726")) // AASRA
+            assertTrue(response.contains("1800-599-0019")) // KIRAN
+            assertTrue(response.contains("+91 9999 666 555")) // Vandrevala Foundation
+            assertTrue(response.contains("14416")) // Tele-MANAS
+
+            // United States & Canada verified
+            assertTrue(response.contains("911")) // Emergency US
+            assertTrue(response.contains("988")) // Suicide & Crisis Lifeline
+            assertTrue(response.contains("1-888-375-7767")) // ANAD Helpline
+            assertTrue(response.contains("741741")) // Crisis Text Line
+
+            // United Kingdom verified
+            assertTrue(response.contains("999")) // Emergency UK
+            assertTrue(response.contains("116 123")) // Samaritans
+            assertTrue(response.contains("0808 801 0677")) // Beat Eating Disorders
+            assertTrue(response.contains("85258")) // Shout
+
+            // International verified
+            assertTrue(response.contains("befrienders.org"))
+            assertTrue(response.contains("findahelpline.com"))
+        }
+    }
+
+    @Test
+    fun `checkClientCrisisKeywords detects misspelled and Hinglish crisis phrases while allowing benign fasting phrases`() {
+        val benignPhrases = listOf(
+            "Can I do 16:8 fasting?",
+            "What are the benefits of 16/8 intermittent fasting?",
+            "I want to try a 16:8 fast starting today",
+            "Fasting for 16 hours and eating in an 8 hour window",
+            "How much protein should I eat during 16:8 intermittent fasting?",
+            "Tell me healthy recipes for dinner with 500 kcal total",
+            "I ate 1800 calories today, is that good?",
+            "Can I have green tea during intermittent fasting?"
+        )
+
+        for (phrase in benignPhrases) {
+            assertFalse(
+                "Benign phrase should not trigger crisis check: $phrase",
+                AiChatViewModel.checkClientCrisisKeywords(phrase)
+            )
+        }
+
+        val crisisPhrases = listOf(
+            // English standard & misspellings
+            "I want to kill myself",
+            "I am thinking of committing suicide",
+            "how to starve myself to drop weight quickly",
+            "I feel so depressed I might commit sucide",
+            "thinking about suicde tonight",
+            "I want to kil myself",
+            "how to starrve fast",
+            "I have been purgging every meal",
+            "vommit after eating lunch",
+            // Hinglish
+            "main mar jana chahta hoon",
+            "zindagi khatam karni hai ab",
+            "main jaan de dunga",
+            "suicide karne ka man kar raha hai",
+            "khana chhod dunga jab tak patla na ho jau",
+            "khana khane ke baad ulti karna chahta hu"
+        )
+
+        for (phrase in crisisPhrases) {
+            assertTrue(
+                "Crisis phrase should trigger check: $phrase",
+                AiChatViewModel.checkClientCrisisKeywords(phrase)
+            )
+        }
+    }
+
+    @Test
+    fun `crisis text online intercepts locally and never consumes quota or calls remote API`() = runTest {
+        val viewModel = AiChatViewModel(
+            aiCoachRepository,
+            userProfileRepository,
+            nutritionGoalRepository,
+            mealLogRepository,
+            waterLogRepository,
+            weightRepository
+        )
+
+        val collectJob = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        assertEquals(0, aiCoachRepository.sendChatMessageCallCount)
+
+        viewModel.onInputChanged("I feel suicidal and want to end my life")
+        viewModel.sendMessage()
+        advanceUntilIdle()
+
+        org.junit.Assert.assertFalse(viewModel.uiState.value.isSending)
+
+        // Strict assertion: remote API was NEVER called, zero quota consumed
+        assertEquals(0, aiCoachRepository.sendChatMessageCallCount)
+
+        val messages = aiCoachRepository.getMessagesForConversation(viewModel.uiState.value.conversationId)
+        val assistantMsg = messages.firstOrNull { it.role == com.kcalgrindai.app.domain.model.MessageRole.ASSISTANT }
+        assertNotNull(assistantMsg)
+        assertTrue(assistantMsg!!.structuredDataJson?.contains("crisis_intercepted") == true)
+        // Verified emergency & crisis helplines present in response
+        assertTrue(assistantMsg.text.contains("112") || assistantMsg.text.contains("988") || assistantMsg.text.contains("911") || assistantMsg.text.contains("116 123"))
 
         collectJob.cancel()
     }

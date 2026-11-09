@@ -25,6 +25,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.kcalgrindai.app.core.designsystem.KcalGrindProtein
+import com.kcalgrindai.app.core.designsystem.KcalGrindWarning
+import com.kcalgrindai.app.core.designsystem.KcalGrindErrorRed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -190,9 +193,9 @@ fun PlanRevealScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        MacroPayoffItem(label = "Protein", value = "${displayProtein}g", color = Color(0xFF3B82F6))
-                        MacroPayoffItem(label = "Carbs", value = "${displayCarbs}g", color = Color(0xFFF59E0B))
-                        MacroPayoffItem(label = "Fat", value = "${displayFat}g", color = Color(0xFFEF4444))
+                        MacroPayoffItem(label = "Protein", value = "${displayProtein}g", color = KcalGrindProtein)
+                        MacroPayoffItem(label = "Carbs", value = "${displayCarbs}g", color = KcalGrindWarning)
+                        MacroPayoffItem(label = "Fat", value = "${displayFat}g", color = KcalGrindErrorRed)
                     }
                 }
             }
@@ -216,7 +219,20 @@ fun PlanRevealScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Text(
+                text = "Not medical advice. Plan targets are algorithmic estimates for healthy adults. Consult your doctor before beginning a weight management program.",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center
+                ),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }

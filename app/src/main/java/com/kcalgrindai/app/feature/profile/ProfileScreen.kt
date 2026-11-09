@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.LocalFireDepartment
@@ -40,6 +41,13 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.kcalgrindai.app.core.designsystem.v3Colors
+import com.kcalgrindai.app.core.designsystem.KcalGrindCloudSyncTeal
+import com.kcalgrindai.app.core.designsystem.KcalGrindHealthConnectYellow
+import com.kcalgrindai.app.core.designsystem.KcalGrindHealthConnectBlue
+import com.kcalgrindai.app.core.designsystem.KcalGrindWaterBlueDark
+import com.kcalgrindai.app.core.designsystem.KcalGrindAmberAccent
+import com.kcalgrindai.app.core.designsystem.KcalGrindWarning
+import com.kcalgrindai.app.core.designsystem.KcalGrindDeleteDangerRed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -102,7 +110,6 @@ fun ProfileScreen(
     val notificationsEnabled by viewModel.notificationsEnabled.collectAsState()
     val mealRemindersEnabled by viewModel.mealRemindersEnabled.collectAsState()
     val hydrationRemindersEnabled by viewModel.hydrationRemindersEnabled.collectAsState()
-    val deductActiveCaloriesEnabled by viewModel.deductActiveCaloriesEnabled.collectAsState()
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
@@ -223,17 +230,24 @@ fun ProfileScreen(
                 }
             }
             is ProfileUiState.Empty -> {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(v3.background)
                         .padding(paddingValues),
-                    contentAlignment = Alignment.Center
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "No profile found. Please complete onboarding.",
+                        text = "No local profile found.",
                         color = v3.textSecondary
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { viewModel.onSyncNow() }
+                    ) {
+                        Text("Restore Cloud Backup")
+                    }
                 }
             }
             is ProfileUiState.Content -> {
@@ -324,7 +338,7 @@ fun ProfileScreen(
                                         Icon(
                                             imageVector = Icons.Default.Edit,
                                             contentDescription = "Change Profile Picture",
-                                            tint = if (v3.isDark) Color(0xFF101211) else Color.White,
+                                            tint = if (v3.isDark) v3.background else v3.surface,
                                             modifier = Modifier.size(11.dp)
                                         )
                                     }
@@ -399,7 +413,7 @@ fun ProfileScreen(
                                                 modifier = Modifier
                                                     .size(5.dp)
                                                     .clip(CircleShape)
-                                                    .background(if (isCloudUser) v3.emeraldAccent else Color(0xFF38B2AC))
+                                                    .background(if (isCloudUser) v3.emeraldAccent else KcalGrindCloudSyncTeal)
                                             )
                                             Text(
                                                 text = if (isCloudUser) "Google Connected" else "Guest Account",
@@ -637,14 +651,14 @@ fun ProfileScreen(
                                     modifier = Modifier
                                         .weight(carbsPct.coerceAtLeast(0.05f))
                                         .fillMaxHeight()
-                                        .background(Color(0xFFF1C40F))
+                                        .background(KcalGrindHealthConnectYellow)
                                 )
                                 Spacer(modifier = Modifier.width(2.dp))
                                 Box(
                                     modifier = Modifier
                                         .weight(fatPct.coerceAtLeast(0.05f))
                                         .fillMaxHeight()
-                                        .background(Color(0xFF3498DB))
+                                        .background(KcalGrindHealthConnectBlue)
                                 )
                             }
 
@@ -680,7 +694,7 @@ fun ProfileScreen(
                                         modifier = Modifier
                                             .size(6.dp)
                                             .clip(CircleShape)
-                                            .background(Color(0xFFF1C40F))
+                                            .background(KcalGrindHealthConnectYellow)
                                     )
                                     Text(
                                         text = "${carbsG}g Carbs",
@@ -698,7 +712,7 @@ fun ProfileScreen(
                                         modifier = Modifier
                                             .size(6.dp)
                                             .clip(CircleShape)
-                                            .background(Color(0xFF3498DB))
+                                            .background(KcalGrindHealthConnectBlue)
                                     )
                                     Text(
                                         text = "${fatG}g Fat",
@@ -722,8 +736,8 @@ fun ProfileScreen(
                         ) {
                             SectionIconBox(
                                 icon = Icons.Default.Settings,
-                                iconTint = Color(0xFF0284C7),
-                                backgroundColor = Color(0xFF0284C7).copy(alpha = 0.12f)
+                                iconTint = KcalGrindWaterBlueDark,
+                                backgroundColor = KcalGrindWaterBlueDark.copy(alpha = 0.12f)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
@@ -947,7 +961,7 @@ fun ProfileScreen(
                                         )
                                     )
                                     Text(
-                                        text = "Breakfast, lunch, and dinner prompts",
+                                        text = "Prompts around breakfast, lunch, and dinner",
                                         style = MaterialTheme.typography.bodySmall.copy(
                                             color = v3.textMuted,
                                             fontSize = 11.sp
@@ -984,7 +998,7 @@ fun ProfileScreen(
                                         )
                                     )
                                     Text(
-                                        text = "Gentle water reminders during the day",
+                                        text = "Gentle water reminders throughout the day (around every 2 hours)",
                                         style = MaterialTheme.typography.bodySmall.copy(
                                             color = v3.textMuted,
                                             fontSize = 11.sp
@@ -1067,7 +1081,7 @@ fun ProfileScreen(
                                                 style = MaterialTheme.typography.labelMedium.copy(
                                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                                     color = if (isSelected) {
-                                                        if (v3.isDark) Color(0xFF101211) else Color.White
+                                                        if (v3.isDark) v3.background else v3.surface
                                                     } else {
                                                         v3.textSecondary
                                                     },
@@ -1102,7 +1116,7 @@ fun ProfileScreen(
                                     )
                                 )
                                 Text(
-                                    text = "Glance companion preview & privacy controls",
+                                    text = "Home-screen widget preview & privacy controls",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         color = v3.textSecondary,
                                         fontSize = 12.sp
@@ -1128,8 +1142,8 @@ fun ProfileScreen(
                         ) {
                             SectionIconBox(
                                 icon = Icons.Default.Sync,
-                                iconTint = Color(0xFFD97706),
-                                backgroundColor = Color(0xFFD97706).copy(alpha = 0.12f)
+                                iconTint = KcalGrindAmberAccent,
+                                backgroundColor = KcalGrindAmberAccent.copy(alpha = 0.12f)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
@@ -1227,12 +1241,12 @@ fun ProfileScreen(
                         val lastSync = viewModel.lastSyncTimestamp
                         val isSyncing = syncState is SyncState.Syncing
                         val lastSyncText = when {
-                            isSyncing -> "Syncing data to cloud…"
+                            isSyncing -> "Backing up data to cloud…"
                             lastSync > 0L -> {
                                 val fmt = SimpleDateFormat("MMM d, h:mm a", Locale.getDefault())
-                                "Last synced: ${fmt.format(Date(lastSync))}"
+                                "Last backed up: ${fmt.format(Date(lastSync))}"
                             }
-                            else -> "Local only • Tap to backup"
+                            else -> "Not backed up yet • Tap Sync Now"
                         }
 
                         Row(
@@ -1244,7 +1258,7 @@ fun ProfileScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Cloud Sync",
+                                    text = "Cloud Backup",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = FontWeight.Medium,
                                         color = v3.textPrimary,
@@ -1294,7 +1308,7 @@ fun ProfileScreen(
                                             text = "Sync Now",
                                             style = MaterialTheme.typography.labelMedium.copy(
                                                 fontWeight = FontWeight.SemiBold,
-                                                color = if (v3.isDark) Color(0xFF101211) else Color.White,
+                                                color = if (v3.isDark) v3.background else v3.surface,
                                                 fontSize = 12.sp
                                             )
                                         )
@@ -1303,46 +1317,49 @@ fun ProfileScreen(
                             }
                         }
 
-                        // Deduct Active Calories Toggle (Phase F - with double counting disclosure)
-                        CardDivider()
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Deduct Active Calories",
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontWeight = FontWeight.Medium,
-                                        color = v3.textPrimary,
-                                        fontSize = 14.sp
+                        // 7-day Backup Reminder Banner (Item 3)
+                        if (viewModel.isBackupOverdue && !isSyncing) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(10.dp),
+                                color = KcalGrindWarning.copy(alpha = 0.12f),
+                                border = BorderStroke(1.dp, KcalGrindWarning.copy(alpha = 0.35f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Info,
+                                        contentDescription = null,
+                                        tint = KcalGrindWarning,
+                                        modifier = Modifier.size(16.dp)
                                     )
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "Offset active workout calories from daily intake. Warning: If you already selected an active TDEE multiplier in your profile, deducting active workout calories risks double-counting burned calories.",
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = v3.textSecondary,
-                                        fontSize = 11.sp,
-                                        lineHeight = 15.sp
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Backup reminder: Over 7 days since last cloud backup. Tap Sync Now to protect your data.",
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            color = v3.textPrimary,
+                                            fontSize = 11.5.sp,
+                                            lineHeight = 15.sp
+                                        )
                                     )
-                                )
+                                }
                             }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Switch(
-                                checked = deductActiveCaloriesEnabled,
-                                onCheckedChange = { viewModel.setDeductActiveCaloriesEnabled(it) },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = Color.White,
-                                    checkedTrackColor = v3.emeraldAccent,
-                                    uncheckedThumbColor = v3.textMuted,
-                                    uncheckedTrackColor = v3.surface
-                                )
-                            )
                         }
+
+                        // Honest Scope Disclosure (Item 2)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "• Backed up: Meals, food logs, weight, water, goals, coach chat.\n• Stored on device only (v1): Custom foods, saved meal templates, recipes.",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = v3.textMuted,
+                                fontSize = 11.sp,
+                                lineHeight = 15.sp
+                            )
+                        )
+
 
                         // Sync Notification Result Banner
                         when (val s = syncState) {
@@ -1382,8 +1399,8 @@ fun ProfileScreen(
                                         .fillMaxWidth()
                                         .clickable { viewModel.dismissSyncResult() },
                                     shape = RoundedCornerShape(10.dp),
-                                    color = Color(0xFFEF4444).copy(alpha = 0.12f),
-                                    border = BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.35f))
+                                    color = KcalGrindDeleteDangerRed.copy(alpha = 0.12f),
+                                    border = BorderStroke(1.dp, KcalGrindDeleteDangerRed.copy(alpha = 0.35f))
                                 ) {
                                     Row(
                                         modifier = Modifier.padding(10.dp),
@@ -1392,14 +1409,14 @@ fun ProfileScreen(
                                         Icon(
                                             imageVector = Icons.Default.Close,
                                             contentDescription = null,
-                                            tint = Color(0xFFEF4444),
+                                            tint = KcalGrindDeleteDangerRed,
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
                                             text = s.message,
                                             style = MaterialTheme.typography.bodySmall.copy(
-                                                color = Color(0xFFEF4444),
+                                                color = KcalGrindDeleteDangerRed,
                                                 fontSize = 12.sp
                                             )
                                         )
@@ -1423,8 +1440,8 @@ fun ProfileScreen(
                                 }
                             },
                         shape = RoundedCornerShape(16.dp),
-                        color = Color(0xFFEF4444).copy(alpha = 0.12f),
-                        border = BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.35f))
+                        color = KcalGrindDeleteDangerRed.copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, KcalGrindDeleteDangerRed.copy(alpha = 0.35f))
                     ) {
                         Row(
                             modifier = Modifier
@@ -1436,7 +1453,7 @@ fun ProfileScreen(
                             Icon(
                                 imageVector = LogoutIcon,
                                 contentDescription = "Sign Out",
-                                tint = Color(0xFFEF4444),
+                                tint = KcalGrindDeleteDangerRed,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -1444,7 +1461,7 @@ fun ProfileScreen(
                                 text = "Sign Out",
                                 style = MaterialTheme.typography.labelLarge.copy(
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFFEF4444),
+                                    color = KcalGrindDeleteDangerRed,
                                     fontSize = 15.sp
                                 )
                             )
@@ -1463,7 +1480,7 @@ fun ProfileScreen(
                             },
                         shape = RoundedCornerShape(16.dp),
                         color = Color.Transparent,
-                        border = BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.35f))
+                        border = BorderStroke(1.dp, KcalGrindDeleteDangerRed.copy(alpha = 0.35f))
                     ) {
                         Row(
                             modifier = Modifier
@@ -1475,7 +1492,7 @@ fun ProfileScreen(
                             Icon(
                                 imageVector = Icons.Default.DeleteForever,
                                 contentDescription = "Delete Account",
-                                tint = Color(0xFFEF4444),
+                                tint = KcalGrindDeleteDangerRed,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -1483,7 +1500,7 @@ fun ProfileScreen(
                                 text = "Delete Account",
                                 style = MaterialTheme.typography.labelLarge.copy(
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFFEF4444),
+                                    color = KcalGrindDeleteDangerRed,
                                     fontSize = 15.sp
                                 )
                             )
@@ -1504,13 +1521,13 @@ fun ProfileScreen(
                 title = { Text("Delete Account?", fontWeight = FontWeight.Bold) },
                 text = {
                     Text(
-                        "This will permanently delete your account, including all personal details, calorie targets, logged meals, custom foods, weight entries, AI chat history, and cloud sync backups.\n\nThis action is irreversible.",
+                        "This will permanently delete your account, including all personal details, calorie targets, logged meals, custom foods, weight entries, AI chat history, and cloud sync backups.\n\nNote: Any active Google Play subscription must be cancelled separately in Google Play (under Subscriptions) and is not cancelled by deleting your account.\n\nThis action is irreversible.",
                         lineHeight = 20.sp
                     )
                 },
                 confirmButton = {
                     TextButton(onClick = { viewModel.confirmDeleteAccount(onSuccess = onNavigateToAuth) }) {
-                        Text("Permanently Delete", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
+                        Text("Permanently Delete", color = KcalGrindDeleteDangerRed, fontWeight = FontWeight.Bold)
                     }
                 },
                 dismissButton = {
@@ -1545,7 +1562,7 @@ fun ProfileScreen(
                         },
                         enabled = reauthPassword.isNotBlank()
                     ) {
-                        Text("Verify & Delete", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
+                        Text("Verify & Delete", color = KcalGrindDeleteDangerRed, fontWeight = FontWeight.Bold)
                     }
                 },
                 dismissButton = {
@@ -1631,7 +1648,7 @@ fun ProfileScreen(
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Text(
-                                    text = "Update your body metrics and daily routine. Daily calories and macro targets will recalculate automatically.",
+                                    text = "Update your body metrics and daily routine. Daily calories and macro targets will recalculate automatically. (Not medical advice: goals are algorithmic estimates. Consult a physician before major dietary changes.)",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )

@@ -316,6 +316,28 @@ class AuthViewModelTest {
     }
 
     @Test
+    fun onGoogleSignInFailure_handlesReleaseFriendlyMessages() {
+        val releaseFriendlyMsg = "Google Sign-In is temporarily unavailable. Please sign in with email or continue as guest."
+        viewModel.onGoogleSignInFailure(releaseFriendlyMsg)
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertFalse(state.authSuccess)
+        assertEquals(releaseFriendlyMsg, state.errorMessage)
+    }
+
+    @Test
+    fun onGoogleSignInFailure_networkErrorFriendlyMessage() {
+        val networkMsg = "Network error during Google Sign-In. Please check your internet connection."
+        viewModel.onGoogleSignInFailure(networkMsg)
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertFalse(state.authSuccess)
+        assertEquals(networkMsg, state.errorMessage)
+    }
+
+    @Test
     fun onGoogleSignInSuccess_onlySetsAuthSuccessAfterRepositorySucceeds() = runTest {
         assertFalse(viewModel.uiState.value.authSuccess)
 
@@ -327,5 +349,82 @@ class AuthViewModelTest {
         assertTrue(viewModel.uiState.value.authSuccess)
         assertFalse(viewModel.uiState.value.isLoading)
     }
-}
 
+    @Test
+    fun onGoogleSignInSuccess_triggersCloudRestoreOnReinstall() = runTest {
+        val fakeSyncRepo = com.kcalgrindai.app.fakes.FakeSyncRepository()
+        val vmWithSync = AuthViewModel(fakeAuthRepository, fakeSyncRepo)
+
+        vmWithSync.onGoogleSignInSuccess("sample-valid-token")
+        advanceUntilIdle()
+
+        assertTrue(vmWithSync.uiState.value.authSuccess)
+        assertEquals(1, fakeSyncRepo.restoreBackupCallCount)
+    }
+
+    @Test
+    fun submit_emailSignIn_triggersCloudRestore() = runTest {
+        val fakeSyncRepo = com.kcalgrindai.app.fakes.FakeSyncRepository()
+        val vmWithSync = AuthViewModel(fakeAuthRepository, fakeSyncRepo)
+
+        vmWithSync.onEmailChanged("test@example.com")
+        vmWithSync.onPasswordChanged("validPassword123")
+        vmWithSync.submit()
+        advanceUntilIdle()
+
+        assertTrue(vmWithSync.uiState.value.authSuccess)
+        assertEquals(1, fakeSyncRepo.restoreBackupCallCount)
+    }
+
+    @Test
+    fun resolveEmailErrorMessage_sanitizesRawFirebaseErrorsInRelease() {
+        val rawFirebaseError = RuntimeException("[ CONFIGURATION_NOT_FOUND ] Please verify Firebase configuration")
+
+        // In release mode (isDebug = false)
+        val releaseSignInMessage = AuthViewModel.resolveEmailErrorMessage(rawFirebaseError, isSignUpMode = false, isDebug = false)
+        assertEquals("Unable to sign in right now. Please try again later.", releaseSignInMessage)
+
+        val releaseSignUpMessage = AuthViewModel.resolveEmailErrorMessage(rawFirebaseError, isSignUpMode = true, isDebug = false)
+        assertEquals("Unable to create account right now. Please try again later.", releaseSignUpMessage)
+
+        // In debug mode (isDebug = true)
+        val debugMessage = AuthViewModel.resolveEmailErrorMessage(rawFirebaseError, isSignUpMode = false, isDebug = true)
+        assertEquals("[ CONFIGURATION_NOT_FOUND ] Please verify Firebase configuration", debugMessage)
+    }
+
+    @Test
+    fun resolveEmailErrorMessage_preservesKnownActionableErrorsInRelease() {
+        val credError = RuntimeException("The email address or password is incorrect")
+        val credMsg = AuthViewModel.resolveEmailErrorMessage(credError, isSignUpMode = false, isDebug = false)
+        assertEquals("Invalid email or password.", credMsg)
+
+        val collisionError = RuntimeException("The email address is already in use by another account.")
+        val collisionMsg = AuthViewModel.resolveEmailErrorMessage(collisionError, isSignUpMode = true, isDebug = false)
+        assertEquals("An account with this email already exists.", collisionMsg)
+
+        val networkError = RuntimeException("A network error occurred during authentication")
+        val networkMsg = AuthViewModel.resolveEmailErrorMessage(networkError, isSignUpMode = false, isDebug = false)
+        assertEquals("Network error. Please check your internet connection.", networkMsg)
+    }
+
+    @Test
+    fun resolveGoogleAndGuestMessages_sanitizesInRelease() {
+        val rawError = RuntimeException("Developer error: 10 API_NOT_CONNECTED")
+
+        // Google
+        val googleRelease = AuthViewModel.resolveGoogleErrorMessage(rawError, isDebug = false)
+        assertEquals("Unable to sign in with Google right now. Please try again later.", googleRelease)
+        val googleDebug = AuthViewModel.resolveGoogleErrorMessage(rawError, isDebug = true)
+        assertEquals("Developer error: 10 API_NOT_CONNECTED", googleDebug)
+
+        // Google failure string
+        val clientFailRelease = AuthViewModel.resolveGoogleFailureMessage("16: Cannot find matching credential", isDebug = false)
+        assertEquals("Google sign in was unsuccessful. Please try again.", clientFailRelease)
+
+        // Guest
+        val guestRelease = AuthViewModel.resolveGuestErrorMessage(rawError, isDebug = false)
+        assertEquals("Unable to continue as guest right now. Please try again later.", guestRelease)
+        val guestDebug = AuthViewModel.resolveGuestErrorMessage(rawError, isDebug = true)
+        assertEquals("Developer error: 10 API_NOT_CONNECTED", guestDebug)
+    }
+}

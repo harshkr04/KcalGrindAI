@@ -14,6 +14,7 @@ import com.kcalgrindai.app.domain.model.FoodSource
 object IndianFoodDataset {
 
     const val DATASET_SOURCE = "ifct"
+    const val DATASET_SOURCE_RECIPE = "curated_recipe"
     const val DATASET_CITATION = "IFCT 2017 (ICMR-National Institute of Nutrition, Hyderabad)"
 
     private fun item(
@@ -25,14 +26,15 @@ object IndianFoodDataset {
         proteinG: Double,
         carbsG: Double,
         fatG: Double,
-        fiberG: Double
+        fiberG: Double,
+        isVerifiedRaw: Boolean = false
     ): FoodEntity {
         return FoodEntity(
             id = 0L,
-            source = DATASET_SOURCE,
+            source = if (isVerifiedRaw) DATASET_SOURCE else DATASET_SOURCE_RECIPE,
             externalId = externalId,
             name = name,
-            brand = "IFCT 2017 (ICMR-NIN)",
+            brand = if (isVerifiedRaw) "IFCT 2017 (ICMR-NIN)" else "Curated Indian Recipe Estimate",
             servingDescription = servingDesc,
             servingGrams = servingGrams,
             calories = calories,
@@ -114,7 +116,7 @@ object IndianFoodDataset {
         item("IFCT_P05", "Matar Paneer", "1 katori (180g)", 180.0, 270.0, 13.5, 16.5, 17.0, 4.5),
         item("IFCT_P06", "Paneer Bhurji", "1 katori (150g)", 150.0, 280.0, 16.2, 6.5, 21.5, 2.0),
         item("IFCT_P07", "Paneer Tikka (Tandoori)", "6 pieces (150g)", 150.0, 260.0, 16.8, 8.0, 18.0, 2.4),
-        item("IFCT_P08", "Raw Paneer (Cottage Cheese)", "100g serving", 100.0, 265.0, 18.3, 3.4, 20.8, 0.0),
+        item("IFCT_P08", "Raw Paneer (Cottage Cheese)", "100g serving", 100.0, 265.0, 18.3, 3.4, 20.8, 0.0, isVerifiedRaw = true),
         item("IFCT_P09", "Paneer Lababdar", "1 katori (180g)", 180.0, 350.0, 14.0, 13.5, 27.0, 2.8),
 
         // ==========================================
@@ -191,17 +193,17 @@ object IndianFoodDataset {
         // ==========================================
         // 9. DAIRY, BEVERAGES & ACCOMPANIMENTS
         // ==========================================
-        item("IFCT_Y01", "Buffalo Milk (Whole)", "1 glass (200ml)", 200.0, 195.0, 8.6, 10.4, 13.0, 0.0),
-        item("IFCT_Y02", "Cow Milk (Toned 3% Fat)", "1 glass (200ml)", 200.0, 120.0, 6.6, 9.6, 6.0, 0.0),
+        item("IFCT_Y01", "Buffalo Milk (Whole)", "1 glass (200ml)", 200.0, 195.0, 8.6, 10.4, 13.0, 0.0, isVerifiedRaw = true),
+        item("IFCT_Y02", "Cow Milk (Toned 3% Fat)", "1 glass (200ml)", 200.0, 120.0, 6.6, 9.6, 6.0, 0.0, isVerifiedRaw = true),
         item("IFCT_Y03", "Masala Chai (with Milk & 1 tsp Sugar)", "1 cup (150ml)", 150.0, 110.0, 3.8, 15.0, 3.8, 0.0),
         item("IFCT_Y04", "South Indian Filter Coffee (with Milk & Sugar)", "1 cup (150ml)", 150.0, 125.0, 4.0, 16.5, 4.5, 0.0),
         item("IFCT_Y05", "Sweet Lassi", "1 glass (200ml)", 200.0, 210.0, 6.5, 32.0, 6.8, 0.0),
         item("IFCT_Y06", "Salted Chaas / Buttermilk (with Jeera & Curry Leaves)", "1 glass (200ml)", 200.0, 60.0, 3.2, 5.0, 2.8, 0.4),
-        item("IFCT_Y07", "Curd / Dahi (Plain Whole Milk)", "1 katori (100g)", 100.0, 75.0, 3.6, 4.8, 4.5, 0.0),
+        item("IFCT_Y07", "Curd / Dahi (Plain Whole Milk)", "1 katori (100g)", 100.0, 75.0, 3.6, 4.8, 4.5, 0.0, isVerifiedRaw = true),
         item("IFCT_Y08", "Cucumber Raita", "1 katori (100g)", 100.0, 65.0, 3.2, 5.2, 3.5, 0.8),
         item("IFCT_Y09", "Boondi Raita", "1 katori (100g)", 100.0, 115.0, 4.0, 11.5, 6.0, 0.6),
         item("IFCT_Y10", "Mixed Veg Raita", "1 katori (100g)", 100.0, 70.0, 3.4, 6.0, 3.6, 1.0),
-        item("IFCT_Y11", "Desi Cow Ghee", "1 tsp (5g)", 5.0, 45.0, 0.0, 0.0, 5.0, 0.0),
+        item("IFCT_Y11", "Desi Cow Ghee", "1 tsp (5g)", 5.0, 45.0, 0.0, 0.0, 5.0, 0.0, isVerifiedRaw = true),
         item("IFCT_Y12", "Mint Coriander Chutney", "2 tbsp (30g)", 30.0, 25.0, 1.0, 3.2, 1.0, 1.2),
 
         // ==========================================

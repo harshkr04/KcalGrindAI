@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kcalgrindai.app.core.designsystem.components.FoodImageBadge
 import com.kcalgrindai.app.domain.model.FoodSource
 import com.kcalgrindai.app.domain.model.MealType
 
@@ -138,8 +139,9 @@ fun FoodDetailScreen(
                 // Unified Database Source Badge
                 val sourceLabel = when (food.source) {
                     FoodSource.IFCT -> "Verified • Indian Nutrition (IFCT)"
+                    FoodSource.CURATED_RECIPE -> "Curated Recipe Estimate"
                     FoodSource.OPEN_FOOD_FACTS -> "Verified • Open Food Facts"
-                    FoodSource.CUSTOM -> "Custom Food Entry"
+                    FoodSource.CUSTOM, FoodSource.USER_ENTERED -> "Custom Food Entry"
                     else -> "Verified Nutrition Database"
                 }
 
@@ -170,25 +172,38 @@ fun FoodDetailScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Food Title
-                Text(
-                    text = food.name,
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 24.sp
+                // Food Title + Visual Badge
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    FoodImageBadge(
+                        foodName = food.name,
+                        foodId = food.id,
+                        size = 56.dp,
+                        shape = RoundedCornerShape(14.dp)
                     )
-                )
-
-                if (!food.brand.isNullOrBlank()) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Brand: ${food.brand}",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Medium
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = food.name,
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = 22.sp
+                            )
                         )
-                    )
+                        if (!food.brand.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Brand: ${food.brand}",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            )
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))

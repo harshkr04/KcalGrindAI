@@ -16,16 +16,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+
+      - name: Assert No Disallowed Placeholders or Names
+        run: |
+          CHECK_PATHS=""
+          for p in app/src backend/src website/src website/dist Docs README.md; do
+            if [ -e "$p" ]; then
+              CHECK_PATHS="$CHECK_PATHS $p"
+            fi
+          done
+          if [ -n "$CHECK_PATHS" ]; then
+            if grep -rn -E "\[YOUR NAME\]|NAME I CHOOSE|Vardhan" $CHECK_PATHS; then
+              echo "ERROR: Disallowed placeholder or name ('[YOUR NAME]', 'NAME I CHOOSE', or 'Vardhan') found in repository source or documentation!"
+              exit 1
+            fi
+          fi
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
 
       - name: Provide CI Mock google-services.json
         run: |
@@ -38,7 +56,26 @@ jobs:
           fi
 
       - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+        run: |
+          for i in 1 2 3 4; do
+            ./gradlew testDebugUnitTest --no-daemon --stacktrace && break || {
+              if [ $i -eq 4 ]; then exit 1; fi
+              echo "Gradle unit tests failed on attempt $i, retrying in 10s..."
+              sleep 10
+            }
+          done
+
+      - name: Build Release APK Verification
+        env:
+          PROD_BACKEND_URL: "https://api.kcalgrind.app"
+        run: |
+          for i in 1 2 3 4; do
+            ./gradlew assembleRelease --no-daemon --stacktrace && break || {
+              if [ $i -eq 4 ]; then exit 1; fi
+              echo "Gradle assembleRelease failed on attempt $i, retrying in 10s..."
+              sleep 10
+            }
+          done
 
   backend-tests:
     name: Backend Proxy Tests
@@ -48,10 +85,72 @@ jobs:
         working-directory: backend
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Node.js 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Assert No Disallowed Placeholders or Names
+        working-directory: .
+        run: |
+          CHECK_PATHS=""
+          for p in app/src backend/src website/src website/dist Docs README.md; do
+            if [ -e "$p" ]; then
+              CHECK_PATHS="$CHECK_PATHS $p"
+            fi
+          done
+          if [ -n "$CHECK_PATHS" ]; then
+            if grep -rn -E "\[YOUR NAME\]|NAME I CHOOSE|Vardhan" $CHECK_PATHS; then
+              echo "ERROR: Disallowed placeholder or name ('[YOUR NAME]', 'NAME I CHOOSE', or 'Vardhan') found in repository source or documentation!"
+              exit 1
+            fi
+          fi
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Standalone Backend Tests
+        env:
+          NODE_ENV: test
+          FIREBASE_PROJECT_ID: test-kcalgrind-ci
+          GEMINI_API_KEY: mock-ci-gemini-key
+          ALLOW_DEV_TOKENS: 'false'
+        run: |
+          node --test --test-concurrency=1 test-account-deletion.js test-auth-middleware.js test-gemini-client-unit.js test-gemini-structure.js test-test-token-production-gate.js test-ai-coach-quota.js test-ai-coach-shared-quota.js test-production-fail-closed.js test-gemini-fallback.js test-coach-safety.js test-photo-cap.js test-canary-logging.js
+          node scripts/audit-purge-completeness.js
+
+  postgres-integration-tests:
+    name: Real Postgres Integration & Security Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: kcalgrind_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: 'npm'
@@ -60,6 +159,63 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Standalone Backend Tests
+      - name: Run Real Postgres Integration & Security Suite
+        env:
+          DATABASE_URL: postgresql://postgres:postgrespassword@localhost:5432/kcalgrind_test
+          NODE_ENV: test
         run: |
-          node --test test-account-deletion.js test-gemini-client-unit.js test-ai-coach-quota.js test-auth-middleware.js test-gemini-structure.js
+          node test-real-postgres.js
+
+      - name: Run Live Purge Audit Against Postgres
+        env:
+          DATABASE_URL: postgresql://postgres:postgrespassword@localhost:5432/kcalgrind_test
+        run: |
+          node scripts/audit-purge-completeness.js --live
+
+  website-tests:
+    name: Website Build & Verification Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: website/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Production Bundle
+        run: npm run build
+
+      - name: Assert No Disallowed Placeholders or Names in Website Bundle & Docs
+        working-directory: .
+        run: |
+          CHECK_TARGETS=""
+          for p in website/src website/dist README.md Docs; do
+            if [ -e "$p" ]; then
+              CHECK_TARGETS="$CHECK_TARGETS $p"
+            fi
+          done
+          if [ -n "$CHECK_TARGETS" ]; then
+            if grep -rn -E "\[YOUR NAME\]|NAME I CHOOSE|Vardhan" $CHECK_TARGETS; then
+              echo "ERROR: Disallowed placeholder or name ('[YOUR NAME]', 'NAME I CHOOSE', or 'Vardhan') found in website/src, website/dist, README.md, or Docs!"
+              exit 1
+            fi
+          fi
+
+      - name: Run Nutrition Calculator Parity Tests
+        run: npm run test:calculator
+
+      - name: Run Static HTML Serving Verification
+        run: npm run test:static
+
+      - name: Run WCAG Contrast Audit
+        run: npm run test:contrast

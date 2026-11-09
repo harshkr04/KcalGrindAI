@@ -48,6 +48,22 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import com.kcalgrindai.app.core.designsystem.KcalGrindAiBannerBgLight
+import com.kcalgrindai.app.core.designsystem.KcalGrindAiBannerTextLight
+import com.kcalgrindai.app.core.designsystem.KcalGrindAiWaterBgLight
+import com.kcalgrindai.app.core.designsystem.KcalGrindAiWaterTextLight
+import com.kcalgrindai.app.core.designsystem.KcalGrindWaterBlue
+import com.kcalgrindai.app.core.designsystem.KcalGrindWarningDarkBg
+import com.kcalgrindai.app.core.designsystem.KcalGrindWarningLightBg
+import com.kcalgrindai.app.core.designsystem.KcalGrindWarningDarkBorder
+import com.kcalgrindai.app.core.designsystem.KcalGrindWarningLightBorder
+import com.kcalgrindai.app.core.designsystem.KcalGrindWarningDarkText
+import com.kcalgrindai.app.core.designsystem.KcalGrindWarningLightText
+import com.kcalgrindai.app.core.designsystem.KcalGrindWarningOrange
+import com.kcalgrindai.app.core.designsystem.KcalGrindWarningOrangeBg
+import com.kcalgrindai.app.core.designsystem.KcalGrindWarningOrangeDarkBg
+import com.kcalgrindai.app.core.designsystem.KcalGrindWarningOrangeTextLight
+import com.kcalgrindai.app.core.designsystem.KcalGrindWarningOrangeTextDark
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -105,11 +121,19 @@ fun AiChatScreen(
     onNavigateToTab: ((String) -> Unit)? = null,
     onOpenAddFood: (() -> Unit)? = null,
     onNavigateToSubscription: (() -> Unit)? = null,
+    initialPrompt: String? = null,
     viewModel: AiChatViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
     val context = LocalContext.current
+
+    androidx.compose.runtime.LaunchedEffect(initialPrompt) {
+        if (!initialPrompt.isNullOrBlank()) {
+            val decoded = com.kcalgrindai.app.core.util.NavigationUrlCodec.decode(initialPrompt)
+            viewModel.onInputChanged(decoded)
+        }
+    }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -177,7 +201,7 @@ fun AiChatScreen(
                 Box(contentAlignment = Alignment.Center) {
                     androidx.compose.foundation.Image(
                         painter = painterResource(id = R.drawable.ic_sproutling_active),
-                        contentDescription = "Sproutling Coach",
+                        contentDescription = "Sproutling",
                         modifier = Modifier.size(26.dp)
                     )
                 }
@@ -187,7 +211,7 @@ fun AiChatScreen(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Kcal Grind AI Coach",
+                    text = "Sproutling",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = v3Colors.textPrimary,
@@ -197,7 +221,7 @@ fun AiChatScreen(
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "Sproutling Nutrition Intelligence",
+                    text = "Nutrition Intelligence",
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = v3Colors.emeraldAccent,
                         fontSize = 11.sp,
@@ -211,10 +235,10 @@ fun AiChatScreen(
             IconButton(
                 onClick = {
                     val shareText = buildString {
-                        appendLine("Kcal Grind AI Coach Conversation")
+                        appendLine("Sproutling Conversation")
                         appendLine("================================")
                         uiState.messages.forEach { msg ->
-                            val role = if (msg.role == MessageRole.USER) "You" else "Kcal Grind AI Coach"
+                            val role = if (msg.role == MessageRole.USER) "You" else "Sproutling"
                             appendLine("$role: ${msg.text}")
                         }
                     }
@@ -247,9 +271,10 @@ fun AiChatScreen(
         AnimatedVisibility(visible = uiState.actionSuccessMessage != null) {
             val msg = uiState.actionSuccessMessage
             if (msg != null) {
-                val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-                val bannerBg = if (isDark) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else Color(0xFFE8F5E9)
-                val bannerContent = if (isDark) MaterialTheme.colorScheme.primary else Color(0xFF2E7D32)
+                val v3Colors = MaterialTheme.v3Colors
+                val isDark = v3Colors.isDark
+                val bannerBg = if (isDark) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else KcalGrindAiBannerBgLight
+                val bannerContent = if (isDark) MaterialTheme.colorScheme.primary else KcalGrindAiBannerTextLight
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = bannerBg,
@@ -320,7 +345,28 @@ fun AiChatScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        // Medical disclaimer notice
+        Surface(
+            shape = RoundedCornerShape(8.dp),
+            color = v3Colors.surfaceElevated.copy(alpha = 0.5f),
+            border = BorderStroke(1.dp, v3Colors.subtleBorder),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+        ) {
+            Text(
+                text = "Not medical advice. Sproutling provides nutritional insights for informational purposes only. Consult a healthcare professional before altering your diet.",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = v3Colors.textSecondary,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp
+                ),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Message List
         LazyColumn(
@@ -387,7 +433,7 @@ fun AiChatScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Attached Photo Preview (if any)
         if (uiState.attachedImageUri != null) {
@@ -443,13 +489,13 @@ fun AiChatScreen(
                             .align(Alignment.TopEnd)
                             .clickable { viewModel.onRemoveAttachedImage() },
                         shape = CircleShape,
-                        color = Color.Black.copy(alpha = 0.75f)
+                        color = if (v3Colors.isDark) v3Colors.surfaceElevated else v3Colors.textPrimary.copy(alpha = 0.75f)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = androidx.compose.material.icons.Icons.Default.Close,
                                 contentDescription = "Remove photo",
-                                tint = Color.White,
+                                tint = if (v3Colors.isDark) v3Colors.textPrimary else v3Colors.background,
                                 modifier = Modifier.size(10.dp)
                             )
                         }
@@ -471,7 +517,7 @@ fun AiChatScreen(
         // Usage Limit Indicator / Warning / Locked Card
         val usage = uiState.usage
         val isLimitReached = usage.isLimitReached
-        val isDark = isSystemInDarkTheme()
+        val isDark = v3Colors.isDark
 
         if (isLimitReached) {
             Surface(
@@ -513,29 +559,6 @@ fun AiChatScreen(
                             )
                         )
                     }
-
-                    if (!usage.isPro && onNavigateToSubscription != null) {
-                        Button(
-                            onClick = onNavigateToSubscription,
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            ),
-                            modifier = Modifier.height(36.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Upgrade to Pro",
-                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
-                            )
-                        }
-                    }
                 }
             }
         } else {
@@ -543,15 +566,15 @@ fun AiChatScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 4.dp, end = 4.dp, bottom = 6.dp),
+                    .padding(start = 4.dp, end = 4.dp, bottom = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (usage.isWarning) {
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = if (isDark) Color(0x33FFB74D) else Color(0xFFFFF3CD),
-                        border = BorderStroke(1.dp, if (isDark) Color(0xFFFFB74D).copy(alpha = 0.5f) else Color(0xFFFFCC80))
+                        color = if (isDark) KcalGrindWarningDarkBg else KcalGrindWarningLightBg,
+                        border = BorderStroke(1.dp, if (isDark) KcalGrindWarningDarkBorder else KcalGrindWarningLightBorder)
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
@@ -560,14 +583,14 @@ fun AiChatScreen(
                             Icon(
                                 imageVector = Icons.Default.Warning,
                                 contentDescription = null,
-                                tint = if (isDark) Color(0xFFFFCC80) else Color(0xFFB78103),
+                                tint = if (isDark) KcalGrindWarningDarkText else KcalGrindWarningLightText,
                                 modifier = Modifier.size(13.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "2 messages remaining today",
                                 style = MaterialTheme.typography.labelSmall.copy(
-                                    color = if (isDark) Color(0xFFFFCC80) else Color(0xFFB78103),
+                                    color = if (isDark) KcalGrindWarningDarkText else KcalGrindWarningLightText,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             )
@@ -576,8 +599,8 @@ fun AiChatScreen(
                 } else if (usage.remaining == 1) {
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = if (isDark) Color(0x33FF9800) else Color(0xFFFFE0B2),
-                        border = BorderStroke(1.dp, if (isDark) Color(0xFFFF9800).copy(alpha = 0.5f) else Color(0xFFFFB74D))
+                        color = if (isDark) KcalGrindWarningOrangeDarkBg else KcalGrindWarningOrangeBg,
+                        border = BorderStroke(1.dp, if (isDark) KcalGrindWarningDarkBorder else KcalGrindWarningLightBorder)
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
@@ -586,14 +609,14 @@ fun AiChatScreen(
                             Icon(
                                 imageVector = Icons.Default.Warning,
                                 contentDescription = null,
-                                tint = if (isDark) Color(0xFFFFB74D) else Color(0xFFE65100),
+                                tint = if (isDark) KcalGrindWarningOrangeTextDark else KcalGrindWarningOrangeTextLight,
                                 modifier = Modifier.size(13.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "1 message remaining today",
                                 style = MaterialTheme.typography.labelSmall.copy(
-                                    color = if (isDark) Color(0xFFFFB74D) else Color(0xFFE65100),
+                                    color = if (isDark) KcalGrindWarningOrangeTextDark else KcalGrindWarningOrangeTextLight,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             )
@@ -610,17 +633,6 @@ fun AiChatScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                             fontWeight = FontWeight.Medium
                         )
-                    )
-                }
-
-                if (!usage.isPro && onNavigateToSubscription != null) {
-                    Text(
-                        text = "Upgrade for 50/day",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        modifier = Modifier.clickable { onNavigateToSubscription() }
                     )
                 }
             }
@@ -749,7 +761,7 @@ private fun AiCoachWelcomeEmptyState(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "Welcome to Kcal Grind Coach",
+            text = "Welcome to Sproutling",
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -925,13 +937,13 @@ private fun ChatBubble(
                 if (isFallback) {
                     Surface(
                         shape = RoundedCornerShape(6.dp),
-                        color = Color(0x33FFB74D),
-                        border = BorderStroke(1.dp, Color(0x66FFB74D))
+                        color = KcalGrindWarningDarkBg,
+                        border = BorderStroke(1.dp, KcalGrindWarningDarkBorder)
                     ) {
                         Text(
                             text = "Offline Nutrition Guide",
                             style = MaterialTheme.typography.labelSmall.copy(
-                                color = Color(0xFFFFB74D),
+                                color = KcalGrindWarningDarkText,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 10.sp
                             ),
@@ -953,7 +965,7 @@ private fun ChatBubble(
                         border = BorderStroke(1.dp, v3Colors.emeraldAccent.copy(alpha = 0.35f))
                     ) {
                         Text(
-                            text = "AI Coach",
+                            text = "Sproutling",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 color = v3Colors.emeraldAccent,
                                 fontWeight = FontWeight.Bold,
@@ -975,7 +987,7 @@ private fun ChatBubble(
             ),
             color = if (isUser) v3Colors.emeraldAccent else v3Colors.surfaceElevated,
             border = if (!isUser) {
-                BorderStroke(1.dp, if (isFallback) Color(0x44FFB74D) else v3Colors.subtleBorder)
+                BorderStroke(1.dp, if (isFallback) KcalGrindWarningDarkBg else v3Colors.subtleBorder)
             } else null,
             modifier = Modifier
                 .padding(horizontal = 4.dp)
@@ -984,8 +996,8 @@ private fun ChatBubble(
             AiCoachMarkdownText(
                 markdown = message.text,
                 isUser = isUser,
-                contentColor = if (isUser) (if (v3Colors.isDark) Color(0xFF101211) else Color.White) else v3Colors.textPrimary,
-                primaryColor = if (isUser) (if (v3Colors.isDark) Color(0xFF101211) else Color.White) else v3Colors.emeraldAccent,
+                contentColor = if (isUser) (if (v3Colors.isDark) v3Colors.background else v3Colors.surface) else v3Colors.textPrimary,
+                primaryColor = if (isUser) (if (v3Colors.isDark) v3Colors.background else v3Colors.surface) else v3Colors.emeraldAccent,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
             )
         }
@@ -1091,9 +1103,10 @@ private fun ProposedFoodCard(
                     Text("Confirm & Log ${data.mealType.label}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
                 }
             } else {
-                val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-                val badgeBg = if (isDark) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else Color(0xFFE8F5E9)
-                val badgeText = if (isDark) MaterialTheme.colorScheme.primary else Color(0xFF2E7D32)
+                val v3Colors = MaterialTheme.v3Colors
+                val isDark = v3Colors.isDark
+                val badgeBg = if (isDark) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else KcalGrindAiBannerBgLight
+                val badgeText = if (isDark) MaterialTheme.colorScheme.primary else KcalGrindAiBannerTextLight
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = badgeBg,
@@ -1127,9 +1140,9 @@ private fun ProposedFoodCard(
 
 @Composable
 private fun WaterLoggedBadge(amountMl: Int) {
-    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-    val waterBg = if (isDark) Color(0xFF38BDF8).copy(alpha = 0.15f) else Color(0xFFE1F5FE)
-    val waterText = if (isDark) Color(0xFF38BDF8) else Color(0xFF0288D1)
+    val isDark = MaterialTheme.v3Colors.isDark
+    val waterBg = if (isDark) KcalGrindWaterBlue.copy(alpha = 0.15f) else KcalGrindAiWaterBgLight
+    val waterText = if (isDark) KcalGrindWaterBlue else KcalGrindAiWaterTextLight
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = waterBg,

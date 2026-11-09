@@ -250,10 +250,22 @@ class AiChatViewModel @Inject constructor(
                         _uiState.update { it.copy(isSending = false) }
                     },
                     onFailure = { error ->
+                        val friendlyMessage = when {
+                            error.message?.contains("429") == true || error is com.kcalgrindai.app.domain.model.AICoachQuotaExceededException ->
+                                "You've reached today's free photo analysis limit. Your quota resets tomorrow."
+                            error.message?.contains("503") == true ->
+                                "The AI service is temporarily experiencing high traffic. Please try again in a few moments."
+                            error.message?.contains("timeout", ignoreCase = true) == true ->
+                                "The request timed out. Please check your internet connection and try again."
+                            error.message?.contains("offline", ignoreCase = true) == true || error.message?.contains("Unable to resolve host", ignoreCase = true) == true ->
+                                "You appear to be offline. Please reconnect to the internet to analyze photos."
+                            else ->
+                                error.message ?: "Failed to analyze photo. Ensure backend is running."
+                        }
                         _uiState.update {
                             it.copy(
                                 isSending = false,
-                                errorMessage = error.message ?: "Failed to analyze photo. Ensure backend is running."
+                                errorMessage = friendlyMessage
                             )
                         }
                     }
@@ -279,13 +291,36 @@ class AiChatViewModel @Inject constructor(
                 val consumedCalories = getDailyConsumedCalories(todayIso)
                 val remainingCalories = targetCalories - consumedCalories
 
+                // Pre-flight client safety check: intercept crisis/eating-disorder cues before server call.
+                // Guarantees zero quota consumption and instantaneous local support.
+                if (checkClientCrisisKeywords(text)) {
+                    val crisisReply = getRegionAwareCrisisResponse()
+                    aiCoachRepository.saveMessage(
+                        ChatMessage(
+                            id = 0L,
+                            conversationId = convId,
+                            role = MessageRole.ASSISTANT,
+                            text = crisisReply,
+                            structuredDataJson = "{\"crisis_intercepted\": true, \"source\": \"client_safety_guardrail\"}",
+                            createdAt = System.currentTimeMillis()
+                        )
+                    )
+                    _uiState.update {
+                        it.copy(
+                            isSending = false,
+                            errorMessage = null
+                        )
+                    }
+                    return@launch
+                }
+
                 val result = aiCoachRepository.sendChatMessage(
                     conversationId = convId,
                     userContent = text,
                     remainingCalories = remainingCalories,
                     consumedCalories = consumedCalories,
                     targetCalories = targetCalories,
-                    goal = profile?.goal?.name,
+                    goal = profile?.goal?.toHumanLabel() ?: "maintain weight",
                     recentTrends = recentTrends
                 )
 
@@ -295,47 +330,55 @@ class AiChatViewModel @Inject constructor(
                         handleSuggestedAction(response.suggestedAction)
                     },
                     onFailure = { error ->
-                        if (error is com.kcalgrindai.app.domain.model.AICoachQuotaExceededException) {
+                        if (error is com.kcalgrindai.app.domain.model.AICoachQuotaExceededException || error.message?.contains("429") == true) {
+                            val limitMsg = error.message ?: "You've reached today's free AI Coach limit. Your messages reset tomorrow."
                             _uiState.update {
                                 it.copy(
                                     isSending = false,
-                                    errorMessage = error.message
+                                    errorMessage = limitMsg
                                 )
                             }
                         } else {
-                            val fallbackReply = generateFallbackCoachResponse(text, targetCalories)
-                            aiCoachRepository.saveMessage(
-                                ChatMessage(
-                                    id = 0L,
-                                    conversationId = convId,
-                                    role = MessageRole.ASSISTANT,
-                                    text = fallbackReply,
-                                    structuredDataJson = "{\"is_fallback\": true, \"source\": \"offline_guidance\"}",
-                                    createdAt = System.currentTimeMillis()
+                            if (checkClientCrisisKeywords(text)) {
+                                aiCoachRepository.saveMessage(
+                                    ChatMessage(
+                                        id = 0L,
+                                        conversationId = convId,
+                                        role = MessageRole.ASSISTANT,
+                                        text = getRegionAwareCrisisResponse(),
+                                        structuredDataJson = "{\"crisis_intercepted\": true, \"source\": \"client_safety_guardrail\"}",
+                                        createdAt = System.currentTimeMillis()
+                                    )
                                 )
-                            )
-                            _uiState.update { it.copy(isSending = false) }
+                                _uiState.update {
+                                    it.copy(
+                                        isSending = false,
+                                        errorMessage = null
+                                    )
+                                }
+                            } else {
+                                val summaryReply = buildDeterministicOfflineSummary(targetCalories, goal, todayIso)
+                                aiCoachRepository.saveMessage(
+                                    ChatMessage(
+                                        id = 0L,
+                                        conversationId = convId,
+                                        role = MessageRole.ASSISTANT,
+                                        text = summaryReply,
+                                        structuredDataJson = "{\"is_fallback\": true, \"source\": \"offline_summary\"}",
+                                        createdAt = System.currentTimeMillis()
+                                    )
+                                )
+                                _uiState.update {
+                                    it.copy(
+                                        isSending = false,
+                                        errorMessage = "Sproutling needs an internet connection"
+                                    )
+                                }
+                            }
                         }
                     }
                 )
             }
-        }
-    }
-
-    internal suspend fun getDailyConsumedCalories(dateIso: String): Int {
-        return try {
-            val total = mealLogRepository.observeMealsWithItemsByDate(dateIso)
-                .first()
-                .sumOf { mealWithItems ->
-                    if (mealWithItems.items.isNotEmpty()) {
-                        mealWithItems.items.sumOf { it.calories }
-                    } else {
-                        mealWithItems.meal.totalCalories
-                    }
-                }
-            total.roundToInt()
-        } catch (_: Exception) {
-            0
         }
     }
 
@@ -387,27 +430,136 @@ class AiChatViewModel @Inject constructor(
         }
     }
 
-    private fun generateFallbackCoachResponse(query: String, targetCalories: Int): String {
-        val q = query.lowercase()
-        return when {
-            q.contains("protein") || q.contains("dinner") -> {
-                "Here are high-protein dinner recommendations aligned with your goals:\n\n" +
-                "• Grilled Herb Chicken Breast (~180g)\n  360 kcal | 42g Protein | 4g Carbs | 8g Fat\n  Serve with steamed broccoli and quinoa for optimal recovery.\n\n" +
-                "• Wild Baked Salmon Fillet (~200g)\n  410 kcal | 40g Protein | 2g Carbs | 24g Healthy Fats\n  Rich in Omega-3 fatty acids for reduced inflammation.\n\n" +
-                "• Crispy Edamame & Tofu Bowl (~250g)\n  380 kcal | 38g Protein | 18g Carbs | 14g Fat\n  High-fiber, plant-based powerhouse."
+    internal suspend fun getDailyConsumedCalories(dateIso: String): Int {
+        return getDailyConsumedNutrition(dateIso).calories
+    }
+
+    internal suspend fun getDailyConsumedNutrition(dateIso: String): ConsumedDailyNutrition {
+        return try {
+            val meals = mealLogRepository.observeMealsWithItemsByDate(dateIso).first()
+            var cal = 0.0
+            var p = 0.0
+            var c = 0.0
+            var f = 0.0
+            for (mealWithItems in meals) {
+                if (mealWithItems.items.isNotEmpty()) {
+                    for (item in mealWithItems.items) {
+                        cal += item.calories
+                        p += item.proteinG
+                        c += item.carbsG
+                        f += item.fatG
+                    }
+                } else {
+                    cal += mealWithItems.meal.totalCalories
+                }
             }
-            q.contains("oatmeal") || q.contains("breakfast") -> {
-                "A bowl of oatmeal with fresh blueberries and honey is a fantastic complex carb choice (~320 kcal, 8g protein, 58g carbs). You can log this to your Diary with one tap via the Add Food tab or '+' button!"
-            }
-            q.contains("water") || q.contains("hydrate") -> {
-                "Great job keeping up with hydration! I've noted 500ml of water. Consistent hydration optimizes metabolic rate and nutrient delivery throughout the day."
-            }
-            q.contains("macro") || q.contains("carb") || q.contains("calorie") -> {
-                "Your daily target is set at $targetCalories kcal. To maximize your progress, prioritize hitting your daily protein target first, then fill in remaining energy needs with nutrient-dense complex carbs and healthy fats."
-            }
-            else -> {
-                "I'm here to support your fitness journey! I can help you plan balanced meals, optimize your macro split, suggest high-protein snacks, or answer any nutritional questions."
-            }
+            ConsumedDailyNutrition(
+                calories = cal.roundToInt(),
+                proteinG = p,
+                carbsG = c,
+                fatG = f
+            )
+        } catch (_: Exception) {
+            ConsumedDailyNutrition()
+        }
+    }
+
+    internal suspend fun buildDeterministicOfflineSummary(
+        targetCalories: Int,
+        goal: com.kcalgrindai.app.domain.model.NutritionGoal?,
+        dateIso: String
+    ): String {
+        val consumed = getDailyConsumedNutrition(dateIso)
+        val remainingCalories = (targetCalories - consumed.calories).coerceAtLeast(0)
+
+        val targetProtein = (goal?.proteinG ?: (targetCalories * 0.25 / 4.0)).roundToInt()
+        val consumedProtein = consumed.proteinG.roundToInt()
+        val remainingProtein = (targetProtein - consumedProtein).coerceAtLeast(0)
+
+        val targetCarbs = (goal?.carbsG ?: (targetCalories * 0.50 / 4.0)).roundToInt()
+        val consumedCarbs = consumed.carbsG.roundToInt()
+        val remainingCarbs = (targetCarbs - consumedCarbs).coerceAtLeast(0)
+
+        val targetFat = (goal?.fatG ?: (targetCalories * 0.25 / 9.0)).roundToInt()
+        val consumedFat = consumed.fatG.roundToInt()
+        val remainingFat = (targetFat - consumedFat).coerceAtLeast(0)
+
+        return buildString {
+            appendLine("Sproutling needs an internet connection.")
+            appendLine()
+            appendLine("Today's remaining budget:")
+            appendLine("• Calories: $remainingCalories kcal left (Target: $targetCalories kcal, Consumed: ${consumed.calories} kcal)")
+            appendLine("• Protein: ${remainingProtein}g left (Target: ${targetProtein}g)")
+            appendLine("• Carbs: ${remainingCarbs}g left (Target: ${targetCarbs}g)")
+            append("• Fat: ${remainingFat}g left (Target: ${targetFat}g)")
+        }
+    }
+
+    companion object {
+        data class ConsumedDailyNutrition(
+            val calories: Int = 0,
+            val proteinG: Double = 0.0,
+            val carbsG: Double = 0.0,
+            val fatG: Double = 0.0
+        )
+
+        fun getRegionAwareCrisisResponse(countryCode: String = java.util.Locale.getDefault().country): String {
+            // Default to India + 112 primary regardless of device locale; list other regions below
+            return """
+                I care deeply about your health and safety, and I cannot provide guidance on extreme restriction, fasting, purging, or self-harm.
+
+                If you are experiencing distress, struggling with eating habits, or feeling overwhelmed, compassionate support is available right now:
+
+                Emergency: 112 (National Emergency Number, India)
+                India Helplines:
+                • Tele-MANAS (24/7 National Mental Health): 14416 or 1800-891-4416 (telemanas.mohfw.gov.in)
+                • KIRAN (24/7 Rehabilitation & Mental Health): 1800-599-0019 (disabilityaffairs.gov.in)
+                • AASRA (24/7 Suicide Prevention): +91 98204 66726 (aasra.info)
+                • Vandrevala Foundation (24/7 Free Counseling): +91 9999 666 555 (vandrevalafoundation.com)
+
+                United States & Canada:
+                • Emergency: 911
+                • 988 Suicide & Crisis Lifeline: Call or text 988 (988lifeline.org)
+                • National Association of Anorexia Nervosa and Associated Disorders (ANAD): 1-888-375-7767 (anad.org)
+                • Crisis Text Line: Text HOME to 741741 (crisistextline.org)
+
+                United Kingdom:
+                • Emergency: 999 or 112
+                • Samaritans: 116 123 (samaritans.org)
+                • Beat Eating Disorders Helpline: 0808 801 0677 (beateatingdisorders.org.uk)
+                • Shout Crisis Text Line: Text SHOUT to 85258 (giveusashout.org)
+
+                International:
+                • Befrienders Worldwide: befrienders.org
+                • Find A Helpline (worldwide directory): findahelpline.com
+
+                Please reach out to one of these services or speak with a licensed healthcare provider who can support you safely.
+            """.trimIndent()
+        }
+
+        val CRISIS_SUPPORT_RESPONSE_TEXT: String
+            get() = getRegionAwareCrisisResponse()
+
+        private val CLIENT_CRISIS_PATTERNS = listOf(
+            Regex("""\b(kill\s+myself|kil{1,2}\s+myself|commit\s+suicide|suicid[ea]?|suicde|sucide|end\s+my\s+life|want\s+to\s+die|suicidal)\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(starve\s+myself|starr?v(e|ing)\s+(myself|to\s+death)|how\s+to\s+starr?ve|starving\s+myself|starve\s+to\s+death|starve\b)""", RegexOption.IGNORE_CASE),
+            Regex("""\b(purge|purging|purgg?ing|purg(e|ed))\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(make\s+myself\s+throw\s*up|throw\s*up\s+after\s+(eating|dinner|food|meals?))\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(vom+it(ing)?\s+after\s+(eating|meals?|food))\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(laxatives?\s+(to\s+empty|after|for\s+weight)|empty\s+my\s+stomach\s+(with\s+laxatives?|after))\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(chew\s+and\s+spit)\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(hide\s+(my\s+)?(anorexia|bulimia|eating\s+disorder)|anorexia|bulimia|anorexic|bulimic)\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(punish\s+myself\s+by\s+(not\s+eating|starving))\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(\d+[- ]day\s+(water\s+)?fast|water\s+fast(ing)?|dry\s+fast(ing)?|fast\s+(for\s+)?(7|10|14|21|30)\s+days)\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(eat(ing)?\s+(only\s+)?(0|50|100|200|300|500)\s+calories(\s+a\s+day)?)\b""", RegexOption.IGNORE_CASE),
+            // Hinglish crisis patterns
+            Regex("""\b(mar\s+ja(na|un|unga|ungi|na\s+chahta|na\s+chahti)|jaan\s+de\s+(dunga|dungi|dena)|zindagi\s+khatam|suicide\s+karn(a|i|e))\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(khana\s+(chhod\s+(dunga|dungi|dena)|chhodna|chhod\s+diya)|bhukh(a|i)\s+rah(na|unga|ungi))\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(khana\s+khane\s+ke\s+baad\s+(ulti|vomit)|ulti\s+karn(a|i)\s+khana\s+ke\s+baad)\b""", RegexOption.IGNORE_CASE)
+        )
+
+        internal fun checkClientCrisisKeywords(text: String): Boolean {
+            return CLIENT_CRISIS_PATTERNS.any { it.containsMatchIn(text) }
         }
     }
 }

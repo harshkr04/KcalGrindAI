@@ -1,4 +1,4 @@
-# Kcal Grind AI — UI / Design System Extraction
+# KcalGrind — UI / Design System Extraction
 
 ## 1. The rule
 

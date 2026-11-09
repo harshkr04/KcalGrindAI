@@ -78,6 +78,35 @@ import com.kcalgrindai.app.R
 import com.kcalgrindai.app.core.designsystem.components.KcalGrindLiquidBadge
 import com.kcalgrindai.app.core.designsystem.components.KcalGrindLiquidCard
 import com.kcalgrindai.app.core.designsystem.v3Colors
+import com.kcalgrindai.app.core.designsystem.KcalGrindChipDarkBg
+import com.kcalgrindai.app.core.designsystem.KcalGrindChipLightBg
+import com.kcalgrindai.app.core.designsystem.KcalGrindChipDarkBorder
+import com.kcalgrindai.app.core.designsystem.KcalGrindChipLightBorder
+import com.kcalgrindai.app.core.designsystem.KcalGrindHighlightDarkBg
+import com.kcalgrindai.app.core.designsystem.KcalGrindHighlightLightBg
+import com.kcalgrindai.app.core.designsystem.KcalGrindHighlightDarkBorder
+import com.kcalgrindai.app.core.designsystem.KcalGrindHighlightLightBorder
+import com.kcalgrindai.app.core.designsystem.KcalGrindOverBudgetRed
+import com.kcalgrindai.app.core.designsystem.KcalGrindDarkBarUnfilled
+import com.kcalgrindai.app.core.designsystem.KcalGrindLightBarUnfilled
+import com.kcalgrindai.app.core.designsystem.KcalGrindDarkSecondaryBar
+import com.kcalgrindai.app.core.designsystem.KcalGrindLightSecondaryBar
+import com.kcalgrindai.app.core.designsystem.KcalGrindDarkMutedBar
+import com.kcalgrindai.app.core.designsystem.KcalGrindLightMutedBar
+import com.kcalgrindai.app.core.designsystem.KcalGrindDeepDarkSurface
+import com.kcalgrindai.app.core.designsystem.KcalGrindDeepDarkBorder
+import com.kcalgrindai.app.core.designsystem.KcalGrindDeepDarkBorderLight
+import com.kcalgrindai.app.core.designsystem.KcalGrindSurfaceCharcoal
+import com.kcalgrindai.app.core.designsystem.KcalGrindWaterBlue
+import com.kcalgrindai.app.core.designsystem.KcalGrindWaterBlueDark
+import com.kcalgrindai.app.core.designsystem.KcalGrindDarkWaterCardBg
+import com.kcalgrindai.app.core.designsystem.KcalGrindOnPrimary
+import com.kcalgrindai.app.core.designsystem.KcalGrindDarkPromoBg
+import com.kcalgrindai.app.core.designsystem.KcalGrindLightPromoBg
+import com.kcalgrindai.app.core.designsystem.KcalGrindDarkPromoBorder
+import com.kcalgrindai.app.core.designsystem.KcalGrindLightPromoBorder
+import com.kcalgrindai.app.core.designsystem.KcalGrindDarkForest
+import com.kcalgrindai.app.core.designsystem.KcalGrindLightDeepText
 import com.kcalgrindai.app.core.navigation.KcalGrindRoute
 import com.kcalgrindai.app.domain.model.MealType
 import com.kcalgrindai.app.domain.model.SproutlingMood
@@ -100,6 +129,9 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val v3 = MaterialTheme.v3Colors
     var showActivityDetailsDialog by remember { mutableStateOf(false) }
+    var showRemindersSheet by remember { mutableStateOf(false) }
+    val mealRemindersEnabled by viewModel.mealRemindersEnabled.collectAsStateWithLifecycle()
+    val hydrationRemindersEnabled by viewModel.hydrationRemindersEnabled.collectAsStateWithLifecycle()
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
@@ -165,7 +197,8 @@ fun HomeScreen(
                             userName = uiState.userName,
                             goalLabel = uiState.goalLabel,
                             streakDays = uiState.streakDays,
-                            onOpenProfile = onNavigateToProfile
+                            onOpenProfile = onNavigateToProfile,
+                            onOpenReminders = { showRemindersSheet = true }
                         )
                     }
 
@@ -255,6 +288,16 @@ fun HomeScreen(
             onDismiss = { showActivityDetailsDialog = false }
         )
     }
+
+    if (showRemindersSheet) {
+        com.kcalgrindai.app.feature.home.components.RemindersBottomSheet(
+            onDismiss = { showRemindersSheet = false },
+            mealRemindersEnabled = mealRemindersEnabled,
+            onMealRemindersChanged = { viewModel.setMealRemindersEnabled(it) },
+            hydrationRemindersEnabled = hydrationRemindersEnabled,
+            onHydrationRemindersChanged = { viewModel.setHydrationRemindersEnabled(it) }
+        )
+    }
 }
 
 // ============================================================================
@@ -267,6 +310,7 @@ private fun HomeTopAppBar(
     goalLabel: String,
     streakDays: Int,
     onOpenProfile: () -> Unit,
+    onOpenReminders: () -> Unit = onOpenProfile,
     modifier: Modifier = Modifier
 ) {
     val v3 = MaterialTheme.v3Colors
@@ -281,25 +325,22 @@ private fun HomeTopAppBar(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(
-                modifier = Modifier
-                    .size(46.dp)
-                    .clickable(onClick = onOpenProfile)
+                contentAlignment = Alignment.Center
             ) {
-                // Profile Avatar Container with Emerald Border Rim
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    shape = CircleShape,
-                    color = v3.surfaceElevated,
-                    border = BorderStroke(2.dp, v3.emeraldAccent)
+                com.kcalgrindai.app.core.designsystem.components.CircleIconButton(
+                    onClick = onOpenProfile,
+                    visualSize = 44.dp,
+                    containerColor = v3.surfaceElevated,
+                    contentColor = v3.emeraldAccent,
+                    border = BorderStroke(2.dp, v3.emeraldAccent),
+                    contentDescription = "Profile"
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Profile",
-                            tint = v3.emeraldAccent,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Profile",
+                        tint = v3.emeraldAccent,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
                 // Online Emerald Status Dot
                 Box(
@@ -343,8 +384,8 @@ private fun HomeTopAppBar(
             // Streak Capsule Chip per V3 design
             Surface(
                 shape = RoundedCornerShape(9999.dp),
-                color = if (v3.isDark) Color(0xFF1F2622) else Color(0xFFE5F7ED),
-                border = BorderStroke(1.dp, if (v3.isDark) Color(0xFF2F3C34) else Color(0xFFBCE7D0))
+                color = if (v3.isDark) KcalGrindChipDarkBg else KcalGrindChipLightBg,
+                border = BorderStroke(1.dp, if (v3.isDark) KcalGrindChipDarkBorder else KcalGrindChipLightBorder)
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -366,22 +407,21 @@ private fun HomeTopAppBar(
                 }
             }
 
-            // Profile / Settings Button
-            Surface(
-                onClick = onOpenProfile,
-                shape = CircleShape,
-                color = v3.surfaceElevated,
+            // Reminders / Notification Bell Button (CircleIconButton)
+            com.kcalgrindai.app.core.designsystem.components.CircleIconButton(
+                onClick = onOpenReminders,
+                visualSize = 38.dp,
+                containerColor = v3.surfaceElevated,
+                contentColor = v3.textSecondary,
                 border = BorderStroke(1.dp, v3.subtleBorder),
-                modifier = Modifier.size(38.dp)
+                contentDescription = "Reminders"
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = "Notifications & Settings",
-                        tint = v3.textSecondary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = "Reminders",
+                    tint = v3.textSecondary,
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
     }
@@ -450,8 +490,8 @@ private fun HomeCalorieEnergyCard(
 
                 Surface(
                     shape = RoundedCornerShape(6.dp),
-                    color = if (v3.isDark) Color(0xFF183526) else Color(0xFFE2F6EB),
-                    border = BorderStroke(1.dp, if (v3.isDark) Color(0xFF235038) else Color(0xFFACDFBF))
+                    color = if (v3.isDark) KcalGrindHighlightDarkBg else KcalGrindHighlightLightBg,
+                    border = BorderStroke(1.dp, if (v3.isDark) KcalGrindHighlightDarkBorder else KcalGrindHighlightLightBorder)
                 ) {
                     Text(
                         text = "Target: ${numberFormatter.format(targetCalories)} kcal",
@@ -494,9 +534,9 @@ private fun HomeCalorieEnergyCard(
                                 .clip(RoundedCornerShape(3.dp))
                                 .background(
                                     when {
-                                        isOver -> Color(0xFFE53935)
+                                        isOver -> KcalGrindOverBudgetRed
                                         isActive -> v3.emeraldAccent
-                                        else -> if (v3.isDark) Color(0xFF222B26) else Color(0xFFD6DED9)
+                                        else -> if (v3.isDark) KcalGrindDarkBarUnfilled else KcalGrindLightBarUnfilled
                                     }
                                 )
                                 .border(
@@ -520,7 +560,7 @@ private fun HomeCalorieEnergyCard(
                         text = numberFormatter.format(displayCalories),
                         style = MaterialTheme.typography.displayLarge.copy(
                             fontWeight = FontWeight.ExtraBold,
-                            color = if (isOver) Color(0xFFE53935) else v3.textPrimary,
+                            color = if (isOver) KcalGrindOverBudgetRed else v3.textPrimary,
                             fontSize = 44.sp,
                             lineHeight = 44.sp
                         )
@@ -529,7 +569,7 @@ private fun HomeCalorieEnergyCard(
                         text = if (isOver) "KCAL OVER" else "KCAL REMAINING",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = if (isOver) Color(0xFFE53935) else v3.emeraldAccent,
+                            color = if (isOver) KcalGrindOverBudgetRed else v3.emeraldAccent,
                             fontSize = 11.sp,
                             letterSpacing = 0.5.sp
                         ),
@@ -579,7 +619,7 @@ private fun HomeCalorieEnergyCard(
                     current = carbs.currentGrams.roundToInt(),
                     target = carbs.targetGrams.roundToInt(),
                     percent = (carbs.progressFraction * 100).toInt(),
-                    barColor = if (v3.isDark) Color(0xFFA8B5AC) else Color(0xFF5B6E62),
+                    barColor = if (v3.isDark) KcalGrindDarkSecondaryBar else KcalGrindLightSecondaryBar,
                     modifier = Modifier.weight(1f)
                 )
 
@@ -589,7 +629,7 @@ private fun HomeCalorieEnergyCard(
                     current = fat.currentGrams.roundToInt(),
                     target = fat.targetGrams.roundToInt(),
                     percent = (fat.progressFraction * 100).toInt(),
-                    barColor = if (v3.isDark) Color(0xFF5E6D64) else Color(0xFF8B9E93),
+                    barColor = if (v3.isDark) KcalGrindDarkMutedBar else KcalGrindLightMutedBar,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -734,13 +774,13 @@ private fun HomeSproutlingCard(
                 Surface(
                     modifier = Modifier.size(56.dp),
                     shape = RoundedCornerShape(18.dp),
-                    color = if (v3.isDark) Color(0xFF142019) else Color(0xFFE0F5E9),
-                    border = BorderStroke(1.dp, if (v3.isDark) Color(0xFF2B4736) else Color(0xFFA6E0BD))
+                    color = if (v3.isDark) KcalGrindDeepDarkSurface else KcalGrindHighlightLightBg,
+                    border = BorderStroke(1.dp, if (v3.isDark) KcalGrindDeepDarkBorder else KcalGrindDeepDarkBorderLight)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Image(
                             painter = painterResource(sproutlingDrawable),
-                            contentDescription = "Sproutling Coach",
+                            contentDescription = "Sproutling",
                             modifier = Modifier.size(38.dp)
                         )
                     }
@@ -754,7 +794,7 @@ private fun HomeSproutlingCard(
                         text = "AI COACH",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0E1B13),
+                            color = KcalGrindSurfaceCharcoal,
                             fontSize = 8.sp,
                             letterSpacing = 0.5.sp
                         ),
@@ -887,7 +927,7 @@ private fun HomeWaterHydrationCard(
     var showHistory by remember { mutableStateOf(false) }
 
     val numberFormatter = remember { NumberFormat.getNumberInstance(Locale.US) }
-    val waterBlue = Color(0xFF38BDF8)
+    val waterBlue = KcalGrindWaterBlue
 
     KcalGrindLiquidCard(
         modifier = modifier.fillMaxWidth(),
@@ -954,7 +994,7 @@ private fun HomeWaterHydrationCard(
                             .clip(RoundedCornerShape(5.dp))
                             .background(
                                 Brush.horizontalGradient(
-                                    listOf(Color(0xFF0284C7), waterBlue)
+                                    listOf(KcalGrindWaterBlueDark, waterBlue)
                                 )
                             )
                     )
@@ -964,7 +1004,7 @@ private fun HomeWaterHydrationCard(
                 Surface(
                     onClick = { onLogWater(250) },
                     shape = RoundedCornerShape(9999.dp),
-                    color = if (v3.isDark) Color(0xFF182B20) else Color(0xFFE2F6EB),
+                    color = if (v3.isDark) KcalGrindDarkWaterCardBg else KcalGrindHighlightLightBg,
                     border = BorderStroke(1.dp, v3.emeraldAccent.copy(alpha = 0.4f))
                 ) {
                     Text(
@@ -1111,7 +1151,7 @@ private fun HomeWaterHydrationCard(
                                         Icon(
                                             imageVector = Icons.Default.Delete,
                                             contentDescription = "Delete entry",
-                                            tint = Color(0xFFE53935),
+                                            tint = KcalGrindOverBudgetRed,
                                             modifier = Modifier.size(14.dp)
                                         )
                                     }
@@ -1303,7 +1343,7 @@ private fun HomeActivityCard(
                         Text(
                             text = "Connect",
                             style = MaterialTheme.typography.labelSmall.copy(
-                                color = Color(0xFF101211),
+                                color = KcalGrindOnPrimary,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 11.sp
                             ),
@@ -1421,7 +1461,7 @@ private fun ActivityDetailsDialog(
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = v3.emeraldAccent,
-                    contentColor = Color(0xFF101211)
+                    contentColor = KcalGrindOnPrimary
                 )
             ) {
                 Text("Got it", fontWeight = FontWeight.Bold)
@@ -1639,8 +1679,8 @@ fun HomeWidgetPromoCard(
 
     Surface(
         shape = RoundedCornerShape(22.dp),
-        color = if (v3.isDark) Color(0xFF16251D) else Color(0xFFD6F5E4),
-        border = BorderStroke(1.dp, if (v3.isDark) Color(0xFF254633) else Color(0xFFA5E6BF)),
+        color = if (v3.isDark) KcalGrindDarkPromoBg else KcalGrindLightPromoBg,
+        border = BorderStroke(1.dp, if (v3.isDark) KcalGrindDarkPromoBorder else KcalGrindLightPromoBorder),
         modifier = modifier.fillMaxWidth()
     ) {
         Box(modifier = Modifier.padding(16.dp)) {
@@ -1654,7 +1694,7 @@ fun HomeWidgetPromoCard(
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Dismiss banner",
-                    tint = if (v3.isDark) v3.emeraldAccent.copy(alpha = 0.7f) else Color(0xFF0F5238).copy(alpha = 0.75f),
+                    tint = if (v3.isDark) v3.emeraldAccent.copy(alpha = 0.7f) else KcalGrindDarkForest.copy(alpha = 0.75f),
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -1677,7 +1717,7 @@ fun HomeWidgetPromoCard(
                     Icon(
                         imageVector = Icons.Default.Eco,
                         contentDescription = "Sproutling",
-                        tint = Color(0xFF101211),
+                        tint = KcalGrindOnPrimary,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -1687,7 +1727,7 @@ fun HomeWidgetPromoCard(
                         text = "Bring Sproutling to your home screen",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = if (v3.isDark) v3.textPrimary else Color(0xFF0F5238),
+                            color = if (v3.isDark) v3.textPrimary else KcalGrindDarkForest,
                             fontSize = 16.sp,
                             lineHeight = 21.sp
                         )
@@ -1696,9 +1736,9 @@ fun HomeWidgetPromoCard(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "Glance at your calories and track water without opening the app.",
+                        text = "Check your calories and track water directly from your home-screen widget without opening the app.",
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = if (v3.isDark) v3.textSecondary else Color(0xFF191C1C),
+                            color = if (v3.isDark) v3.textSecondary else KcalGrindLightDeepText,
                             fontSize = 12.sp,
                             lineHeight = 17.sp
                         )
@@ -1723,14 +1763,14 @@ fun HomeWidgetPromoCard(
                                 Icon(
                                     imageVector = Icons.Default.Widgets,
                                     contentDescription = null,
-                                    tint = Color(0xFF101211),
+                                    tint = KcalGrindOnPrimary,
                                     modifier = Modifier.size(15.dp)
                                 )
                                 Text(
                                     text = "Add widget",
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF101211),
+                                        color = KcalGrindOnPrimary,
                                         fontSize = 12.sp
                                     )
                                 )
@@ -1749,14 +1789,14 @@ fun HomeWidgetPromoCard(
                                 text = "Widget settings",
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.SemiBold,
-                                    color = if (v3.isDark) v3.emeraldAccent else Color(0xFF0F5238),
+                                    color = if (v3.isDark) v3.emeraldAccent else KcalGrindDarkForest,
                                     fontSize = 12.sp
                                 )
                             )
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                 contentDescription = null,
-                                tint = if (v3.isDark) v3.emeraldAccent else Color(0xFF0F5238),
+                                tint = if (v3.isDark) v3.emeraldAccent else KcalGrindDarkForest,
                                 modifier = Modifier.size(15.dp)
                             )
                         }

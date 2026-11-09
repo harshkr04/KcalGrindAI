@@ -1,4 +1,4 @@
-# Kcal Grind AI — AI Integration
+# KcalGrind — AI Integration
 
 ## 1. Non-negotiable rule
 

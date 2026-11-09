@@ -62,7 +62,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -70,6 +73,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -79,9 +84,11 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
+import com.kcalgrindai.app.BuildConfig
 import com.kcalgrindai.app.R
 import com.kcalgrindai.app.core.designsystem.components.KcalGrindCoachIcon
 import com.kcalgrindai.app.core.designsystem.components.liquidGlass
+import com.kcalgrindai.app.core.designsystem.KcalGrindOnPrimary
 import com.kcalgrindai.app.core.designsystem.v3Colors
 
 @Composable
@@ -127,18 +134,51 @@ fun AuthScreen(
             if (e.statusCode == GoogleSignInStatusCodes.SIGN_IN_CANCELLED) {
                 viewModel.onGoogleSignInCancelled()
             } else {
-                val userFriendlyMessage = when (e.statusCode) {
-                    CommonStatusCodes.DEVELOPER_ERROR ->
-                        "Google Sign-In configuration error (Code 10): Ensure SHA-1 fingerprint and Web Client ID are registered in Firebase Console."
-                    CommonStatusCodes.NETWORK_ERROR ->
-                        "Network error during Google Sign-In. Please check your internet connection."
-                    else ->
-                        "Google Sign-In failed (Code ${e.statusCode}): ${e.localizedMessage ?: "Unknown error"}"
+                if (BuildConfig.DEBUG) {
+                    android.util.Log.e("AuthScreen", "Google Sign-In ApiException statusCode=${e.statusCode}", e)
+                }
+                // Log non-fatal Crashlytics event (zero tokens or emails, strictly anonymous error code)
+                com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.recordException(
+                    e,
+                    mapOf(
+                        "auth_flow" to "google_sign_in",
+                        "status_code" to e.statusCode.toString()
+                    )
+                )
+                val userFriendlyMessage = if (BuildConfig.DEBUG) {
+                    when (e.statusCode) {
+                        CommonStatusCodes.DEVELOPER_ERROR ->
+                            "Google Sign-In configuration error (Code 10): Ensure SHA-1 fingerprint and Web Client ID are registered in Firebase Console."
+                        CommonStatusCodes.NETWORK_ERROR ->
+                            "Network error during Google Sign-In. Please check your internet connection."
+                        else ->
+                            "Google Sign-In failed (Code ${e.statusCode}): ${e.localizedMessage ?: "Unknown error"}"
+                    }
+                } else {
+                    when (e.statusCode) {
+                        CommonStatusCodes.NETWORK_ERROR ->
+                            "Network error during Google Sign-In. Please check your internet connection."
+                        else ->
+                            "Google Sign-In is temporarily unavailable. Please sign in with email or continue as guest."
+                    }
                 }
                 viewModel.onGoogleSignInFailure(userFriendlyMessage)
             }
         } catch (e: Exception) {
-            viewModel.onGoogleSignInFailure(e.localizedMessage ?: "Unexpected error during Google Sign-In.")
+            if (BuildConfig.DEBUG) {
+                android.util.Log.e("AuthScreen", "Google Sign-In Exception", e)
+            }
+            // Log non-fatal Crashlytics event (zero tokens or emails)
+            com.kcalgrindai.app.core.util.KcalGrindAICrashReporter.recordException(
+                e,
+                mapOf("auth_flow" to "google_sign_in_general")
+            )
+            val userFriendlyMessage = if (BuildConfig.DEBUG) {
+                e.localizedMessage ?: "Unexpected error during Google Sign-In."
+            } else {
+                "Unable to sign in with Google right now. Please try again or use another sign-in method."
+            }
+            viewModel.onGoogleSignInFailure(userFriendlyMessage)
         }
     }
 
@@ -162,12 +202,12 @@ fun AuthScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Top Header: App Identity & V3 Liquid Pill
+            // Top Header: App Identity
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
@@ -190,38 +230,12 @@ fun AuthScreen(
                     }
 
                     Text(
-                        text = "Kcal Grind AI",
+                        text = "KcalGrind",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = v3.textPrimary,
                         letterSpacing = 0.5.sp
                     )
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = v3.surface,
-                    border = BorderStroke(1.dp, v3.subtleBorder.copy(alpha = 0.7f))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .clip(CircleShape)
-                                .background(v3.emeraldAccent)
-                        )
-                        Text(
-                            text = "V3 LIQUID",
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = v3.emeraldAccent
-                        )
-                    }
                 }
             }
 
@@ -265,7 +279,7 @@ fun AuthScreen(
                             .padding(bottom = 6.dp)
                     ) {
                         Text(
-                            text = "SPROUTLING AI",
+                            text = "SPROUTLING",
                             fontFamily = FontFamily.Monospace,
                             fontSize = 8.sp,
                             fontWeight = FontWeight.Bold,
@@ -330,32 +344,6 @@ fun AuthScreen(
                         )
                     }
                 }
-
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = v3.surface.copy(alpha = 0.8f),
-                    border = BorderStroke(1.dp, v3.subtleBorder.copy(alpha = 0.7f))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(5.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Widgets,
-                            contentDescription = null,
-                            tint = v3.emeraldAccent,
-                            modifier = Modifier.size(13.dp)
-                        )
-                        Text(
-                            text = "Android Glance",
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = v3.textSecondary
-                        )
-                    }
-                }
             }
 
             Spacer(modifier = Modifier.height(26.dp))
@@ -405,9 +393,12 @@ fun AuthScreen(
                 onClick = {
                     if (uiState.isLoading) return@Button
                     if (webClientId.isNullOrBlank()) {
-                        viewModel.onGoogleSignInFailure(
+                        val msg = if (BuildConfig.DEBUG) {
                             "Google Sign-In configuration required: OAuth Web Client ID is missing in google-services.json. Please add Web Client ID in Firebase Console."
-                        )
+                        } else {
+                            "Google Sign-In is temporarily unavailable. Please sign in with email or continue as guest."
+                        }
+                        viewModel.onGoogleSignInFailure(msg)
                     } else {
                         viewModel.onGoogleSignInStarted()
                         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -422,9 +413,9 @@ fun AuthScreen(
                 shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White,
-                    contentColor = Color(0xFF101211),
+                    contentColor = KcalGrindOnPrimary,
                     disabledContainerColor = Color.White.copy(alpha = 0.6f),
-                    disabledContentColor = Color(0xFF101211).copy(alpha = 0.6f)
+                    disabledContentColor = KcalGrindOnPrimary.copy(alpha = 0.6f)
                 ),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp),
                 modifier = Modifier
@@ -457,7 +448,7 @@ fun AuthScreen(
                             text = "Continue with Google",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF101211)
+                            color = KcalGrindOnPrimary
                         )
                     }
                 }
@@ -774,7 +765,7 @@ fun AuthScreen(
                             shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = v3.emeraldAccent,
-                                contentColor = Color(0xFF101211)
+                                contentColor = KcalGrindOnPrimary
                             ),
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -782,7 +773,7 @@ fun AuthScreen(
                         ) {
                             if (uiState.isLoading) {
                                 CircularProgressIndicator(
-                                    color = Color(0xFF101211),
+                                    color = KcalGrindOnPrimary,
                                     strokeWidth = 2.dp,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -884,13 +875,38 @@ fun AuthScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Footer Policy Links
-            Text(
-                text = "By signing in, you agree to our Terms of Service and Privacy Policy.",
-                style = MaterialTheme.typography.bodySmall,
-                fontSize = 11.sp,
-                color = v3.textMuted,
-                textAlign = TextAlign.Center,
+            // Footer Privacy Policy Link
+            val uriHandler = LocalUriHandler.current
+            val privacyAnnotatedString = buildAnnotatedString {
+                append("By continuing, you agree to our ")
+                pushStringAnnotation(tag = "URL", annotation = "https://kcalgrind.app/privacy")
+                withStyle(
+                    style = SpanStyle(
+                        color = v3.emeraldAccent,
+                        fontWeight = FontWeight.SemiBold,
+                        textDecoration = TextDecoration.Underline
+                    )
+                ) {
+                    append("Privacy Policy")
+                }
+                pop()
+                append(".")
+            }
+
+            @Suppress("DEPRECATION")
+            androidx.compose.foundation.text.ClickableText(
+                text = privacyAnnotatedString,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = 12.sp,
+                    color = v3.textMuted,
+                    textAlign = TextAlign.Center
+                ),
+                onClick = { offset ->
+                    privacyAnnotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset)
+                        .firstOrNull()?.let { annotation ->
+                            uriHandler.openUri(annotation.item)
+                        }
+                },
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
 

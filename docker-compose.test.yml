@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: kcalgrind-postgres-test
+    environment:
+      POSTGRES_DB: kcalgrind_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  test-runner:
+    image: node:20-alpine
+    container_name: kcalgrind-test-runner
+    working_dir: /app/backend
+    volumes:
+      - .:/app
+    environment:
+      DATABASE_URL: postgresql://postgres:postgrespassword@postgres:5432/kcalgrind_test
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "npm ci && node test-real-postgres.js && npm run audit:purge -- --live"

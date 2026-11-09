@@ -14,6 +14,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -246,6 +247,32 @@ class HomeViewModel @Inject constructor(
             currentDateFormatted = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.getDefault()))
         )
     )
+
+    val mealRemindersEnabled: StateFlow<Boolean> = userPreferencesRepository?.mealRemindersEnabled
+        ?.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+        ?: MutableStateFlow(true).asStateFlow()
+
+    val hydrationRemindersEnabled: StateFlow<Boolean> = userPreferencesRepository?.hydrationRemindersEnabled
+        ?.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+        ?: MutableStateFlow(true).asStateFlow()
+
+    fun setMealRemindersEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository?.setMealRemindersEnabled(enabled)
+            if (context != null && userPreferencesRepository != null) {
+                com.kcalgrindai.app.core.worker.ReminderScheduler(context, userPreferencesRepository).syncRemindersWithSettings()
+            }
+        }
+    }
+
+    fun setHydrationRemindersEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository?.setHydrationRemindersEnabled(enabled)
+            if (context != null && userPreferencesRepository != null) {
+                com.kcalgrindai.app.core.worker.ReminderScheduler(context, userPreferencesRepository).syncRemindersWithSettings()
+            }
+        }
+    }
 
     fun dismissWidgetPromo() {
         viewModelScope.launch {

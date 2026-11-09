@@ -379,6 +379,8 @@ class FakeAICoachRepository(
     private val conversations = mutableListOf<Conversation>()
     private val messages = mutableListOf<ChatMessage>()
     var shouldFail: Boolean = false
+    var sendError: Throwable? = null
+    var sendChatMessageCallCount: Int = 0
     var lastRemainingCalories: Int? = null
     var lastConsumedCalories: Int? = null
     var lastTargetCalories: Int? = null
@@ -426,12 +428,15 @@ class FakeAICoachRepository(
         goal: String?,
         recentTrends: com.kcalgrindai.app.data.remote.dto.RecentTrendsDto?
     ): Result<AIChatResponse> {
+        sendChatMessageCallCount++
         try {
             usageRepository?.checkQuota()
         } catch (e: Exception) {
             return Result.failure(e)
         }
 
+        val injectedError = sendError
+        if (injectedError != null) return Result.failure(injectedError)
         if (shouldFail) return Result.failure(java.io.IOException("AI Coach unavailable"))
         this.lastRemainingCalories = remainingCalories
         this.lastConsumedCalories = consumedCalories
@@ -766,5 +771,40 @@ class FakeAICoachUsageRepository(
             usedToday = usedCount,
             lastResetDate = date ?: java.time.LocalDate.now().toString()
         )
+    }
+}
+
+class FakeSyncRepository : com.kcalgrindai.app.domain.repository.SyncRepository {
+    var restoreBackupCallCount = 0
+    private var lastSync: Long = 0L
+
+    override suspend fun pushAll(): Result<com.kcalgrindai.app.domain.repository.SyncPushResult> {
+        return Result.success(com.kcalgrindai.app.domain.repository.SyncPushResult())
+    }
+
+    override suspend fun pullSince(sinceEpochMs: Long): Result<com.kcalgrindai.app.domain.repository.SyncPullResult> {
+        return Result.success(com.kcalgrindai.app.domain.repository.SyncPullResult())
+    }
+
+    override suspend fun fullSync(): Result<com.kcalgrindai.app.domain.repository.SyncResult> {
+        return Result.success(
+            com.kcalgrindai.app.domain.repository.SyncResult(
+                push = com.kcalgrindai.app.domain.repository.SyncPushResult(),
+                pull = com.kcalgrindai.app.domain.repository.SyncPullResult(),
+                syncedAt = System.currentTimeMillis()
+            )
+        )
+    }
+
+    override suspend fun restoreCloudBackup(): Result<com.kcalgrindai.app.domain.repository.SyncPullResult> {
+        restoreBackupCallCount++
+        lastSync = System.currentTimeMillis()
+        return Result.success(com.kcalgrindai.app.domain.repository.SyncPullResult())
+    }
+
+    override fun getLastSyncTimestamp(): Long = lastSync
+
+    override fun setLastSyncTimestamp(epochMs: Long) {
+        lastSync = epochMs
     }
 }

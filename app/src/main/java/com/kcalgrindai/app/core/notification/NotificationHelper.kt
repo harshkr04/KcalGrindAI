@@ -56,15 +56,23 @@ object NotificationHelper {
         mealName: String,
         message: String = "Don't forget to track your $mealName to keep your daily streak alive!"
     ) {
+        val slot = when (mealName.lowercase().trim()) {
+            "snacks" -> "snack"
+            else -> mealName.lowercase().trim()
+        }
+        val destination = "diary?mealSlot=$slot"
         val intent = Intent(context, MainActivity::class.java).apply {
+            action = Intent.ACTION_VIEW
+            putExtra(MainActivity.EXTRA_DESTINATION, destination)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            NOTIFICATION_ID_MEAL,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val pendingIntent = androidx.core.app.TaskStackBuilder.create(context).run {
+            addNextIntentWithParentStack(intent)
+            getPendingIntent(
+                NOTIFICATION_ID_MEAL,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_MEALS)
             .setSmallIcon(R.mipmap.ic_launcher)
@@ -87,15 +95,19 @@ object NotificationHelper {
         context: Context,
         message: String = "Take a moment to drink a glass of water and hit your hydration target today! 💧"
     ) {
+        val destination = "home"
         val intent = Intent(context, MainActivity::class.java).apply {
+            action = Intent.ACTION_VIEW
+            putExtra(MainActivity.EXTRA_DESTINATION, destination)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            NOTIFICATION_ID_HYDRATION,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val pendingIntent = androidx.core.app.TaskStackBuilder.create(context).run {
+            addNextIntentWithParentStack(intent)
+            getPendingIntent(
+                NOTIFICATION_ID_HYDRATION,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_HYDRATION)
             .setSmallIcon(R.mipmap.ic_launcher)

@@ -28,6 +28,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.kcalgrindai.app.core.designsystem.KcalGrindSuccess
+import com.kcalgrindai.app.core.designsystem.KcalGrindWarning
+import com.kcalgrindai.app.core.designsystem.KcalGrindErrorRed
+import com.kcalgrindai.app.core.designsystem.KcalGrindProtein
+import com.kcalgrindai.app.core.designsystem.KcalGrindCarbs
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -59,9 +64,9 @@ fun FoodResultScreen(
     val currentFat = (food.macros.fat * portionRatio).toInt()
 
     val (badgeBg, badgeText, badgeLabel) = when (food.confidenceLevel) {
-        ConfidenceLevel.HIGH -> Triple(Color(0xFF10B981).copy(alpha = 0.15f), Color(0xFF10B981), "High Confidence (${(food.confidence * 100).toInt()}%)")
-        ConfidenceLevel.MEDIUM -> Triple(Color(0xFFF59E0B).copy(alpha = 0.15f), Color(0xFFF59E0B), "Moderate Confidence (${(food.confidence * 100).toInt()}%) - Please Confirm")
-        ConfidenceLevel.LOW -> Triple(Color(0xFFEF4444).copy(alpha = 0.15f), Color(0xFFEF4444), "Low Confidence (${(food.confidence * 100).toInt()}%)")
+        ConfidenceLevel.HIGH -> Triple(KcalGrindSuccess.copy(alpha = 0.15f), KcalGrindSuccess, "High Confidence (${(food.confidence * 100).toInt()}%)")
+        ConfidenceLevel.MEDIUM -> Triple(KcalGrindWarning.copy(alpha = 0.15f), KcalGrindWarning, "Moderate Confidence (${(food.confidence * 100).toInt()}%) - Please Confirm")
+        ConfidenceLevel.LOW -> Triple(KcalGrindErrorRed.copy(alpha = 0.15f), KcalGrindErrorRed, "Low Confidence (${(food.confidence * 100).toInt()}%)")
     }
 
     Column(
@@ -143,8 +148,8 @@ fun FoodResultScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     NutrientPill("Protein", "${currentProtein}g", MaterialTheme.colorScheme.primary)
-                    NutrientPill("Carbs", "${currentCarbs}g", Color(0xFF60A5FA))
-                    NutrientPill("Fat", "${currentFat}g", Color(0xFFFBBF24))
+                    NutrientPill("Carbs", "${currentCarbs}g", KcalGrindProtein)
+                    NutrientPill("Fat", "${currentFat}g", KcalGrindCarbs)
                 }
             }
         }

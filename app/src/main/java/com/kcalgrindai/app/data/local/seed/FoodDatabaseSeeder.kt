@@ -16,7 +16,8 @@ class FoodDatabaseSeeder @Inject constructor(
 
     suspend fun seedIfNeeded(): Int = withContext(Dispatchers.IO) {
         mutex.withLock {
-            val existingCount = foodDao.getFoodCountBySource(IndianFoodDataset.DATASET_SOURCE)
+            val existingCount = foodDao.getFoodCountBySource(IndianFoodDataset.DATASET_SOURCE) +
+                foodDao.getFoodCountBySource(IndianFoodDataset.DATASET_SOURCE_RECIPE)
             if (existingCount == 0) {
                 foodDao.insertFoods(IndianFoodDataset.foods)
                 IndianFoodDataset.foods.size

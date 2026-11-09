@@ -96,16 +96,19 @@ async function runTests() {
     }
   });
 
+  testApp.get('/', async () => ({ name: 'KcalGrind API', status: 'ready' }));
   testApp.get('/health', async () => ({ status: 'ok' }));
   testApp.post('/ai/analyze-text', async (request) => ({
     success: true,
     user: request.user,
   }));
 
-  // Test 1: GET /health allows unauthenticated access
+  // Test 1: GET / and GET /health allow unauthenticated access
+  const resRoot = await testApp.inject({ method: 'GET', url: '/' });
+  assert.strictEqual(resRoot.statusCode, 200, 'GET / must return 200');
   const resHealth = await testApp.inject({ method: 'GET', url: '/health' });
   assert.strictEqual(resHealth.statusCode, 200, 'GET /health must return 200');
-  console.log('✓ Test 1: /health is accessible without authentication');
+  console.log('✓ Test 1: / and /health are accessible without authentication');
 
   // Test 2: POST without header is rejected with 401
   const resNoAuth = await testApp.inject({
@@ -116,6 +119,28 @@ async function runTests() {
   assert.strictEqual(resNoAuth.statusCode, 401, 'Request without token must be 401');
   assert.strictEqual(JSON.parse(resNoAuth.body).error, 'Unauthorized');
   console.log('✓ Test 2: Unauthenticated request rejected with 401 Unauthorized');
+
+  // Test 2b: Header without Bearer prefix is rejected with 401
+  const resNoBearer = await testApp.inject({
+    method: 'POST',
+    url: '/ai/analyze-text',
+    headers: { authorization: 'Basic dXNlcjpwYXNz' },
+    payload: { text: '1 apple' },
+  });
+  assert.strictEqual(resNoBearer.statusCode, 401, 'Header without Bearer prefix must be 401');
+  assert.strictEqual(JSON.parse(resNoBearer.body).error, 'Unauthorized');
+  console.log('✓ Test 2b: Header without Bearer prefix rejected with 401');
+
+  // Test 2c: Empty token string in Bearer header is rejected with 401
+  const resEmptyToken = await testApp.inject({
+    method: 'POST',
+    url: '/ai/analyze-text',
+    headers: { authorization: 'Bearer    ' },
+    payload: { text: '1 apple' },
+  });
+  assert.strictEqual(resEmptyToken.statusCode, 401, 'Empty token string must be 401');
+  assert.strictEqual(JSON.parse(resEmptyToken.body).error, 'Unauthorized');
+  console.log('✓ Test 2c: Empty token string rejected with 401');
 
   // Test 3 (anti-drift A): invalid token is rejected via mock rejection
   const resInvalid = await testApp.inject({

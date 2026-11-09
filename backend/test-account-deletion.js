@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import assert from 'node:assert';
+import { auditTables, CANONICAL_PURGE_TABLES } from './scripts/audit-purge-completeness.js';
 
 // Contract and unit test for DELETE /account route and auth middleware.
 const VALID_TOKENS = new Map([
@@ -35,6 +36,7 @@ class MockSupabase {
       recipe_items: [],
       custom_foods: [],
       user_subscriptions: [],
+      ai_coach_daily_usage: [],
     };
   }
 
@@ -95,6 +97,14 @@ async function runTests() {
   const rateLimits = new Map();
   rateLimits.set('user_charlie_delete_me', [Date.now(), Date.now()]);
   rateLimits.set('user_bob_keep_me', [Date.now()]);
+
+  const aiCoachDailyUsage = new Map();
+  aiCoachDailyUsage.set('user_charlie_delete_me:2026-11-06', 4);
+  aiCoachDailyUsage.set('user_bob_keep_me:2026-11-06', 2);
+
+  const userTimezones = new Map();
+  userTimezones.set('user_charlie_delete_me', 'America/New_York');
+  userTimezones.set('user_bob_keep_me', 'Asia/Kolkata');
 
   // Seed rows for Charlie (to be deleted) and Bob (to be kept)
   const charlieUid = 'user_charlie_delete_me';
@@ -186,6 +196,12 @@ async function runTests() {
   mockDb.tables.user_subscriptions.push(
     { id: 1, user_id: charlieUid, status: 'active' },
     { id: 2, user_id: bobUid, status: 'active' }
+  );
+
+  // 13. ai_coach_daily_usage (Cloud Run Shared Quota Storage)
+  mockDb.tables.ai_coach_daily_usage.push(
+    { firebase_uid: charlieUid, local_date: '2026-11-06', used_count: 4, in_flight: 0, timezone: 'America/New_York' },
+    { firebase_uid: bobUid, local_date: '2026-11-06', used_count: 2, in_flight: 0, timezone: 'Asia/Kolkata' }
   );
 
   // Global Auth hook
@@ -301,6 +317,16 @@ async function runTests() {
       // 12. Daily goals
       await mockDb.from('daily_goals').delete().eq('firebase_uid', uid);
 
+      // 13. AI Coach daily usage (shared Cloud Run storage)
+      await mockDb.from('ai_coach_daily_usage').delete().eq('firebase_uid', uid);
+
+      // Purge in-memory / cache data
+      for (const key of aiCoachDailyUsage.keys()) {
+        if (key.startsWith(`${uid}:`)) {
+          aiCoachDailyUsage.delete(key);
+        }
+      }
+      userTimezones.delete(uid);
       rateLimits.delete(uid);
 
       return reply.code(200).send(result);
@@ -326,7 +352,7 @@ async function runTests() {
   assert.strictEqual(res2.statusCode, 401, 'test-token-* must return 401');
   console.log('  ✓ Test 2: test-token prefix rejected with 401');
 
-  // Test 3: Authenticated DELETE /account purges ALL 16 tables for Charlie
+  // Test 3: Authenticated DELETE /account purges ALL 17 tables for Charlie
   const res3 = await app.inject({
     method: 'DELETE',
     url: '/account',
@@ -354,6 +380,9 @@ async function runTests() {
   assert.strictEqual(mockDb.tables.recipe_items.filter(r => r.recipe_id === 80).length, 0, 'recipe_items purged');
   assert.strictEqual(mockDb.tables.custom_foods.filter(r => r.firebase_uid === charlieUid).length, 0, 'custom_foods purged');
   assert.strictEqual(mockDb.tables.user_subscriptions.filter(r => r.user_id === charlieUid).length, 0, 'user_subscriptions purged');
+  assert.strictEqual(mockDb.tables.ai_coach_daily_usage.filter(r => r.firebase_uid === charlieUid).length, 0, 'ai_coach_daily_usage purged');
+  assert.strictEqual(aiCoachDailyUsage.has(`${charlieUid}:2026-11-06`), false, 'in-memory aiCoachDailyUsage purged');
+  assert.strictEqual(userTimezones.has(charlieUid), false, 'userTimezones cache purged');
   assert.strictEqual(rateLimits.has(charlieUid), false, 'Rate limit entries cleared');
 
   // Assert Bob's rows are completely intact
@@ -365,9 +394,12 @@ async function runTests() {
   assert.strictEqual(mockDb.tables.saved_meals.filter(r => r.firebase_uid === bobUid).length, 1, 'Bob saved_meals intact');
   assert.strictEqual(mockDb.tables.recipes.filter(r => r.firebase_uid === bobUid).length, 1, 'Bob recipes intact');
   assert.strictEqual(mockDb.tables.custom_foods.filter(r => r.firebase_uid === bobUid).length, 1, 'Bob custom_foods intact');
+  assert.strictEqual(mockDb.tables.ai_coach_daily_usage.filter(r => r.firebase_uid === bobUid).length, 1, 'Bob ai_coach_daily_usage intact');
+  assert.strictEqual(aiCoachDailyUsage.has(`${bobUid}:2026-11-06`), true, 'Bob in-memory aiCoachDailyUsage intact');
+  assert.strictEqual(userTimezones.has(bobUid), true, 'Bob userTimezones cache intact');
   assert.strictEqual(rateLimits.has(bobUid), true, 'Bob rate limit intact');
 
-  console.log('  ✓ Test 3: Authenticated account deletion purges ALL 16 tables cleanly and preserves other users');
+  console.log('  ✓ Test 3: Authenticated account deletion purges ALL 17 tables cleanly and preserves other users');
 
   // Test 4: Idempotency (calling DELETE /account again returns 200 without error)
   const res4 = await app.inject({
@@ -392,7 +424,19 @@ async function runTests() {
   assert.strictEqual(mockDb.tables.user_profiles.filter(r => r.firebase_uid === charlieUid).length, 0, 'No user_profiles row was recreated');
   console.log('  ✓ Test 5: Verified backend does not recreate a profile row for purged UID on later requests');
 
-  console.log('\nAll 5 Backend Account Deletion & Purge Tests Passed Successfully!');
+  // Test 6: Purge list schema completeness audit
+  const auditAllTables = auditTables(Object.keys(mockDb.tables));
+  assert.strictEqual(auditAllTables.isComplete, true, 'All 17 mock database tables must be in the purge list');
+  assert.strictEqual(auditAllTables.missingTables.length, 0);
+
+  // If a new user table is added to the schema without being added to purge list, audit MUST fail
+  const badSchema = [...Object.keys(mockDb.tables), 'untracked_user_tokens'];
+  const auditFailed = auditTables(badSchema);
+  assert.strictEqual(auditFailed.isComplete, false, 'Audit must fail if any schema table is missing from purge list');
+  assert.deepStrictEqual(auditFailed.missingTables, ['untracked_user_tokens']);
+  console.log('  ✓ Test 6: Staging purge audit script verified against complete and incomplete schemas');
+
+  console.log('\nAll 6 Backend Account Deletion & Purge Tests Passed Successfully!');
 }
 
 runTests().catch((err) => {

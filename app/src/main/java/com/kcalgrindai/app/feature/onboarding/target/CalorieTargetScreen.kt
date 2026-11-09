@@ -187,7 +187,20 @@ fun CalorieTargetScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Not medical advice. Daily calorie and macronutrient targets are estimates calculated from general metabolic formulas. Consult a healthcare provider before making major diet changes.",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                            textAlign = TextAlign.Center,
+                            fontSize = 11.sp,
+                            lineHeight = 15.sp
+                        ),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }

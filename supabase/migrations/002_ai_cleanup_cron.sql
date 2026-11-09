@@ -1,0 +1,12 @@
+-- =============================================================
+-- Migration 002: AI Analysis Log Cleanup Cron (Placeholder)
+-- =============================================================
+-- Note: As documented in Docs/03_DATABASE.md, automated 60-day AI log retention
+-- was originally specified via the 'pg_cron' extension.
+-- However, 'pg_cron' requires 'shared_preload_libraries' in postgresql.conf,
+-- superuser privileges, and pauses on Supabase free tier after 7 days.
+-- To ensure migrations 001-004 remain 100% portable across standard Postgres,
+-- local Docker environments, and CI containers without external C-extension
+-- dependencies, this migration is intentionally kept as a zero-op placeholder.
+-- Automated log truncation is handled at the application layer or via external cron.
+-- =============================================================

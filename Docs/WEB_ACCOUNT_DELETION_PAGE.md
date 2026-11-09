@@ -1,4 +1,4 @@
-# Kcal Grind — Account & Data Deletion Request Page
+# KcalGrind — Account & Data Deletion Request Page
 
 **URL:** `https://kcalgrind.app/delete-account`  
 **Play Store Policy Compliance:** Google Play User Data & Account Deletion Policy (Requirement for apps supporting account creation)
@@ -13,14 +13,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Request Account & Data Deletion — Kcal Grind</title>
+  <title>Request Account & Data Deletion — KcalGrind</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body class="bg-dark text-light">
   <main class="container max-w-2xl py-12 px-4">
-    <h1>Delete Your Kcal Grind Account & Data</h1>
+    <h1>Delete Your KcalGrind Account & Data</h1>
     <p class="lead">
-      At Kcal Grind, you have complete ownership and control over your personal information and health data. 
+      At KcalGrind, you have complete ownership and control over your personal information and health data. 
       You can permanently delete your account and all associated records at any time.
     </p>
 
@@ -28,9 +28,9 @@
 
     <section class="mb-8">
       <h2>Option 1: Instant In-App Deletion (Recommended)</h2>
-      <p>If you have the Kcal Grind app installed on your Android device, you can delete your account immediately:</p>
+      <p>If you have the KcalGrind app installed on your Android device, you can delete your account immediately:</p>
       <ol class="list-decimal pl-6 space-y-2">
-        <li>Open the <strong>Kcal Grind</strong> app on your device.</li>
+        <li>Open the <strong>KcalGrind</strong> app on your device.</li>
         <li>Tap the <strong>Profile</strong> tab in the bottom navigation bar.</li>
         <li>Scroll down to the <strong>Danger Zone</strong> section and tap <strong>Delete Account</strong>.</li>
         <li>Read the confirmation summary explaining what data is permanently wiped.</li>
@@ -50,11 +50,18 @@
         <p><strong>Email body must include:</strong></p>
         <ul class="list-disc pl-6">
           <li>Your registered account email address.</li>
-          <li>A clear statement: <em>"Please permanently delete my Kcal Grind account and purge all associated cloud and personal data."</em></li>
+          <li>A clear statement: <em>"Please permanently delete my KcalGrind account and purge all associated cloud and personal data."</em></li>
         </ul>
       </div>
       <p class="mt-3">
         <strong>Verification & Processing Timeframe:</strong> For your security, our support team will send a verification confirmation link to your registered email address. Once verified, all cloud records are permanently purged within <strong>48 to 72 hours</strong> (and no later than 30 days under GDPR and CCPA regulations).
+      </p>
+    </section>
+
+    <section class="mb-8">
+      <h2>Important Notice: Google Play Subscriptions</h2>
+      <p class="alert alert-warning p-4 bg-surface border border-warning rounded-lg">
+        <strong>Active Subscriptions:</strong> Any active Google Play subscription must be cancelled separately in Google Play (under Google Play Store &rarr; Profile &rarr; Payments & Subscriptions &rarr; Subscriptions) and is <strong>not cancelled</strong> by deleting your KcalGrind account. Google Play handles all billing and recurring subscriptions independently.
       </p>
     </section>
 

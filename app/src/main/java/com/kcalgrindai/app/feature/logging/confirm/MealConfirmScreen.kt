@@ -28,6 +28,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import com.kcalgrindai.app.core.designsystem.KcalGrindProtein
+import com.kcalgrindai.app.core.designsystem.KcalGrindCarbs
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -165,8 +167,8 @@ fun MealConfirmScreen(
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     MacroConfirmPill("P", "${totalProtein}g", MaterialTheme.colorScheme.primary)
-                    MacroConfirmPill("C", "${totalCarbs}g", Color(0xFF60A5FA))
-                    MacroConfirmPill("F", "${totalFat}g", Color(0xFFFBBF24))
+                    MacroConfirmPill("C", "${totalCarbs}g", KcalGrindProtein)
+                    MacroConfirmPill("F", "${totalFat}g", KcalGrindCarbs)
                 }
             }
         }

@@ -39,6 +39,8 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.WbSunny
 import com.kcalgrindai.app.domain.model.Recipe
+import com.kcalgrindai.app.core.designsystem.KcalGrindStarAmberDark
+import com.kcalgrindai.app.core.designsystem.KcalGrindCloudSyncTeal
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -304,7 +306,7 @@ private fun InsightsTopBar(
                     .background(v3.emeraldAccent)
             )
             Text(
-                text = "Kcal Grind AI V3",
+                text = "Weekly Trends",
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.SemiBold,
                     color = v3.emeraldAccent,
@@ -383,7 +385,7 @@ private fun TabButton(
         label = "tabBg"
     )
     val animatedTextColor by androidx.compose.animation.animateColorAsState(
-        targetValue = if (isSelected) (if (v3.isDark) Color(0xFF101211) else Color.White) else v3.textSecondary,
+        targetValue = if (isSelected) (if (v3.isDark) v3.background else v3.surface) else v3.textSecondary,
         animationSpec = androidx.compose.animation.core.tween(durationMillis = 160, easing = androidx.compose.animation.core.FastOutSlowInEasing),
         label = "tabText"
     )
@@ -459,13 +461,13 @@ private fun WeeklyCalorieSummaryCard(
                         shape = RoundedCornerShape(12.dp),
                         color = when {
                             isNearTarget || isDeficit -> v3.emeraldAccent.copy(alpha = 0.15f)
-                            else -> Color(0xFFE5A93C).copy(alpha = 0.15f)
+                            else -> KcalGrindStarAmberDark.copy(alpha = 0.15f)
                         },
                         border = BorderStroke(
                             1.dp,
                             when {
                                 isNearTarget || isDeficit -> v3.emeraldAccent.copy(alpha = 0.35f)
-                                else -> Color(0xFFE5A93C).copy(alpha = 0.35f)
+                                else -> KcalGrindStarAmberDark.copy(alpha = 0.35f)
                             }
                         )
                     ) {
@@ -476,7 +478,7 @@ private fun WeeklyCalorieSummaryCard(
                                 fontWeight = FontWeight.Bold,
                                 color = when {
                                     isNearTarget || isDeficit -> v3.emeraldAccent
-                                    else -> Color(0xFFE5A93C)
+                                    else -> KcalGrindStarAmberDark
                                 }
                             ),
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
@@ -628,7 +630,7 @@ private fun CalorieBarChartCard(
                                     when {
                                         !pt.hasLogs -> v3.progressTrack
                                         isNearTarget -> v3.emeraldAccent
-                                        pt.calories > targetCalories -> Color(0xFFE5A93C)
+                                        pt.calories > targetCalories -> KcalGrindStarAmberDark
                                         else -> v3.strongEmerald
                                     }
                                 )
@@ -695,7 +697,7 @@ private fun MacroAdherenceCard(
                 avgGrams = carbs.avgGrams,
                 targetGrams = carbs.targetGrams,
                 percent = carbs.adherencePercent,
-                color = Color(0xFFE5A93C)
+                color = KcalGrindStarAmberDark
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -705,7 +707,7 @@ private fun MacroAdherenceCard(
                 avgGrams = fat.avgGrams,
                 targetGrams = fat.targetGrams,
                 percent = fat.adherencePercent,
-                color = Color(0xFF38B2AC)
+                color = KcalGrindCloudSyncTeal
             )
         }
     }
@@ -780,7 +782,7 @@ private fun HydrationSummaryCard(
                 Icon(
                     imageVector = androidx.compose.material.icons.Icons.Default.WaterDrop,
                     contentDescription = null,
-                    tint = Color(0xFF38B2AC),
+                    tint = KcalGrindCloudSyncTeal,
                     modifier = Modifier.size(22.dp)
                 )
                 Spacer(modifier = Modifier.width(10.dp))
@@ -804,14 +806,14 @@ private fun HydrationSummaryCard(
 
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = Color(0xFF38B2AC).copy(alpha = 0.15f),
-                border = BorderStroke(1.dp, Color(0xFF38B2AC).copy(alpha = 0.35f))
+                color = KcalGrindCloudSyncTeal.copy(alpha = 0.15f),
+                border = BorderStroke(1.dp, KcalGrindCloudSyncTeal.copy(alpha = 0.35f))
             ) {
                 Text(
                     text = "Target: $targetWaterMl ml",
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF38B2AC)
+                        color = KcalGrindCloudSyncTeal
                     ),
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                 )
@@ -870,7 +872,7 @@ private fun WeightSummaryCard(
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = v3.emeraldAccent,
-                        contentColor = if (v3.isDark) Color(0xFF101211) else Color.White
+                        contentColor = if (v3.isDark) v3.background else v3.surface
                     )
                 ) {
                     Icon(
@@ -1088,7 +1090,7 @@ private fun EmptyWeightCard(onLogWeightClick: () -> Unit) {
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = v3.emeraldAccent,
-                    contentColor = if (v3.isDark) Color(0xFF101211) else Color.White
+                    contentColor = if (v3.isDark) v3.background else v3.surface
                 )
             ) {
                 Text("Log First Weight Entry", fontWeight = FontWeight.Bold)
@@ -1138,7 +1140,7 @@ private fun LogWeightDialog(
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = v3.emeraldAccent,
-                    contentColor = if (v3.isDark) Color(0xFF101211) else Color.White
+                    contentColor = if (v3.isDark) v3.background else v3.surface
                 )
             ) {
                 Text("Save", fontWeight = FontWeight.Bold)
@@ -1290,7 +1292,7 @@ private fun RecipeSortSection(
                             text = option.title,
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) (if (v3.isDark) Color(0xFF101211) else Color.White) else v3.textSecondary
+                                color = if (isSelected) (if (v3.isDark) v3.background else v3.surface) else v3.textSecondary
                             )
                         )
                     }
@@ -1408,7 +1410,7 @@ private fun RecipeFilterChip(
             text = label,
             style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) (if (v3.isDark) Color(0xFF101211) else Color.White) else v3.textPrimary
+                color = if (isSelected) (if (v3.isDark) v3.background else v3.surface) else v3.textPrimary
             ),
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
         )
@@ -1459,7 +1461,7 @@ private fun EmptyRecipesCard(
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = v3.emeraldAccent,
-                    contentColor = if (v3.isDark) Color(0xFF101211) else Color.White
+                    contentColor = if (v3.isDark) v3.background else v3.surface
                 )
             ) {
                 Text(
@@ -1552,14 +1554,14 @@ private fun RecipeCard(
                     if (recipe.popularityScore >= 90.0) {
                         Surface(
                             shape = RoundedCornerShape(6.dp),
-                            color = Color(0xFFE5A93C).copy(alpha = 0.15f),
-                            border = BorderStroke(1.dp, Color(0xFFE5A93C).copy(alpha = 0.3f))
+                            color = KcalGrindStarAmberDark.copy(alpha = 0.15f),
+                            border = BorderStroke(1.dp, KcalGrindStarAmberDark.copy(alpha = 0.3f))
                         ) {
                             Text(
                                 text = "Editor's Pick",
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFFE5A93C),
+                                    color = KcalGrindStarAmberDark,
                                     fontSize = 9.sp
                                 ),
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -1616,7 +1618,7 @@ private fun RecipeCard(
                 Icon(
                     imageVector = Icons.Filled.Star,
                     contentDescription = if (recipe.isFavorite) "Favorited" else "Favorite",
-                    tint = if (recipe.isFavorite) Color(0xFFE5A93C) else v3.textMuted.copy(alpha = 0.4f),
+                    tint = if (recipe.isFavorite) KcalGrindStarAmberDark else v3.textMuted.copy(alpha = 0.4f),
                     modifier = Modifier.size(22.dp)
                 )
             }

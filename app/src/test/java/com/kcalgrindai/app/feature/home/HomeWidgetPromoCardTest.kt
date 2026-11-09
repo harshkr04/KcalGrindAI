@@ -1,4 +1,4 @@
-package com.kcalgrindai.app.feature.home
+﻿package com.kcalgrindai.app.feature.home
 
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
@@ -75,7 +75,7 @@ class HomeWidgetPromoCardTest {
         }
 
         composeTestRule.onNodeWithText("Bring Sproutling to your home screen").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Glance at your calories and track water without opening the app.").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Check your calories and track water directly from your home-screen widget without opening the app.").assertIsDisplayed()
         composeTestRule.onNodeWithText("Add widget").assertIsDisplayed()
         composeTestRule.onNodeWithText("Widget settings").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Dismiss banner").assertIsDisplayed()

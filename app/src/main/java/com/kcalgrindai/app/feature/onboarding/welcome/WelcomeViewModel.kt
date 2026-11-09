@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 data class WelcomeUiState(
-    val title: String = "Kcal Grind AI",
+    val title: String = "KcalGrind",
     val subtitle: String = "Intelligent nutrition tracking tailored to your biology and lifestyle."
 )
 

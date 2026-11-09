@@ -96,16 +96,6 @@ class ProfileViewModel @Inject constructor(
         ?.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
         ?: MutableStateFlow(true).asStateFlow()
 
-    val deductActiveCaloriesEnabled: StateFlow<Boolean> = userPreferencesRepository?.deductActiveCaloriesEnabled
-        ?.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
-        ?: MutableStateFlow(false).asStateFlow()
-
-    fun setDeductActiveCaloriesEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            safeLog("Settings: Deduct active calories set to $enabled")
-            userPreferencesRepository?.setDeductActiveCaloriesEnabled(enabled)
-        }
-    }
 
     fun setMealRemindersEnabled(enabled: Boolean) {
         viewModelScope.launch {
@@ -134,6 +124,15 @@ class ProfileViewModel @Inject constructor(
     val lastSyncTimestamp: Long
         get() = syncRepository?.getLastSyncTimestamp() ?: 0L
 
+    /** True if last sync was > 7 days ago or data has never been backed up. */
+    val isBackupOverdue: Boolean
+        get() {
+            val ts = lastSyncTimestamp
+            if (ts == 0L) return true
+            val sevenDaysMs = 7L * 24 * 60 * 60 * 1000
+            return (System.currentTimeMillis() - ts) > sevenDaysMs
+        }
+
     init {
         loadProfile()
         checkHealthConnectPermission()
@@ -141,6 +140,12 @@ class ProfileViewModel @Inject constructor(
 
     fun loadProfile() {
         viewModelScope.launch {
+            // Restore from cloud backup if local database is empty after clear-data/reinstall
+            val localProfile = userProfileRepository.getProfile()
+            if (localProfile == null) {
+                runCatching { syncRepository?.restoreCloudBackup() }
+            }
+
             val streak = mealLogRepository?.getStreakDays() ?: 0
             kotlinx.coroutines.flow.combine(
                 userProfileRepository.observeProfileWithGoal(),
@@ -414,7 +419,19 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _syncState.value = SyncState.Syncing
             safeLog("Starting cloud sync attempt...")
-            syncRepo.fullSync()
+            val localProfile = userProfileRepository.getProfile()
+            val syncTask = if (localProfile == null) {
+                syncRepo.restoreCloudBackup().map { pullResult ->
+                    SyncResult(
+                        push = com.kcalgrindai.app.domain.repository.SyncPushResult(emptyMap(), emptyMap(), emptyMap()),
+                        pull = pullResult,
+                        syncedAt = System.currentTimeMillis()
+                    )
+                }
+            } else {
+                syncRepo.fullSync()
+            }
+            syncTask
                 .onSuccess { result ->
                     safeLog("Cloud sync succeeded: $result")
                     _syncState.value = SyncState.Success(result)

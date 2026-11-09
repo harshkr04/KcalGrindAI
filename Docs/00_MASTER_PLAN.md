@@ -1,4 +1,4 @@
-# Kcal Grind AI — Master Implementation Plan
+# KcalGrind — Master Implementation Plan
 
 ## 0. Where we actually are (confirmed by codebase audit)
 

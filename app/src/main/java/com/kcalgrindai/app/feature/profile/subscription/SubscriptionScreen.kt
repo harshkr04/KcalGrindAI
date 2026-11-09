@@ -139,7 +139,7 @@ fun SubscriptionScreen(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Text(
-                        text = if (uiState.isPro) "Your Kcal Grind Pro Membership" else "Unlock Your Full Potential with Kcal Grind Pro",
+                        text = if (uiState.isPro) "Your KcalGrind Pro Membership" else "Unlock Your Full Potential with KcalGrind Pro",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -478,7 +478,7 @@ private fun ActiveSubscriptionCard(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "Kcal Grind Pro",
+                            text = "KcalGrind Pro",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface

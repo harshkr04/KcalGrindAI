@@ -44,27 +44,22 @@ fun KcalGrindBackButton(
     val resolvedContainer = containerColor ?: v3.surfaceElevated
     val resolvedContent = contentColor ?: v3.textPrimary
 
-    Box(
-        modifier = modifier
-            .size(48.dp)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
+    CircleIconButton(
+        onClick = onClick,
+        modifier = modifier,
+        visualSize = 38.dp,
+        containerColor = resolvedContainer,
+        contentColor = resolvedContent,
+        border = androidx.compose.foundation.BorderStroke(1.dp, v3.subtleBorder),
+        shadowElevation = 1.dp,
+        contentDescription = contentDescription
     ) {
-        Surface(
-            modifier = Modifier.size(38.dp),
-            color = resolvedContainer,
-            shape = CircleShape,
-            shadowElevation = 1.dp
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = contentDescription,
-                    tint = resolvedContent,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = contentDescription,
+            tint = resolvedContent,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 

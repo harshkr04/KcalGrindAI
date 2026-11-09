@@ -30,6 +30,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.kcalgrindai.app.core.designsystem.KcalGrindAvatarBrandGreen
+import com.kcalgrindai.app.core.designsystem.KcalGrindAvatarIndigo
+import com.kcalgrindai.app.core.designsystem.KcalGrindAvatarTeal
+import com.kcalgrindai.app.core.designsystem.KcalGrindAvatarSkyBlue
+import com.kcalgrindai.app.core.designsystem.KcalGrindAvatarViolet
+import com.kcalgrindai.app.core.designsystem.KcalGrindAvatarRose
+import com.kcalgrindai.app.core.designsystem.KcalGrindAvatarAmber
+import com.kcalgrindai.app.core.designsystem.KcalGrindAvatarSlate
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -52,14 +60,14 @@ fun AvatarSelectionDialog(
 ) {
     val colorOptions = remember {
         listOf(
-            AvatarColorOption("default", "Brand Green", Color(0xFF16A34A)),
-            AvatarColorOption("color:#4F46E5", "Indigo", Color(0xFF4F46E5)),
-            AvatarColorOption("color:#0D9488", "Teal", Color(0xFF0D9488)),
-            AvatarColorOption("color:#0284C7", "Sky Blue", Color(0xFF0284C7)),
-            AvatarColorOption("color:#7C3AED", "Violet", Color(0xFF7C3AED)),
-            AvatarColorOption("color:#E11D48", "Rose", Color(0xFFE11D48)),
-            AvatarColorOption("color:#EA580C", "Amber", Color(0xFFEA580C)),
-            AvatarColorOption("color:#475569", "Slate", Color(0xFF475569))
+            AvatarColorOption("default", "Brand Green", KcalGrindAvatarBrandGreen),
+            AvatarColorOption("color:#4F46E5", "Indigo", KcalGrindAvatarIndigo),
+            AvatarColorOption("color:#0D9488", "Teal", KcalGrindAvatarTeal),
+            AvatarColorOption("color:#0284C7", "Sky Blue", KcalGrindAvatarSkyBlue),
+            AvatarColorOption("color:#7C3AED", "Violet", KcalGrindAvatarViolet),
+            AvatarColorOption("color:#E11D48", "Rose", KcalGrindAvatarRose),
+            AvatarColorOption("color:#EA580C", "Amber", KcalGrindAvatarAmber),
+            AvatarColorOption("color:#475569", "Slate", KcalGrindAvatarSlate)
         )
     }
 
@@ -71,7 +79,7 @@ fun AvatarSelectionDialog(
     }
 
     val activeColor = remember(selectedOptionId) {
-        colorOptions.firstOrNull { it.id == selectedOptionId }?.color ?: Color(0xFF16A34A)
+        colorOptions.firstOrNull { it.id == selectedOptionId }?.color ?: KcalGrindAvatarBrandGreen
     }
 
     Dialog(onDismissRequest = onDismiss) {

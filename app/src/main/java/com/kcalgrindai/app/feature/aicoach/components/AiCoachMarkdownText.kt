@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.kcalgrindai.app.core.designsystem.KcalGrindSuccess
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -261,7 +262,7 @@ fun parseInlineMarkdown(
             match.groups[14] != null -> {
                 withStyle(
                     SpanStyle(
-                        color = if (primaryColor != Color.Unspecified) primaryColor else Color(0xFF10B981),
+                        color = if (primaryColor != Color.Unspecified) primaryColor else KcalGrindSuccess,
                         textDecoration = TextDecoration.Underline,
                         fontWeight = FontWeight.Medium
                     )
@@ -298,6 +299,7 @@ fun AiCoachMarkdownText(
         Text(
             text = remember(markdown) { parseInlineMarkdown(markdown, primaryColor, contentColor) },
             style = MaterialTheme.typography.bodyMedium.copy(
+                fontSize = 14.sp,
                 lineHeight = 22.sp,
                 letterSpacing = 0.15.sp
             ),
@@ -371,6 +373,7 @@ fun AiCoachMarkdownText(
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = primaryColor,
+                                    fontSize = 14.sp,
                                     lineHeight = 22.sp,
                                     textAlign = TextAlign.Start
                                 ),
@@ -380,6 +383,7 @@ fun AiCoachMarkdownText(
                             Text(
                                 text = remember(block.text) { parseInlineMarkdown(block.text, primaryColor, contentColor) },
                                 style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = 14.sp,
                                     lineHeight = 22.sp,
                                     letterSpacing = 0.15.sp
                                 ),
@@ -406,6 +410,7 @@ fun AiCoachMarkdownText(
                             Text(
                                 text = remember(block.text) { parseInlineMarkdown(block.text, primaryColor, contentColor) },
                                 style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = 14.sp,
                                     lineHeight = 22.sp,
                                     letterSpacing = 0.15.sp
                                 ),
@@ -419,6 +424,7 @@ fun AiCoachMarkdownText(
                         Text(
                             text = remember(block.text) { parseInlineMarkdown(block.text, primaryColor, contentColor) },
                             style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 14.sp,
                                 lineHeight = 22.sp,
                                 letterSpacing = 0.15.sp
                             ),
@@ -478,6 +484,7 @@ fun AiCoachMarkdownText(
                             Text(
                                 text = remember(block.text) { parseInlineMarkdown(block.text, primaryColor, contentColor) },
                                 style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = 14.sp,
                                     fontStyle = FontStyle.Italic,
                                     lineHeight = 22.sp
                                 ),

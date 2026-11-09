@@ -6,7 +6,10 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "dev": "node --watch src/server.js",
+    "test": "node --test test-account-deletion.js test-auth-middleware.js test-gemini-client-unit.js test-gemini-structure.js test-test-token-production-gate.js test-ai-coach-quota.js test-ai-coach-shared-quota.js test-production-fail-closed.js test-gemini-fallback.js test-coach-safety.js test-photo-cap.js test-canary-logging.js",
+    "test:postgres": "node test-real-postgres.js",
+    "audit:purge": "node scripts/audit-purge-completeness.js"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.2",
@@ -18,6 +21,8 @@
     "firebase-admin": "^14.3.0"
   },
   "devDependencies": {
-    "firebase-tools": "^15.30.0"
+    "@electric-sql/pglite": "^0.3.16",
+    "firebase-tools": "^15.30.0",
+    "pg": "^8.23.1"
   }
 }

@@ -2,7 +2,7 @@ package com.kcalgrindai.app.core.util
 
 interface WidgetUpdater {
     /**
-     * Triggers an asynchronous update of all active Kcal Grind AI widgets.
+     * Triggers an asynchronous update of all active KcalGrind widgets.
      */
     fun requestUpdate()
 

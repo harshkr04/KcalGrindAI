@@ -1,4 +1,4 @@
-# Kcal Grind AI — Production & Deployment
+# KcalGrind — Production & Deployment
 
 ## 1. Environments
 

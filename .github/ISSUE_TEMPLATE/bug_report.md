@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Create a report to help us improve Kcal Grind AI
+about: Create a report to help us improve KcalGrind
 title: '[BUG] '
 labels: ['bug']
 assignees: ''

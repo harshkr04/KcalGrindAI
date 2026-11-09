@@ -8,6 +8,15 @@ enum class GoalType(val id: String, val label: String, val blurb: String, val de
     HEALTHIER("healthier", "Eat healthier", "Better quality, no calorie chase.", 0, 1.5),
     NUTRITION("nutrition", "Track nutrition", "Just see what you eat, clearly.", 0, 1.6);
 
+    fun toHumanLabel(): String = when (this) {
+        LOSE -> "lose weight"
+        MAINTAIN -> "maintain weight"
+        GAIN -> "gain weight"
+        MUSCLE -> "build muscle"
+        HEALTHIER -> "eat healthier"
+        NUTRITION -> "track nutrition"
+    }
+
     companion object {
         fun fromId(id: String): GoalType {
             val normalized = id.trim().lowercase()
@@ -95,7 +104,8 @@ enum class FoodSource(val id: String) {
     NUTRITIONIX("nutritionix"),
     CUSTOM("custom"),
     USER_ENTERED("USER_ENTERED"),
-    IFCT("ifct");
+    IFCT("ifct"),
+    CURATED_RECIPE("curated_recipe");
 
     companion object {
         fun fromId(id: String): FoodSource = entries.find { it.id.equals(id, ignoreCase = true) || it.name.equals(id, ignoreCase = true) } ?: CUSTOM

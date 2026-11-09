@@ -90,8 +90,15 @@ object NetworkModule {
                     }
                 }
                 val builder = original.newBuilder()
-                if (!token.isNullOrBlank()) {
-                    builder.header("Authorization", "Bearer $token")
+                val effectiveToken = if (!token.isNullOrBlank()) {
+                    token
+                } else if (com.kcalgrindai.app.BuildConfig.DEBUG || com.kcalgrindai.app.BuildConfig.BACKEND_URL.contains("10.0.2.2") || com.kcalgrindai.app.BuildConfig.BACKEND_URL.contains("localhost")) {
+                    "test-token-local-emulator"
+                } else {
+                    null
+                }
+                if (!effectiveToken.isNullOrBlank()) {
+                    builder.header("Authorization", "Bearer $effectiveToken")
                 }
                 // Send user local timezone ID (e.g. Asia/Kolkata, America/New_York)
                 builder.header("X-User-Timezone", java.util.TimeZone.getDefault().id)

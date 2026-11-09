@@ -1,12 +1,12 @@
-# Kcal Grind AI — Monetization & Google Play Billing Architecture
+# KcalGrind — Monetization & Google Play Billing Architecture
 
-This document defines the monetization strategy, tier structure, feature gating architecture, and Google Play Billing integration roadmap for Kcal Grind AI.
+This document defines the monetization strategy, tier structure, feature gating architecture, and Google Play Billing integration roadmap for KcalGrind.
 
 ---
 
 ## 1. Product Tiers
 
-| Feature | Kcal Grind AI Free (Default / Guest) | Kcal Grind AI Pro ($4.99/mo or $39.99/yr) |
+| Feature | KcalGrind Free (Default / Guest) | KcalGrind Pro ($4.99/mo or $39.99/yr) |
 |---|---|---|
 | **Manual Food Logging & Barcode Scan** | Unlimited (USDA & OFF) | Unlimited |
 | **Water Logging & Weight Tracking** | Unlimited | Unlimited |
