@@ -26,7 +26,7 @@ android {
 
     defaultConfig {
         applicationId = "com.kcalgrindai.app"
-        minSdk = 26
+        minSdk = 29
         targetSdk = 34
         versionCode = 1
         versionName = "0.1.0"
@@ -35,16 +35,33 @@ android {
         buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "${(localProperties.getProperty("USE_FIREBASE_EMULATOR") ?: System.getenv("USE_FIREBASE_EMULATOR") ?: "false").toBoolean()}")
     }
 
+    signingConfigs {
+        create("release") {
+            val keystoreFile = file("release-test.keystore")
+            if (keystoreFile.exists()) {
+                storeFile = keystoreFile
+                storePassword = System.getenv("RELEASE_STORE_PASSWORD") ?: "password123"
+                keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: "kcalgrind"
+                keyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: "password123"
+            }
+        }
+    }
+
     buildTypes {
         getByName("debug") {
             buildConfigField("String", "BACKEND_URL", "\"${localProperties.getProperty("BACKEND_URL") ?: "http://10.0.2.2:8000/"}\"")
         }
         getByName("release") {
-            isMinifyEnabled = false
+            val keystoreFile = file("release-test.keystore")
+            if (keystoreFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             val releaseBackendUrl = localProperties.getProperty("PROD_BACKEND_URL")
                 ?: System.getenv("PROD_BACKEND_URL")
-                ?: ""
+                ?: "https://api.kcalgrind.app"
             buildConfigField("String", "BACKEND_URL", "\"$releaseBackendUrl\"")
         }
     }
