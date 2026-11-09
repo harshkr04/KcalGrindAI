@@ -2,6 +2,8 @@ package com.kcalgrindai.app.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.room.withTransaction
+import com.kcalgrindai.app.data.local.KcalGrindDatabase
 import com.kcalgrindai.app.data.local.dao.AIAnalysisDao
 import com.kcalgrindai.app.data.local.dao.ConversationDao
 import com.kcalgrindai.app.data.local.dao.FoodLogItemDao
@@ -62,7 +64,8 @@ class SyncRepositoryImpl @Inject constructor(
     private val waterLogDao: WaterLogDao,
     private val aiAnalysisDao: AIAnalysisDao,
     private val conversationDao: ConversationDao,
-    private val messageDao: MessageDao
+    private val messageDao: MessageDao,
+    private val database: KcalGrindDatabase
 ) : SyncRepository {
 
     private val prefs: SharedPreferences by lazy {
@@ -126,7 +129,9 @@ class SyncRepositoryImpl @Inject constructor(
 
         val sinceIso = isoFormat.format(Date(sinceEpochMs))
         val response = syncApi.pullSync(sinceIso)
-        var result = SyncPullResult()
+
+        database.withTransaction {
+            var result = SyncPullResult()
 
         // 1. User Profile
         response.userProfile?.let { pulled ->
@@ -189,6 +194,7 @@ class SyncRepositoryImpl @Inject constructor(
         for (pulled in response.mealLogs) {
             val localId = pulled.localId
             val existing = localId?.let { mealLogDao.getMealLogById(it) }
+                ?: mealLogDao.getMealLogsByDate(pulled.logDate).firstOrNull { it.mealType == pulled.mealType }
             val pulledLoggedAt = parseIsoToEpoch(pulled.loggedAt)
 
             if (existing != null && pulledLoggedAt < existing.loggedAt) continue
@@ -209,7 +215,9 @@ class SyncRepositoryImpl @Inject constructor(
             // Upsert food log items for this meal (from the pulled response)
             val pulledItems = response.foodLogItems.filter { it.mealLogId == pulled.id }
             for (item in pulledItems) {
-                val existingItem = item.localId?.let { foodLogItemDao.getItemById(it) }
+                val existingItemsForMeal = foodLogItemDao.getItemsForMeal(targetMealLogId)
+            val existingItem = item.localId?.let { foodLogItemDao.getItemById(it) }
+                ?: existingItemsForMeal.firstOrNull { it.name == item.name && it.calories == item.calories }
                 val itemEntity = com.kcalgrindai.app.data.local.entity.FoodLogItemEntity(
                     id = existingItem?.id ?: 0L,
                     mealLogId = targetMealLogId,
@@ -236,6 +244,7 @@ class SyncRepositoryImpl @Inject constructor(
         var weightInserted = 0
         for (pulled in response.weightEntries) {
             val existing = pulled.localId?.let { weightEntryDao.getWeightEntryById(it) }
+                ?: weightEntryDao.getAllWeightEntries().firstOrNull { it.date == pulled.logDate }
             val pulledLoggedAt = parseIsoToEpoch(pulled.loggedAt)
 
             if (existing != null && pulledLoggedAt < existing.loggedAt) continue
@@ -255,7 +264,8 @@ class SyncRepositoryImpl @Inject constructor(
         // 5. Water Logs
         var waterInserted = 0
         for (pulled in response.waterLogs) {
-            val existing = pulled.localId?.let { waterLogDao.getWaterLogsByDate(pulled.logDate).find { w -> w.id == pulled.localId } }
+            val existing = pulled.localId?.let { lid -> waterLogDao.getWaterLogsByDate(pulled.logDate).find { w -> w.id == lid } }
+                ?: waterLogDao.getWaterLogsByDate(pulled.logDate).find { w -> w.loggedAt == parseIsoToEpoch(pulled.loggedAt) }
             val pulledLoggedAt = parseIsoToEpoch(pulled.loggedAt)
 
             if (existing != null && pulledLoggedAt < existing.loggedAt) continue
@@ -276,6 +286,7 @@ class SyncRepositoryImpl @Inject constructor(
         var msgsInserted = 0
         for (pulled in response.conversations) {
             val existing = pulled.localId?.let { conversationDao.getConversationById(it) }
+                ?: conversationDao.getAllConversations().firstOrNull { it.startedAt == parseIsoToEpoch(pulled.startedAt) }
             val pulledLastMsgAt = parseIsoToEpoch(pulled.lastMessageAt)
 
             val entity = ConversationEntity(
@@ -289,7 +300,11 @@ class SyncRepositoryImpl @Inject constructor(
 
             val pulledMsgs = response.messages.filter { it.conversationId == pulled.id }
             for (msg in pulledMsgs) {
-                val existingMsg = msg.localId?.let { messageDao.getMessageById(it) }
+                val existingMsgs = messageDao.getMessagesForConversation(targetConvId)
+            val existingMsg = msg.localId?.let { messageDao.getMessageById(it) }
+                ?: existingMsgs.firstOrNull {
+                    it.createdAt == parseIsoToEpoch(msg.createdAt) && it.role == msg.role && it.text == msg.textContent
+                }
                 if (existingMsg == null) {
                     val msgEntity = MessageEntity(
                         id = 0L,
@@ -306,7 +321,8 @@ class SyncRepositoryImpl @Inject constructor(
         }
         result = result.copy(conversationsInserted = convsInserted, messagesInserted = msgsInserted)
 
-        result
+            result
+        }
     }
 
     // -------------------------------------------------------
@@ -324,6 +340,13 @@ class SyncRepositoryImpl @Inject constructor(
             pull = pullResult,
             syncedAt = now
         )
+    }
+
+    override suspend fun restoreCloudBackup(): Result<SyncPullResult> = runCatching {
+        val pullResult = pullSince(0L).getOrThrow()
+        val now = System.currentTimeMillis()
+        setLastSyncTimestamp(now)
+        pullResult
     }
 
     override fun getLastSyncTimestamp(): Long {

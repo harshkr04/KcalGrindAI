@@ -36,7 +36,7 @@ data class ActivityProgress(
 
 data class HomeUiState(
     val isLoading: Boolean = true,
-    val userName: String = "Kcal Grind User",
+    val userName: String = "KcalGrind User",
     val currentDateFormatted: String = "",
     val targetCalories: Int = 2000,
     val consumedCalories: Int = 0,

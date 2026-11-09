@@ -28,6 +28,12 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import com.kcalgrindai.app.core.designsystem.KcalGrindOverBudgetRed
+import com.kcalgrindai.app.core.designsystem.KcalGrindProtein
+import com.kcalgrindai.app.core.designsystem.KcalGrindCarbs
+import com.kcalgrindai.app.core.designsystem.KcalGrindFat
+import com.kcalgrindai.app.core.designsystem.components.CircleIconButton
+import com.kcalgrindai.app.core.designsystem.components.FoodImageBadge
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -118,7 +124,7 @@ fun SavedMealsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { viewModel.confirmDelete() }) {
-                    Text("Delete", color = Color(0xFFE53935), fontWeight = FontWeight.Bold)
+                    Text("Delete", color = KcalGrindOverBudgetRed, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -213,7 +219,13 @@ fun SavedMealsScreen(
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = onNavigateBack) {
+                    CircleIconButton(
+                        onClick = onNavigateBack,
+                        visualSize = 38.dp,
+                        containerColor = v3Colors.surfaceElevated,
+                        contentColor = v3Colors.textPrimary,
+                        contentDescription = "Back"
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
@@ -340,48 +352,59 @@ private fun SavedMealCard(
                 .fillMaxWidth()
                 .padding(18.dp)
         ) {
-            // Header: Name + Slot + Actions
+            // Header: Food Badge + Name + Slot + Actions
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = meal.savedMeal.name,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = v3Colors.textPrimary,
-                            fontSize = 17.sp
-                        )
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    FoodImageBadge(
+                        foodName = meal.savedMeal.name,
+                        size = 42.dp,
+                        shape = RoundedCornerShape(10.dp)
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = v3Colors.emeraldAccent.copy(alpha = 0.15f)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = meal.savedMeal.name,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = v3Colors.textPrimary,
+                                fontSize = 17.sp
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = v3Colors.emeraldAccent.copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    text = meal.savedMeal.defaultMealType.name.lowercase().replaceFirstChar { it.uppercase() },
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = v3Colors.emeraldAccent,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 10.sp
+                                    ),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+
                             Text(
-                                text = meal.savedMeal.defaultMealType.name.lowercase().replaceFirstChar { it.uppercase() },
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    color = v3Colors.emeraldAccent,
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 10.sp
-                                ),
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                text = "${meal.items.size} items",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = v3Colors.textSecondary,
+                                    fontSize = 11.sp
+                                )
                             )
                         }
-
-                        Text(
-                            text = "${meal.items.size} items",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = v3Colors.textSecondary,
-                                fontSize = 11.sp
-                            )
-                        )
                     }
                 }
 
@@ -404,7 +427,7 @@ private fun SavedMealCard(
                         Icon(
                             imageVector = Icons.Default.DeleteOutline,
                             contentDescription = "Delete",
-                            tint = Color(0xFFE53935),
+                            tint = KcalGrindOverBudgetRed,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -436,7 +459,7 @@ private fun SavedMealCard(
                 Text(
                     text = "P: ${meal.totalProteinG.roundToInt()}g",
                     style = MaterialTheme.typography.bodySmall.copy(
-                        color = Color(0xFF60A5FA),
+                        color = KcalGrindProtein,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 12.sp
                     )
@@ -445,7 +468,7 @@ private fun SavedMealCard(
                 Text(
                     text = "C: ${meal.totalCarbsG.roundToInt()}g",
                     style = MaterialTheme.typography.bodySmall.copy(
-                        color = Color(0xFFFBBF24),
+                        color = KcalGrindCarbs,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 12.sp
                     )
@@ -454,7 +477,7 @@ private fun SavedMealCard(
                 Text(
                     text = "F: ${meal.totalFatG.roundToInt()}g",
                     style = MaterialTheme.typography.bodySmall.copy(
-                        color = Color(0xFF34D399),
+                        color = KcalGrindFat,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 12.sp
                     )

@@ -96,18 +96,18 @@ class FoodRepositoryOfflineSearchTest {
     @Test
     fun `seeder populates Indian food dataset accurately and is idempotent`() = runTest {
         // Initial count is 0
-        assertEquals(0, foodDao.getFoodCountBySource("ifct"))
+        assertEquals(0, foodDao.getFoodCountBySource("ifct") + foodDao.getFoodCountBySource("curated_recipe"))
 
         // First seed
         val seededCount = seeder.seedIfNeeded()
         assertEquals(IndianFoodDataset.foods.size, seededCount)
         assertTrue(seededCount >= 100)
-        assertEquals(seededCount, foodDao.getFoodCountBySource("ifct"))
+        assertEquals(seededCount, foodDao.getFoodCountBySource("ifct") + foodDao.getFoodCountBySource("curated_recipe"))
 
         // Second seed does not duplicate rows
         val secondSeedCount = seeder.seedIfNeeded()
         assertEquals(seededCount, secondSeedCount)
-        assertEquals(seededCount, foodDao.getFoodCountBySource("ifct"))
+        assertEquals(seededCount, foodDao.getFoodCountBySource("ifct") + foodDao.getFoodCountBySource("curated_recipe"))
     }
 
     @Test
@@ -115,12 +115,12 @@ class FoodRepositoryOfflineSearchTest {
         // 1. Search "dal"
         val dalItems = foodRepository.searchFoods("dal")
         assertTrue("Expected non-empty dal results", dalItems.isNotEmpty())
-        assertTrue("Expected IFCT dal items", dalItems.any { it.source == FoodSource.IFCT })
+        assertTrue("Expected curated recipe dal items", dalItems.any { it.source == FoodSource.CURATED_RECIPE })
 
         // 2. Search "roti"
         val rotiItems = foodRepository.searchFoods("roti")
         assertTrue("Expected non-empty roti results", rotiItems.isNotEmpty())
-        assertTrue("Expected IFCT roti items", rotiItems.any { it.source == FoodSource.IFCT })
+        assertTrue("Expected curated recipe roti items", rotiItems.any { it.source == FoodSource.CURATED_RECIPE })
 
         // 3. Search "biryani"
         val biryaniItems = foodRepository.searchFoods("biryani")
@@ -136,6 +136,7 @@ class FoodRepositoryOfflineSearchTest {
         val paneerItems = foodRepository.searchFoods("paneer")
         assertTrue("Expected non-empty paneer results", paneerItems.isNotEmpty())
         assertTrue("Expected Paneer Butter Masala", paneerItems.any { it.name.contains("Paneer", ignoreCase = true) })
+        assertTrue("Expected Raw Paneer from IFCT", paneerItems.any { it.source == FoodSource.IFCT })
     }
 
     @Test
@@ -155,7 +156,7 @@ class FoodRepositoryOfflineSearchTest {
         val items = result.getOrThrow()
 
         // Should contain local IFCT items AND the USDA item
-        assertTrue("Should contain local IFCT dal items", items.any { it.source == FoodSource.IFCT })
+        assertTrue("Should contain local curated dal items", items.any { it.source == FoodSource.CURATED_RECIPE })
         assertTrue("Should contain USDA item", items.any { it.source == FoodSource.USDA })
     }
 

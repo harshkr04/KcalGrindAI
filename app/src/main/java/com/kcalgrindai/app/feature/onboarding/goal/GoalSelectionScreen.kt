@@ -41,6 +41,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.kcalgrindai.app.core.designsystem.KcalGrindOnPrimary
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -88,7 +89,7 @@ fun GoalSelectionScreen(
                         shape = RoundedCornerShape(27.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = v3.emeraldAccent,
-                            contentColor = Color(0xFF101211)
+                            contentColor = KcalGrindOnPrimary
                         )
                     ) {
                         Row(
@@ -171,12 +172,12 @@ fun GoalSelectionScreen(
                 }
 
                 val tagText: String? = when (goal) {
-                    GoalType.LOSE -> "-450 kcal deficit • High protein"
-                    GoalType.MUSCLE -> "+250 kcal surplus • Lean gains"
-                    GoalType.GAIN -> "+350 kcal surplus • Mass pacing"
-                    GoalType.MAINTAIN -> "Maintenance calories • Balanced macros"
-                    GoalType.HEALTHIER -> "Clean nutrition • Whole foods focus"
-                    GoalType.NUTRITION -> "Consistent logging • Macro awareness"
+                    GoalType.LOSE -> "-450 kcal deficit â€¢ High protein"
+                    GoalType.MUSCLE -> "+250 kcal surplus â€¢ Lean gains"
+                    GoalType.GAIN -> "+350 kcal surplus â€¢ Mass pacing"
+                    GoalType.MAINTAIN -> "Maintenance calories â€¢ Balanced macros"
+                    GoalType.HEALTHIER -> "Clean nutrition â€¢ Whole foods focus"
+                    GoalType.NUTRITION -> "Consistent logging â€¢ Macro awareness"
                 }
 
                 val borderAnimColor by animateColorAsState(
@@ -301,7 +302,7 @@ fun GoalSelectionScreen(
                                     Icon(
                                         imageVector = Icons.Default.Check,
                                         contentDescription = "Selected",
-                                        tint = Color(0xFF101211),
+                                        tint = KcalGrindOnPrimary,
                                         modifier = Modifier.size(14.dp)
                                     )
                                 }
@@ -501,7 +502,7 @@ fun GoalSelectionScreen(
                                 }
 
                                 Text(
-                                    text = "Based on your fitness mission, $estimatedCals kcal is your calibrated target! 🌱",
+                                    text = "Based on your fitness mission, $estimatedCals kcal is your estimated target!",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         color = v3.textPrimary,
                                         fontWeight = FontWeight.Medium,

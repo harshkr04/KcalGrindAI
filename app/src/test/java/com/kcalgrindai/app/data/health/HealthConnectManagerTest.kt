@@ -27,13 +27,12 @@ class HealthConnectManagerTest {
     }
 
     @Test
-    fun requiredPermissions_includesBothStepsAndActiveCalories() {
+    fun requiredPermissions_includesOnlyStepsInV1() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         val manager = HealthConnectManager(context)
 
         assertTrue(manager.requiredPermissions.contains(manager.stepsPermission))
-        assertTrue(manager.requiredPermissions.contains(manager.activeCaloriesPermission))
-        assertEquals(2, manager.requiredPermissions.size)
+        assertEquals(1, manager.requiredPermissions.size)
     }
 
     @Test

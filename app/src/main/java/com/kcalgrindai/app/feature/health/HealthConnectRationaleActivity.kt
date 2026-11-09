@@ -1,4 +1,4 @@
-package com.kcalgrindai.app.feature.health
+﻿package com.kcalgrindai.app.feature.health
 
 import android.content.Intent
 import android.net.Uri
@@ -109,7 +109,7 @@ fun HealthConnectRationaleScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = "Health Connect & Kcal Grind",
+                text = "Health Connect & KcalGrind",
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.Bold,
                     color = v3.textPrimary
@@ -119,7 +119,7 @@ fun HealthConnectRationaleScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Kcal Grind integrates with Android Health Connect to provide accurate, real-time energy balance tracking without manual logging.",
+                text = "KcalGrind integrates with Android Health Connect to provide accurate, real-time energy balance tracking without manual logging.",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = v3.textSecondary,
                     lineHeight = 20.sp
@@ -136,14 +136,7 @@ fun HealthConnectRationaleScreen(
                 v3 = v3
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
 
-            RationalePermissionCard(
-                icon = Icons.Default.LocalFireDepartment,
-                title = "Active Calories Burned (Read)",
-                description = "Used to optionally calculate your net calorie balance. Workout expenditure can be deducted from consumed calories so you stay on target.",
-                v3 = v3
-            )
 
             Spacer(modifier = Modifier.height(12.dp))
 

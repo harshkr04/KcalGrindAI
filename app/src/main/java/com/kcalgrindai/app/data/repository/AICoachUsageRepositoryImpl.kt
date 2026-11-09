@@ -139,9 +139,10 @@ class AICoachUsageRepositoryImpl @Inject constructor(
     }
 
     override suspend fun setPro(isPro: Boolean): Unit = mutex.withLock {
-        if (com.kcalgrindai.app.BuildConfig.DEBUG) {
-            prefs.edit().putBoolean(KEY_OVERRIDE_PRO, isPro).apply()
+        if (!com.kcalgrindai.app.BuildConfig.DEBUG) {
+            return@withLock
         }
+        prefs.edit().putBoolean(KEY_OVERRIDE_PRO, isPro).apply()
         billingRepository.setPro(isPro)
         val current = syncUsageStateLocked(isPro)
         val newLimit = if (isPro) PRO_DAILY_LIMIT else FREE_DAILY_LIMIT

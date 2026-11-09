@@ -1,4 +1,4 @@
-package com.kcalgrindai.app.feature.settings.widget
+﻿package com.kcalgrindai.app.feature.settings.widget
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -45,6 +45,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.kcalgrindai.app.core.designsystem.KcalGrindOnPrimary
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -245,7 +246,7 @@ fun WidgetStatusCard(
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        tint = Color(0xFF101211),
+                        tint = KcalGrindOnPrimary,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
@@ -253,7 +254,7 @@ fun WidgetStatusCard(
                         text = if (isAdded) "Add another widget" else "Add to home screen",
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF101211),
+                            color = KcalGrindOnPrimary,
                             fontSize = 14.sp
                         )
                     )
@@ -292,7 +293,7 @@ fun WidgetPreviewShowcaseCard(
                         )
                     )
                     Text(
-                        text = "Live Android dynamic Glance companion",
+                        text = "Live home-screen widget companion",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = v3.textSecondary,
                             fontSize = 12.sp
@@ -305,7 +306,7 @@ fun WidgetPreviewShowcaseCard(
                     color = v3.emeraldAccent.copy(alpha = 0.15f)
                 ) {
                     Text(
-                        text = "Android 12+ Glance",
+                        text = "Android 10+",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
                             color = v3.emeraldAccent,
@@ -332,7 +333,7 @@ fun WidgetPreviewShowcaseCard(
                         modifier = Modifier.weight(1f)
                     )
                     WidgetTabButton(
-                        text = "2×2 Quick Glance",
+                        text = "2×2 Quick Widget",
                         isSelected = selectedTab == WidgetSizeTab.QUICK_2X2,
                         onClick = { onSelectTab(WidgetSizeTab.QUICK_2X2) },
                         modifier = Modifier.weight(1f)
@@ -402,7 +403,7 @@ private fun WidgetTabButton(
                 text = text,
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                    color = if (isSelected) Color(0xFF101211) else v3.textSecondary,
+                    color = if (isSelected) KcalGrindOnPrimary else v3.textSecondary,
                     fontSize = 12.sp
                 )
             )
@@ -436,7 +437,7 @@ fun WidgetDetailed4x2Preview(isPrivacyEnabled: Boolean) {
                         modifier = Modifier.size(15.dp)
                     )
                     Text(
-                        text = "KCAL GRIND AI",
+                        text = "KcalGrind",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.ExtraBold,
                             color = v3.textPrimary,
@@ -585,7 +586,7 @@ fun WidgetQuick2x2Preview(isPrivacyEnabled: Boolean) {
                         .background(v3.emeraldAccent)
                 )
                 Text(
-                    text = "KCAL GRIND",
+                    text = "KcalGrind",
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.ExtraBold,
                         color = v3.textPrimary,
@@ -812,7 +813,7 @@ fun WidgetManualInstructionsCard() {
             Spacer(modifier = Modifier.height(10.dp))
             ManualStepRow(stepNumber = "2", stepText = "Open Widgets.")
             Spacer(modifier = Modifier.height(10.dp))
-            ManualStepRow(stepNumber = "3", stepText = "Find Kcal Grind AI.")
+            ManualStepRow(stepNumber = "3", stepText = "Find KcalGrind.")
             Spacer(modifier = Modifier.height(10.dp))
             ManualStepRow(stepNumber = "4", stepText = "Drag the widget onto the home screen.")
 

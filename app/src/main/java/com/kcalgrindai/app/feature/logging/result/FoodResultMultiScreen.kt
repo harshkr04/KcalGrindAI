@@ -30,6 +30,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.kcalgrindai.app.core.designsystem.KcalGrindSuccess
+import com.kcalgrindai.app.core.designsystem.KcalGrindWarning
+import com.kcalgrindai.app.core.designsystem.KcalGrindErrorRed
+import com.kcalgrindai.app.core.designsystem.KcalGrindProtein
+import com.kcalgrindai.app.core.designsystem.KcalGrindCarbs
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -134,8 +139,8 @@ fun FoodResultMultiScreen(
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     MacroSummaryPill("P", "${totalProtein}g", MaterialTheme.colorScheme.primary)
-                    MacroSummaryPill("C", "${totalCarbs}g", Color(0xFF60A5FA))
-                    MacroSummaryPill("F", "${totalFat}g", Color(0xFFFBBF24))
+                    MacroSummaryPill("C", "${totalCarbs}g", KcalGrindProtein)
+                    MacroSummaryPill("F", "${totalFat}g", KcalGrindCarbs)
                 }
             }
         }
@@ -172,9 +177,9 @@ private fun MultiFoodItemCard(
     onToggle: () -> Unit
 ) {
     val (badgeBg, badgeText, badgeLabel) = when (food.confidenceLevel) {
-        ConfidenceLevel.HIGH -> Triple(Color(0xFF10B981).copy(alpha = 0.15f), Color(0xFF10B981), "High (${(food.confidence * 100).toInt()}%)")
-        ConfidenceLevel.MEDIUM -> Triple(Color(0xFFF59E0B).copy(alpha = 0.15f), Color(0xFFF59E0B), "Confirm (${(food.confidence * 100).toInt()}%)")
-        ConfidenceLevel.LOW -> Triple(Color(0xFFEF4444).copy(alpha = 0.15f), Color(0xFFEF4444), "Low (${(food.confidence * 100).toInt()}%)")
+        ConfidenceLevel.HIGH -> Triple(KcalGrindSuccess.copy(alpha = 0.15f), KcalGrindSuccess, "High (${(food.confidence * 100).toInt()}%)")
+        ConfidenceLevel.MEDIUM -> Triple(KcalGrindWarning.copy(alpha = 0.15f), KcalGrindWarning, "Confirm (${(food.confidence * 100).toInt()}%)")
+        ConfidenceLevel.LOW -> Triple(KcalGrindErrorRed.copy(alpha = 0.15f), KcalGrindErrorRed, "Low (${(food.confidence * 100).toInt()}%)")
     }
 
     Surface(

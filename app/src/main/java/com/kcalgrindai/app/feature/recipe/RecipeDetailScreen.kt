@@ -38,6 +38,16 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import com.kcalgrindai.app.core.designsystem.KcalGrindStarAmber
+import com.kcalgrindai.app.core.designsystem.KcalGrindStarAmberDark
+import com.kcalgrindai.app.core.designsystem.KcalGrindCarbs
+import com.kcalgrindai.app.core.designsystem.KcalGrindAmberAccent
+import com.kcalgrindai.app.core.designsystem.KcalGrindProteinDark
+import com.kcalgrindai.app.core.designsystem.KcalGrindProteinLight
+import com.kcalgrindai.app.core.designsystem.KcalGrindFat
+import com.kcalgrindai.app.core.designsystem.KcalGrindSuccess
+import com.kcalgrindai.app.core.designsystem.KcalGrindCaloriesPurple
+import com.kcalgrindai.app.core.designsystem.KcalGrindCaloriesPurpleDark
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -196,7 +206,7 @@ private fun RecipeDetailTopBar(
             Icon(
                 imageVector = Icons.Filled.Star,
                 contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
-                tint = if (isFavorite) Color(0xFFF59E0B) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
+                tint = if (isFavorite) KcalGrindStarAmber else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
             )
         }
     }
@@ -295,13 +305,13 @@ private fun RecipeHeroHeader(recipe: Recipe) {
                     val isDarkCard = MaterialTheme.colorScheme.surface.luminance() < 0.5f
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = Color(0xFFF59E0B).copy(alpha = 0.12f)
+                        color = KcalGrindStarAmber.copy(alpha = 0.12f)
                     ) {
                         Text(
                             text = "Editor's Pick",
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (isDarkCard) Color(0xFFFBBF24) else Color(0xFFD97706)
+                                color = if (isDarkCard) KcalGrindCarbs else KcalGrindAmberAccent
                             ),
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                         )
@@ -351,7 +361,7 @@ private fun RecipeMacroBreakdownCard(recipe: Recipe) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Nutrition per Serving",
+                    text = "Estimated Nutrition per Serving",
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -375,28 +385,39 @@ private fun RecipeMacroBreakdownCard(recipe: Recipe) {
                 DetailMacroPill(
                     label = "Protein",
                     amount = "${recipe.proteinG}g",
-                    color = if (isDark) Color(0xFF818CF8) else Color(0xFF646FD4),
+                    color = if (isDark) KcalGrindProteinDark else KcalGrindProteinLight,
                     modifier = Modifier.weight(1f)
                 )
                 DetailMacroPill(
                     label = "Carbs",
                     amount = "${recipe.carbsG}g",
-                    color = if (isDark) Color(0xFFFBBF24) else Color(0xFFF59E0B),
+                    color = if (isDark) KcalGrindCarbs else KcalGrindStarAmber,
                     modifier = Modifier.weight(1f)
                 )
                 DetailMacroPill(
                     label = "Fat",
                     amount = "${recipe.fatG}g",
-                    color = if (isDark) Color(0xFF34D399) else Color(0xFF10B981),
+                    color = if (isDark) KcalGrindFat else KcalGrindSuccess,
                     modifier = Modifier.weight(1f)
                 )
                 DetailMacroPill(
                     label = "Fiber",
                     amount = "${recipe.fiberG}g",
-                    color = if (isDark) Color(0xFFA78BFA) else Color(0xFF8B5CF6),
+                    color = if (isDark) KcalGrindCaloriesPurple else KcalGrindCaloriesPurpleDark,
                     modifier = Modifier.weight(1f)
                 )
             }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = "Estimated nutrition (approximate values). Calculated from ingredient references; actual values vary with preparation.",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    lineHeight = 15.sp
+                )
+            )
         }
     }
 }

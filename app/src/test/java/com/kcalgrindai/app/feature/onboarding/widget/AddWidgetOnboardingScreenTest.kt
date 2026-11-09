@@ -1,4 +1,4 @@
-package com.kcalgrindai.app.feature.onboarding.widget
+﻿package com.kcalgrindai.app.feature.onboarding.widget
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -32,7 +32,7 @@ class AddWidgetOnboardingScreenTest {
         composeTestRule.onNodeWithText("Maybe later").assertExists()
         composeTestRule.onNodeWithText("Skip").assertExists()
         composeTestRule.onNodeWithText("1-Tap Meal AI Scan").assertExists()
-        composeTestRule.onNodeWithText("Instant Glance sync").assertExists()
+        composeTestRule.onNodeWithText("Manual widget sync").assertExists()
     }
 
     @Test

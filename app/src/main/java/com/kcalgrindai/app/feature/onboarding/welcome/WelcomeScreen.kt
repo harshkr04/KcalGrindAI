@@ -29,6 +29,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.kcalgrindai.app.core.designsystem.KcalGrindOnPrimary
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -69,7 +70,7 @@ fun WelcomeScreen(
                         shape = RoundedCornerShape(27.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = v3.emeraldAccent,
-                            contentColor = Color(0xFF101211)
+                            contentColor = KcalGrindOnPrimary
                         )
                     ) {
                         Row(

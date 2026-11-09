@@ -8,6 +8,7 @@ import com.kcalgrindai.app.domain.model.UserProfile
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -158,5 +159,138 @@ class CalculateNutritionGoalUseCaseTest {
         )
         assertTrue(macroCheck.withinTolerance)
         assertNotNull(NutritionCalculator.explain(NutritionCalculator.fallback()))
+    }
+
+    @Test
+    fun testGoalSafetyLimitsAndWeeklyPaceBounds() {
+        // Enforce safe weekly weight-change rate dynamically capped at 1% of body weight per week
+        // 70 kg user: max safe weekly rate is 0.70 kg/week
+        assertEquals(0.70, NutritionCalculator.maxWeeklyWeightChangeKg(70.0), 0.001)
+        assertTrue(NutritionCalculator.isWeeklyPaceSafe(0.5, 70.0))
+        assertTrue(NutritionCalculator.isWeeklyPaceSafe(0.7, 70.0))
+        assertTrue(NutritionCalculator.isWeeklyPaceSafe(-0.7, 70.0))
+        assertFalse(NutritionCalculator.isWeeklyPaceSafe(0.8, 70.0))
+        assertFalse(NutritionCalculator.isWeeklyPaceSafe(-1.2, 70.0))
+
+        // Low body weight edge case (45 kg user): max safe weekly rate is 0.45 kg/week
+        assertEquals(0.45, NutritionCalculator.maxWeeklyWeightChangeKg(45.0), 0.001)
+        assertTrue(NutritionCalculator.isWeeklyPaceSafe(0.4, 45.0))
+        assertTrue(NutritionCalculator.isWeeklyPaceSafe(0.45, 45.0))
+        assertFalse(NutritionCalculator.isWeeklyPaceSafe(0.5, 45.0))
+        assertFalse(NutritionCalculator.isWeeklyPaceSafe(-0.6, 45.0))
+
+        // High body weight (100 kg user): max safe weekly rate is 1.00 kg/week
+        assertEquals(1.00, NutritionCalculator.maxWeeklyWeightChangeKg(100.0), 0.001)
+        assertTrue(NutritionCalculator.isWeeklyPaceSafe(1.0, 100.0))
+        assertFalse(NutritionCalculator.isWeeklyPaceSafe(1.1, 100.0))
+
+        // Daily calorie deficit/surplus limits scaled to 1% rate
+        // 45 kg user: max deficit = (45 * 0.01 * 7700) / 7 = 495 kcal/day
+        assertEquals(-495, NutritionCalculator.clampDailyCalorieDelta(-1000, 45.0))
+        assertEquals(495, NutritionCalculator.clampDailyCalorieDelta(800, 45.0))
+        // 70 kg user: max deficit = (70 * 0.01 * 7700) / 7 = 770 kcal/day
+        assertEquals(-770, NutritionCalculator.clampDailyCalorieDelta(-1000, 70.0))
+        assertEquals(750, NutritionCalculator.clampDailyCalorieDelta(1200, 70.0))
+        assertEquals(-450, NutritionCalculator.clampDailyCalorieDelta(-450, 70.0))
+
+        // Sex-aware conservative calorie floors
+        assertEquals(1500, NutritionCalculator.calorieFloor("male"))
+        assertEquals(1500, NutritionCalculator.calorieFloor("MALE"))
+        assertEquals(1200, NutritionCalculator.calorieFloor("female"))
+        assertEquals(1200, NutritionCalculator.calorieFloor("FEMALE"))
+        assertEquals(1200, NutritionCalculator.calorieFloor(null))
+
+        // Enforce sex-aware calorie floor in calculate()
+        // Male floor (1500 kcal/day)
+        val maleSevereDeficit = NutritionCalculator.calculate(
+            weightKg = 50.0,
+            heightCm = 150.0,
+            age = 50,
+            goal = GoalType.LOSE,
+            activity = ActivityLevel.SEDENTARY,
+            sex = "male"
+        )
+        assertTrue(maleSevereDeficit.calories >= NutritionCalculator.CAL_FLOOR_MALE)
+        assertTrue(maleSevereDeficit.floored)
+        assertEquals(1500, maleSevereDeficit.calories)
+
+        // Female / unspecified floor (1200 kcal/day)
+        val femaleSevereDeficit = NutritionCalculator.calculate(
+            weightKg = 40.0,
+            heightCm = 145.0,
+            age = 60,
+            goal = GoalType.LOSE,
+            activity = ActivityLevel.SEDENTARY,
+            sex = "female"
+        )
+        assertTrue(femaleSevereDeficit.calories >= NutritionCalculator.CAL_FLOOR_FEMALE)
+        assertTrue(femaleSevereDeficit.floored)
+        assertEquals(1200, femaleSevereDeficit.calories)
+
+        // Minor safety protection: require age >= 18 for weight-loss or gain goals
+        val minorLoseEx = assertThrows(IllegalArgumentException::class.java) {
+            NutritionCalculator.calculate(
+                weightKg = 60.0,
+                heightCm = 165.0,
+                age = 16,
+                goal = GoalType.LOSE,
+                activity = ActivityLevel.MODERATE
+            )
+        }
+        assertEquals(NutritionCalculator.MINOR_WEIGHT_MODIFICATION_RESTRICTION_MESSAGE, minorLoseEx.message)
+
+        val minorGainEx = assertThrows(IllegalArgumentException::class.java) {
+            NutritionCalculator.calculate(
+                weightKg = 60.0,
+                heightCm = 165.0,
+                age = 17,
+                goal = GoalType.GAIN,
+                activity = ActivityLevel.MODERATE
+            )
+        }
+        assertEquals(NutritionCalculator.MINOR_WEIGHT_MODIFICATION_RESTRICTION_MESSAGE, minorGainEx.message)
+
+        val minorMuscleEx = assertThrows(IllegalArgumentException::class.java) {
+            NutritionCalculator.calculate(
+                weightKg = 60.0,
+                heightCm = 165.0,
+                age = 15,
+                goal = GoalType.MUSCLE,
+                activity = ActivityLevel.MODERATE
+            )
+        }
+        assertEquals(NutritionCalculator.MINOR_WEIGHT_MODIFICATION_RESTRICTION_MESSAGE, minorMuscleEx.message)
+
+        // Non-weight-modification goals allowed for minors
+        val minorMaintain = NutritionCalculator.calculate(
+            weightKg = 60.0,
+            heightCm = 165.0,
+            age = 16,
+            goal = GoalType.MAINTAIN,
+            activity = ActivityLevel.MODERATE
+        )
+        assertNotNull(minorMaintain)
+        assertEquals(GoalType.MAINTAIN, minorMaintain.goal)
+
+        val minorHealthier = NutritionCalculator.calculate(
+            weightKg = 60.0,
+            heightCm = 165.0,
+            age = 16,
+            goal = GoalType.HEALTHIER,
+            activity = ActivityLevel.MODERATE
+        )
+        assertNotNull(minorHealthier)
+        assertEquals(GoalType.HEALTHIER, minorHealthier.goal)
+
+        // Age >= 18 allowed for weight-loss
+        val adultLose = NutritionCalculator.calculate(
+            weightKg = 60.0,
+            heightCm = 165.0,
+            age = 18,
+            goal = GoalType.LOSE,
+            activity = ActivityLevel.MODERATE
+        )
+        assertNotNull(adultLose)
+        assertEquals(GoalType.LOSE, adultLose.goal)
     }
 }

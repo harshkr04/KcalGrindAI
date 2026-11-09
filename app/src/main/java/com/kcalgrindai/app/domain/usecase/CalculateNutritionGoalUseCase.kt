@@ -55,7 +55,8 @@ class CalculateNutritionGoalUseCase @Inject constructor() {
         goal: GoalType,
         activity: ActivityLevel,
         goalWeightKg: Double? = null,
-        dietTags: List<String> = emptyList()
+        dietTags: List<String> = emptyList(),
+        sex: String? = null
     ): NutritionCalculator.CalculationResult {
         return NutritionCalculator.calculate(
             weightKg = weightKg,
@@ -64,7 +65,8 @@ class CalculateNutritionGoalUseCase @Inject constructor() {
             goal = goal,
             activity = activity,
             goalWeightKg = goalWeightKg,
-            dietTags = dietTags
+            dietTags = dietTags,
+            sex = sex
         )
     }
 }

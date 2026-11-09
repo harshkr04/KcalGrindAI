@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import com.kcalgrindai.app.core.designsystem.components.KcalGrindCoachIcon
+import com.kcalgrindai.app.core.designsystem.v3Colors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -73,20 +74,20 @@ fun KcalGrindBottomNavigationBar(
     modifier: Modifier = Modifier,
     hazeState: HazeState? = null
 ) {
-    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val isDark = MaterialTheme.v3Colors.isDark
     val navShape = RoundedCornerShape(34.dp)
     
     // Theme-aware liquid frosted glass colors (~15% transparent / 85% opaque diffused)
     val glassColor = if (isDark) {
         MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.84f)
     } else {
-        Color.White.copy(alpha = 0.84f)
+        MaterialTheme.v3Colors.surface.copy(alpha = 0.84f)
     }
     
     val baseBackground = if (isDark) {
         MaterialTheme.colorScheme.surface.copy(alpha = 0.12f)
     } else {
-        Color.White.copy(alpha = 0.08f)
+        MaterialTheme.v3Colors.surface.copy(alpha = 0.08f)
     }
 
     val hazeStyle = remember(isDark, glassColor, baseBackground) {

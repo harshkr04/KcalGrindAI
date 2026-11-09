@@ -197,7 +197,20 @@ fun GoalSettingScreen(
                 onValueChange = { viewModel.onFatChanged(it.toDouble()) }
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Not medical advice. Calorie targets and macro splits are nutritional estimates for healthy individuals. Consult a medical professional before starting any restrictive dietary regimen.",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                ),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

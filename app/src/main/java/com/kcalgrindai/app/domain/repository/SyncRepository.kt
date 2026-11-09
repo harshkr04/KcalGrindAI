@@ -20,6 +20,12 @@ interface SyncRepository {
      */
     suspend fun fullSync(): Result<SyncResult>
 
+    /**
+     * Restore all cloud data down to local Room database (reinstall recovery).
+     * Equivalent to pulling changes with sinceEpochMs = 0 and updating the last sync timestamp.
+     */
+    suspend fun restoreCloudBackup(): Result<SyncPullResult>
+
     /** Get the epoch-millis timestamp of the last successful sync. */
     fun getLastSyncTimestamp(): Long
 

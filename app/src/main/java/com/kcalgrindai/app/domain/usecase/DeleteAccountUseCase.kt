@@ -27,7 +27,8 @@ open class DeleteAccountUseCase @Inject constructor(
     private val accountApiService: AccountApiService,
     private val database: KcalGrindDatabase,
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val networkMonitor: NetworkMonitor? = null
+    private val networkMonitor: NetworkMonitor? = null,
+    private val foodImageStorageManager: com.kcalgrindai.app.core.util.FoodImageStorageManager? = null
 ) {
 
     open suspend fun execute(): AccountDeletionResult = withContext(Dispatchers.IO) {
@@ -138,5 +139,6 @@ open class DeleteAccountUseCase @Inject constructor(
     private suspend fun wipeLocalState() {
         database.clearAllTables()
         userPreferencesRepository.clearAllPreferences()
+        foodImageStorageManager?.deleteAllFoodImages()
     }
 }

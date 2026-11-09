@@ -1,4 +1,4 @@
-package com.kcalgrindai.app.feature.onboarding.widget
+﻿package com.kcalgrindai.app.feature.onboarding.widget
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -43,6 +43,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetPreviewCardBg
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetPreviewCardBorder
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetPreviewBadgeBg
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetPreviewBadgeBorder
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetPreviewDarkForest
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetPreviewDarkText
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetPreviewSlate
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetPreviewWaterUnfilled
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetPreviewMacroCarb
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetPreviewMacroProtein
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetPreviewMacroFat
+import com.kcalgrindai.app.core.designsystem.KcalGrindWidgetPreviewIndigo
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -181,7 +193,7 @@ fun AddWidgetOnboardingScreen(
                         modifier = Modifier.size(14.dp)
                     )
                     Text(
-                        text = "ANDROID GLANCE COMPANION",
+                        text = "ANDROID HOME-SCREEN WIDGET",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary,
@@ -271,7 +283,7 @@ fun AddWidgetOnboardingScreen(
                             modifier = Modifier.size(18.dp)
                         )
                         Text(
-                            text = "Instant Glance sync",
+                            text = "Manual widget sync",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface,
@@ -291,8 +303,8 @@ fun AddWidgetOnboardingScreen(
 fun WidgetOnboardingPreviewCard() {
     Surface(
         shape = RoundedCornerShape(24.dp),
-        color = Color(0xFFE8ECE9),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCCD1CE)),
+        color = KcalGrindWidgetPreviewCardBg,
+        border = androidx.compose.foundation.BorderStroke(1.dp, KcalGrindWidgetPreviewCardBorder),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
@@ -319,10 +331,10 @@ fun WidgetOnboardingPreviewCard() {
                     color = Color.White.copy(alpha = 0.8f)
                 ) {
                     Text(
-                        text = "4×2 GLANCE",
+                        text = "4×2 WIDGET",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F5238),
+                            color = KcalGrindWidgetPreviewDarkForest,
                             fontSize = 10.sp
                         ),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
@@ -333,8 +345,8 @@ fun WidgetOnboardingPreviewCard() {
             // Widget Container Surface (Soft Mint #B0F1CC)
             Surface(
                 shape = RoundedCornerShape(20.dp),
-                color = Color(0xFFB0F1CC),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF9AE3B9)),
+                color = KcalGrindWidgetPreviewBadgeBg,
+                border = androidx.compose.foundation.BorderStroke(1.dp, KcalGrindWidgetPreviewBadgeBorder),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -353,14 +365,14 @@ fun WidgetOnboardingPreviewCard() {
                             Icon(
                                 imageVector = Icons.Default.Eco,
                                 contentDescription = null,
-                                tint = Color(0xFF0F5238),
+                                tint = KcalGrindWidgetPreviewDarkForest,
                                 modifier = Modifier.size(16.dp)
                             )
                             Text(
-                                text = "KCAL GRIND AI",
+                                text = "KCALGRIND",
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = Color(0xFF0F5238),
+                                    color = KcalGrindWidgetPreviewDarkForest,
                                     fontSize = 11.sp,
                                     letterSpacing = 0.5.sp
                                 )
@@ -369,7 +381,7 @@ fun WidgetOnboardingPreviewCard() {
 
                         Surface(
                             shape = RoundedCornerShape(10.dp),
-                            color = Color(0xFF0F5238).copy(alpha = 0.12f)
+                            color = KcalGrindWidgetPreviewDarkForest.copy(alpha = 0.12f)
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
@@ -380,13 +392,13 @@ fun WidgetOnboardingPreviewCard() {
                                     modifier = Modifier
                                         .size(6.dp)
                                         .clip(CircleShape)
-                                        .background(Color(0xFF0F5238))
+                                        .background(KcalGrindWidgetPreviewDarkForest)
                                 )
                                 Text(
                                     text = "Energized",
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF0F5238),
+                                        color = KcalGrindWidgetPreviewDarkForest,
                                         fontSize = 10.sp
                                     )
                                 )
@@ -428,14 +440,14 @@ fun WidgetOnboardingPreviewCard() {
                                 text = "680 kcal left",
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = Color(0xFF191C1C),
+                                    color = KcalGrindWidgetPreviewDarkText,
                                     fontSize = 18.sp
                                 )
                             )
                             Text(
                                 text = "1,420 / 2,100 kcal",
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    color = Color(0xFF404943),
+                                    color = KcalGrindWidgetPreviewSlate,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -456,7 +468,7 @@ fun WidgetOnboardingPreviewCard() {
                                             .height(8.dp)
                                             .clip(RoundedCornerShape(2.dp))
                                             .background(
-                                                if (isFilled) Color(0xFF0F5238) else Color(0xFFC8F7DC)
+                                                if (isFilled) KcalGrindWidgetPreviewDarkForest else KcalGrindWidgetPreviewWaterUnfilled
                                             )
                                     )
                                 }
@@ -471,9 +483,9 @@ fun WidgetOnboardingPreviewCard() {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        MacroPreviewPill(label = "C: 180g", fraction = 0.65f, barColor = Color(0xFF2D6A4F), modifier = Modifier.weight(1f))
-                        MacroPreviewPill(label = "P: 120g", fraction = 0.80f, barColor = Color(0xFF195E3E), modifier = Modifier.weight(1f))
-                        MacroPreviewPill(label = "F: 55g", fraction = 0.50f, barColor = Color(0xFF407855), modifier = Modifier.weight(1f))
+                        MacroPreviewPill(label = "C: 180g", fraction = 0.65f, barColor = KcalGrindWidgetPreviewMacroCarb, modifier = Modifier.weight(1f))
+                        MacroPreviewPill(label = "P: 120g", fraction = 0.80f, barColor = KcalGrindWidgetPreviewMacroProtein, modifier = Modifier.weight(1f))
+                        MacroPreviewPill(label = "F: 55g", fraction = 0.50f, barColor = KcalGrindWidgetPreviewMacroFat, modifier = Modifier.weight(1f))
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
@@ -485,7 +497,7 @@ fun WidgetOnboardingPreviewCard() {
                     ) {
                         Surface(
                             shape = RoundedCornerShape(10.dp),
-                            color = Color(0xFF0F5238),
+                            color = KcalGrindWidgetPreviewDarkForest,
                             modifier = Modifier.weight(1f)
                         ) {
                             Row(
@@ -501,7 +513,7 @@ fun WidgetOnboardingPreviewCard() {
 
                         Surface(
                             shape = RoundedCornerShape(10.dp),
-                            color = Color(0xFF313C9F),
+                            color = KcalGrindWidgetPreviewIndigo,
                             modifier = Modifier.weight(1f)
                         ) {
                             Row(
@@ -534,7 +546,7 @@ private fun MacroPreviewPill(
             style = MaterialTheme.typography.labelSmall.copy(
                 fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF404943)
+                color = KcalGrindWidgetPreviewSlate
             )
         )
         Spacer(modifier = Modifier.height(2.dp))

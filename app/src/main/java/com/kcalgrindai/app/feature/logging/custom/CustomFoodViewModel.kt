@@ -47,6 +47,7 @@ data class CustomFoodUiState(
     val generalError: String? = null,
     // Macro warning (advisory only)
     val macroWarning: String? = null,
+    val imageUri: android.net.Uri? = null,
     val isSaving: Boolean = false,
     val isDeleting: Boolean = false,
     val isEditMode: Boolean = false
@@ -69,7 +70,8 @@ sealed interface CustomFoodEvent {
 @HiltViewModel
 class CustomFoodViewModel @Inject constructor(
     private val foodRepository: FoodRepository,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    private val foodImageStorageManager: com.kcalgrindai.app.core.util.FoodImageStorageManager? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CustomFoodUiState())
@@ -115,6 +117,10 @@ class CustomFoodViewModel @Inject constructor(
                 recheckMacros()
             }
         }
+    }
+
+    fun onImageSelected(uri: android.net.Uri?) {
+        _uiState.update { it.copy(imageUri = uri) }
     }
 
     fun onNameChange(value: String) {
@@ -356,8 +362,12 @@ class CustomFoodViewModel @Inject constructor(
                 )
 
                 val savedId = foodRepository.saveFood(foodItem)
+                val finalId = if (state.id != null && state.id > 0) state.id else savedId
+                if (state.imageUri != null && finalId > 0) {
+                    foodImageStorageManager?.saveCustomFoodPhoto(finalId, state.imageUri)
+                }
                 _uiState.update { it.copy(isSaving = false) }
-                _events.emit(CustomFoodEvent.SaveSuccess(if (state.id != null && state.id > 0) state.id else savedId))
+                _events.emit(CustomFoodEvent.SaveSuccess(finalId))
             } catch (e: Exception) {
                 _uiState.update { it.copy(isSaving = false, generalError = e.message ?: "Failed to save food") }
             }
@@ -369,6 +379,7 @@ class CustomFoodViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isDeleting = true) }
             try {
+                foodImageStorageManager?.deleteFoodImage(id)
                 foodRepository.deleteFoodById(id)
                 _uiState.update { it.copy(isDeleting = false) }
                 _events.emit(CustomFoodEvent.DeleteSuccess)

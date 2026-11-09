@@ -20,7 +20,10 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class CustomFoodViewModelTest {
 
@@ -215,5 +218,45 @@ class CustomFoodViewModelTest {
         }
 
         assertNull(fakeFoodRepository.getFoodById(42L))
+    }
+
+    @Test
+    fun deleteCustomFood_removesAssociatedFoodImageFromDisk() = runTest {
+        val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
+        val storageManager = com.kcalgrindai.app.core.util.FoodImageStorageManager(context)
+        val bitmap = android.graphics.Bitmap.createBitmap(10, 10, android.graphics.Bitmap.Config.ARGB_8888)
+        val imageFile = storageManager.saveFoodImageFromBitmap(99L, bitmap)
+        assertTrue("Food image must exist on disk before deletion", imageFile.exists())
+        assertTrue("Storage manager must report file exists", storageManager.getFoodImageFile(99L) != null)
+
+        val food = FoodItem(
+            id = 99L,
+            source = FoodSource.USER_ENTERED,
+            name = "Food With Photo",
+            brand = "Custom",
+            servingDescription = "1 bowl",
+            servingGrams = 100.0,
+            calories = 150.0,
+            proteinG = 5.0,
+            carbsG = 20.0,
+            fatG = 2.0,
+            fiberG = 1.0,
+            sugarG = 0.0,
+            sodiumMg = 0.0,
+            isUserCreated = true,
+            createdAt = 1000L
+        )
+        fakeFoodRepository.saveFood(food)
+
+        val editHandle = SavedStateHandle(mapOf("foodId" to 99L))
+        val editVm = CustomFoodViewModel(fakeFoodRepository, editHandle, storageManager)
+        advanceUntilIdle()
+
+        editVm.deleteCustomFood()
+        advanceUntilIdle()
+
+        assertNull("Food must be deleted from repository", fakeFoodRepository.getFoodById(99L))
+        assertFalse("Food image file must be permanently deleted from private disk", imageFile.exists())
+        assertNull("Storage manager must report no image file for deleted food", storageManager.getFoodImageFile(99L))
     }
 }

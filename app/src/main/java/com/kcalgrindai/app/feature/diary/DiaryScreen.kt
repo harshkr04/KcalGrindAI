@@ -54,7 +54,23 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kcalgrindai.app.R
+import com.kcalgrindai.app.core.designsystem.components.CircleIconButton
+import com.kcalgrindai.app.core.designsystem.components.FoodImageBadge
 import com.kcalgrindai.app.core.designsystem.v3Colors
+import com.kcalgrindai.app.core.designsystem.KcalGrindProtein
+import com.kcalgrindai.app.core.designsystem.KcalGrindCarbs
+import com.kcalgrindai.app.core.designsystem.KcalGrindFat
+import com.kcalgrindai.app.core.designsystem.KcalGrindOverBudgetLightBg
+import com.kcalgrindai.app.core.designsystem.KcalGrindOverBudgetLightBorder
+import com.kcalgrindai.app.core.designsystem.KcalGrindOverBudgetDarkText
+import com.kcalgrindai.app.core.designsystem.KcalGrindSourceVerified
+import com.kcalgrindai.app.core.designsystem.KcalGrindSourceVerifiedBg
+import com.kcalgrindai.app.core.designsystem.KcalGrindSourceManual
+import com.kcalgrindai.app.core.designsystem.KcalGrindSourceManualBg
+import com.kcalgrindai.app.core.designsystem.KcalGrindSourceCustom
+import com.kcalgrindai.app.core.designsystem.KcalGrindSourceCustomBg
+import com.kcalgrindai.app.core.designsystem.KcalGrindSourceRecipe
+import com.kcalgrindai.app.core.designsystem.KcalGrindSourceRecipeBg
 import com.kcalgrindai.app.domain.model.FoodLogItem
 import com.kcalgrindai.app.domain.model.ItemSource
 import com.kcalgrindai.app.domain.model.MealType
@@ -66,11 +82,29 @@ fun DiaryScreen(
     onNavigateToTab: (String) -> Unit,
     onNavigateToAddFood: () -> Unit,
     onNavigateToMealDetail: (Long) -> Unit,
+    initialMealSlot: String? = null,
     viewModel: DiaryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val v3Colors = MaterialTheme.v3Colors
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+
+    LaunchedEffect(initialMealSlot, uiState.mealsGrouped) {
+        if (!initialMealSlot.isNullOrBlank() && uiState.mealsGrouped.isNotEmpty()) {
+            val normalizedSlot = initialMealSlot.trim().lowercase().let {
+                if (it == "snacks") "snack" else it
+            }
+            val targetIndex = uiState.mealsGrouped.indexOfFirst {
+                it.mealType.name.equals(normalizedSlot, ignoreCase = true) ||
+                it.mealType.id.equals(normalizedSlot, ignoreCase = true)
+            }
+            if (targetIndex >= 0) {
+                // item 0 is Daily Totals Summary Card; meal section cards start at index 1
+                listState.animateScrollToItem(targetIndex + 1)
+            }
+        }
+    }
 
     LaunchedEffect(uiState.undoMessage) {
         val msg = uiState.undoMessage
@@ -117,6 +151,7 @@ fun DiaryScreen(
             }
         } else {
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
@@ -187,12 +222,12 @@ private fun DiaryDateHeader(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(
+            CircleIconButton(
                 onClick = onPreviousDay,
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .background(v3Colors.surfaceElevated)
+                visualSize = 38.dp,
+                containerColor = v3Colors.surfaceElevated,
+                contentColor = v3Colors.textPrimary,
+                contentDescription = "Previous Day"
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
@@ -242,12 +277,12 @@ private fun DiaryDateHeader(
                 }
             }
 
-            IconButton(
+            CircleIconButton(
                 onClick = onNextDay,
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .background(v3Colors.surfaceElevated)
+                visualSize = 38.dp,
+                containerColor = v3Colors.surfaceElevated,
+                contentColor = v3Colors.textPrimary,
+                contentDescription = "Next Day"
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
@@ -319,16 +354,16 @@ private fun DiaryDailySummaryCard(
                 val remaining = targetCalories - totalCalories
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = if (remaining >= 0) v3Colors.emeraldAccent.copy(alpha = 0.15f) else Color(0x33BA1A1A),
+                    color = if (remaining >= 0) v3Colors.emeraldAccent.copy(alpha = 0.15f) else KcalGrindOverBudgetLightBg,
                     border = BorderStroke(
                         1.dp,
-                        if (remaining >= 0) v3Colors.emeraldAccent.copy(alpha = 0.35f) else Color(0x66BA1A1A)
+                        if (remaining >= 0) v3Colors.emeraldAccent.copy(alpha = 0.35f) else KcalGrindOverBudgetLightBorder
                     )
                 ) {
                     Text(
                         text = if (remaining >= 0) "$remaining kcal left" else "${-remaining} kcal over",
                         style = MaterialTheme.typography.labelMedium.copy(
-                            color = if (remaining >= 0) v3Colors.emeraldAccent else Color(0xFFFF897D),
+                            color = if (remaining >= 0) v3Colors.emeraldAccent else KcalGrindOverBudgetDarkText,
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp
                         ),
@@ -347,19 +382,19 @@ private fun DiaryDailySummaryCard(
                 DiaryMacroPill(
                     label = "Protein",
                     amount = "${proteinG.roundToInt()}g",
-                    accentColor = Color(0xFF60A5FA),
+                    accentColor = KcalGrindProtein,
                     modifier = Modifier.weight(1f)
                 )
                 DiaryMacroPill(
                     label = "Carbs",
                     amount = "${carbsG.roundToInt()}g",
-                    accentColor = Color(0xFFFBBF24),
+                    accentColor = KcalGrindCarbs,
                     modifier = Modifier.weight(1f)
                 )
                 DiaryMacroPill(
                     label = "Fat",
                     amount = "${fatG.roundToInt()}g",
-                    accentColor = Color(0xFF34D399),
+                    accentColor = KcalGrindFat,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -481,21 +516,20 @@ private fun DiaryMealSectionCard(
                         )
                     )
                     Spacer(modifier = Modifier.width(10.dp))
-                    Surface(
+                    CircleIconButton(
                         onClick = onAddMealClick,
-                        shape = CircleShape,
-                        color = v3Colors.surfaceElevated,
+                        visualSize = 36.dp,
+                        containerColor = v3Colors.surfaceElevated,
+                        contentColor = v3Colors.emeraldAccent,
                         border = BorderStroke(1.dp, v3Colors.subtleBorder),
-                        modifier = Modifier.size(36.dp)
+                        contentDescription = "Add food to $mealTitle"
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Add food to $mealTitle",
-                                tint = v3Colors.emeraldAccent,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add food to $mealTitle",
+                            tint = v3Colors.emeraldAccent,
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                 }
             }
@@ -543,6 +577,14 @@ private fun DiaryFoodItemRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            FoodImageBadge(
+                foodName = item.name,
+                foodId = item.id,
+                size = 38.dp,
+                shape = RoundedCornerShape(8.dp)
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -601,10 +643,10 @@ private fun SourceBadge(source: ItemSource) {
     val v3Colors = MaterialTheme.v3Colors
     val (label, bg, fg) = when (source) {
         ItemSource.AI -> Triple("AI", v3Colors.emeraldAccent.copy(alpha = 0.18f), v3Colors.emeraldAccent)
-        ItemSource.VERIFIED -> Triple("Barcode", Color(0x3338B2AC), Color(0xFF38B2AC))
-        ItemSource.MANUAL -> Triple("Manual", Color(0x3360A5FA), Color(0xFF60A5FA))
-        ItemSource.USER_ENTERED -> Triple("Custom", Color(0x33A78BFA), Color(0xFFA78BFA))
-        ItemSource.RECIPE, ItemSource.CURATED_RECIPE -> Triple("Recipe", Color(0x33FBBF24), Color(0xFFFBBF24))
+        ItemSource.VERIFIED -> Triple("Barcode", KcalGrindSourceVerifiedBg, KcalGrindSourceVerified)
+        ItemSource.MANUAL -> Triple("Manual", KcalGrindSourceManualBg, KcalGrindSourceManual)
+        ItemSource.USER_ENTERED -> Triple("Custom", KcalGrindSourceCustomBg, KcalGrindSourceCustom)
+        ItemSource.RECIPE, ItemSource.CURATED_RECIPE -> Triple("Recipe", KcalGrindSourceRecipeBg, KcalGrindSourceRecipe)
     }
 
     Surface(
@@ -690,14 +732,14 @@ private fun DiaryEmptyDayCard(
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        tint = if (v3Colors.isDark) Color(0xFF101211) else Color.White,
+                        tint = if (v3Colors.isDark) v3Colors.background else v3Colors.surface,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Log Meal",
                         style = MaterialTheme.typography.labelLarge.copy(
-                            color = if (v3Colors.isDark) Color(0xFF101211) else Color.White,
+                            color = if (v3Colors.isDark) v3Colors.background else v3Colors.surface,
                             fontWeight = FontWeight.Bold
                         )
                     )

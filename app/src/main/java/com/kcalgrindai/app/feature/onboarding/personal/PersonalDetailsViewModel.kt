@@ -95,9 +95,11 @@ class PersonalDetailsViewModel @Inject constructor(
             if (age == null) {
                 ageErr = "Age is required."
             } else if (age < NutritionCalculator.Limits.MIN_AGE) {
-                ageErr = "Kcal Grind AI is for ages ${NutritionCalculator.Limits.MIN_AGE} and up."
+                ageErr = "KcalGrind is for ages ${NutritionCalculator.Limits.MIN_AGE} and up."
             } else if (age > NutritionCalculator.Limits.MAX_AGE) {
                 ageErr = "Enter an age of ${NutritionCalculator.Limits.MAX_AGE} or below."
+            } else if (age < 18 && NutritionCalculator.isWeightModificationGoal(sessionManager.getSnapshot().goal)) {
+                ageErr = NutritionCalculator.MINOR_WEIGHT_MODIFICATION_RESTRICTION_MESSAGE
             }
 
             var heightErr: String? = null

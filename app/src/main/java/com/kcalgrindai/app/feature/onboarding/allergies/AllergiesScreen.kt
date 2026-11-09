@@ -72,7 +72,7 @@ fun AllergiesScreen(
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Kcal Grind AI will warn you whenever detected foods contain potential allergens.",
+                text = "KcalGrind will warn you whenever detected foods contain potential allergens.",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

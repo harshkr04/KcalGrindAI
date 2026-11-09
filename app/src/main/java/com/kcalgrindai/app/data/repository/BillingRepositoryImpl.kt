@@ -22,6 +22,10 @@ class BillingRepositoryImpl @Inject constructor(
     private val userProfileDao: UserProfileDao
 ) : BillingRepository {
 
+    internal var isDebugOverride: Boolean? = null
+    private val isDebug: Boolean
+        get() = isDebugOverride ?: com.kcalgrindai.app.BuildConfig.DEBUG
+
     private val prefs: SharedPreferences by lazy {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
@@ -86,6 +90,10 @@ class BillingRepositoryImpl @Inject constructor(
     override fun observeIsPro(): Flow<Boolean> = _isProFlow.asStateFlow()
 
     override suspend fun setPro(isPro: Boolean) {
+        if (!isDebug) {
+            // Strictly unreachable in release builds: Pro cannot be granted locally
+            return
+        }
         val editor = prefs.edit().putBoolean(KEY_IS_PRO, isPro)
         if (!isPro) {
             editor.remove(KEY_ACTIVE_PLAN_ID).remove(KEY_EXPIRES_AT)
@@ -101,7 +109,7 @@ class BillingRepositoryImpl @Inject constructor(
     override fun getActiveExpiresAt(): Long? = prefs.getLong(KEY_EXPIRES_AT, 0L).takeIf { it > 0L }
 
     override suspend fun subscribe(planId: String): PurchaseResult = withContext(Dispatchers.IO) {
-        if (com.kcalgrindai.app.BuildConfig.DEBUG) {
+        if (isDebug) {
             // In debug/development, simulate successful subscription activation
             val expiresAt = System.currentTimeMillis() + (if (planId.contains("annual")) 365L else 30L) * 24 * 3600 * 1000
             prefs.edit()
@@ -123,6 +131,11 @@ class BillingRepositoryImpl @Inject constructor(
     }
 
     override suspend fun restorePurchases(): PurchaseResult = withContext(Dispatchers.IO) {
+        if (!isDebug) {
+            return@withContext PurchaseResult.Error(
+                "Google Play Store billing service is unavailable in this environment. In-app purchases require a physical device signed in to Google Play with configured billing products."
+            )
+        }
         val isCurrentlyPro = prefs.getBoolean(KEY_IS_PRO, false)
         if (isCurrentlyPro) {
             _isProFlow.value = true
@@ -135,7 +148,7 @@ class BillingRepositoryImpl @Inject constructor(
             )
         } else {
             PurchaseResult.Error(
-                "No active subscriptions found for this Google Play account. Please subscribe to activate Kcal Grind Pro."
+                "No active subscriptions found for this Google Play account. Please subscribe to activate KcalGrind Pro."
             )
         }
     }

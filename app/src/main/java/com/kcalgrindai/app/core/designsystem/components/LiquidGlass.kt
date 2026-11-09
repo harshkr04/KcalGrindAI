@@ -41,7 +41,7 @@ fun Modifier.liquidGlass(
 }
 
 /**
- * Premium Liquid Glass Card container for Kcal Grind AI V3.
+ * Premium Liquid Glass Card container for KcalGrind V3.
  * Distinguishes foreground content from background with subtle depth,
  * soft specular border, and customizable click behavior.
  */

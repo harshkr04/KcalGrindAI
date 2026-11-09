@@ -1,4 +1,4 @@
-package com.kcalgrindai.app.feature.settings.widget
+﻿package com.kcalgrindai.app.feature.settings.widget
 
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
@@ -66,12 +66,12 @@ class WidgetSettingsScreenTest {
         composeTestRule.onNodeWithText("Home Screen Widget").assertExists()
         composeTestRule.onNodeWithText("Available Widget Sizes").assertExists()
         composeTestRule.onNodeWithText("4×2 Detailed").assertExists()
-        composeTestRule.onNodeWithText("2×2 Quick Glance").assertExists()
+        composeTestRule.onNodeWithText("2×2 Quick Widget").assertExists()
         composeTestRule.onNodeWithText("Hide numbers on widget").assertExists()
         composeTestRule.onNodeWithText("Manual Setup Instructions").assertExists()
         composeTestRule.onNodeWithText("Long-press an empty area of the home screen.").assertExists()
         composeTestRule.onNodeWithText("Open Widgets.").assertExists()
-        composeTestRule.onNodeWithText("Find Kcal Grind AI.").assertExists()
+        composeTestRule.onNodeWithText("Find KcalGrind.").assertExists()
         composeTestRule.onNodeWithText("Drag the widget onto the home screen.").assertExists()
     }
 
@@ -91,7 +91,7 @@ class WidgetSettingsScreenTest {
         composeTestRule.onNodeWithText("680 kcal left").assertExists()
 
         // Click 2x2 tab
-        composeTestRule.onNodeWithText("2×2 Quick Glance").performClick()
+        composeTestRule.onNodeWithText("2×2 Quick Widget").performClick()
         advanceUntilIdle()
         composeTestRule.waitForIdle()
 

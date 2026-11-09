@@ -48,6 +48,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kcalgrindai.app.core.designsystem.components.KcalGrindBackButton
 import com.kcalgrindai.app.core.designsystem.components.KcalGrindPrimaryButton
+import com.kcalgrindai.app.core.designsystem.components.FoodImageBadge
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.OutlinedButton
+import android.net.Uri
 import com.kcalgrindai.app.core.designsystem.components.KcalGrindTextField
 import com.kcalgrindai.app.core.designsystem.v3Colors
 
@@ -61,6 +66,12 @@ fun CustomFoodScreen(
     val uiState by viewModel.uiState.collectAsState()
     val v3 = MaterialTheme.v3Colors
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        viewModel.onImageSelected(uri)
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -192,6 +203,34 @@ fun CustomFoodScreen(
                             letterSpacing = 1.sp
                         )
                     )
+
+                    // Optional Food Photo Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        FoodImageBadge(
+                            foodName = uiState.name.ifBlank { "Custom Food" },
+                            foodId = uiState.id,
+                            size = 56.dp
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            OutlinedButton(
+                                onClick = { photoPickerLauncher.launch("image/*") },
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Text(if (uiState.imageUri != null) "Change Photo" else "Add Photo (Optional)")
+                            }
+                            Text(
+                                text = "Stored locally • EXIF & GPS stripped",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 11.sp,
+                                    color = v3.textMuted
+                                )
+                            )
+                        }
+                    }
 
                     KcalGrindTextField(
                         value = uiState.name,

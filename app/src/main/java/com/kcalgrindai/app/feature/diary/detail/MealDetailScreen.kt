@@ -48,6 +48,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.luminance
+import com.kcalgrindai.app.core.designsystem.components.CircleIconButton
+import com.kcalgrindai.app.core.designsystem.components.FoodImageBadge
+import com.kcalgrindai.app.core.designsystem.KcalGrindOverBudgetRed
+import com.kcalgrindai.app.core.designsystem.KcalGrindProteinDark
+import com.kcalgrindai.app.core.designsystem.KcalGrindProteinLight
+import com.kcalgrindai.app.core.designsystem.KcalGrindCarbs
+import com.kcalgrindai.app.core.designsystem.KcalGrindWarning
+import com.kcalgrindai.app.core.designsystem.KcalGrindFat
+import com.kcalgrindai.app.core.designsystem.KcalGrindSuccess
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kcalgrindai.app.core.designsystem.components.KcalGrindPrimaryButton
@@ -122,7 +131,7 @@ fun MealDetailScreen(
                         viewModel.deleteMeal(onDeleted = onNavigateBack)
                     }
                 ) {
-                    Text("Delete", color = Color(0xFFE53935), fontWeight = FontWeight.Bold)
+                    Text("Delete", color = KcalGrindOverBudgetRed, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -242,13 +251,13 @@ fun MealDetailScreen(
                                 .height(52.dp),
                             shape = RoundedCornerShape(26.dp),
                             colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Color(0xFFE53935)
+                                contentColor = KcalGrindOverBudgetRed
                             )
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
                                 contentDescription = null,
-                                tint = Color(0xFFE53935),
+                                tint = KcalGrindOverBudgetRed,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -283,7 +292,11 @@ private fun MealDetailTopBar(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBackClick) {
+            CircleIconButton(
+                onClick = onBackClick,
+                visualSize = 38.dp,
+                contentDescription = "Back"
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
@@ -365,9 +378,9 @@ private fun MealDetailSummaryCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Macro summary chips (theme-aware colors)
-            val proteinColor = if (isDark) Color(0xFF818CF8) else Color(0xFF646FD4)
-            val carbsColor = if (isDark) Color(0xFFFBBF24) else Color(0xFFF59E0B)
-            val fatColor = if (isDark) Color(0xFF34D399) else Color(0xFF10B981)
+            val proteinColor = if (isDark) KcalGrindProteinDark else KcalGrindProteinLight
+            val carbsColor = if (isDark) KcalGrindCarbs else KcalGrindWarning
+            val fatColor = if (isDark) KcalGrindFat else KcalGrindSuccess
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -434,6 +447,14 @@ private fun MealDetailItemCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            FoodImageBadge(
+                foodName = item.name,
+                foodId = item.id,
+                size = 40.dp,
+                shape = RoundedCornerShape(10.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = item.name,

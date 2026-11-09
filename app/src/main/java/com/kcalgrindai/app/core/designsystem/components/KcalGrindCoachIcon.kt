@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Clean, professional brand vector icon for Kcal Grind AI Nutrition Coach.
+ * Clean, professional brand vector icon for KcalGrind Nutrition Coach Sproutling.
  * Combines a sleek coaching dialogue bubble with an organic nutritional leaf curve.
  * Adheres strictly to design guidelines: no sparkles, no stars, no psychology/brain cliches.
  */

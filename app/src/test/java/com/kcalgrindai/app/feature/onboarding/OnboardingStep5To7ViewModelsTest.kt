@@ -2,6 +2,7 @@ package com.kcalgrindai.app.feature.onboarding
 
 import com.kcalgrindai.app.domain.model.ActivityLevel
 import com.kcalgrindai.app.domain.model.UnitSystem
+import com.kcalgrindai.app.domain.usecase.NutritionCalculator
 import com.kcalgrindai.app.feature.onboarding.activity.ActivityLevelViewModel
 import com.kcalgrindai.app.feature.onboarding.body.BodyMetricsViewModel
 import com.kcalgrindai.app.feature.onboarding.personal.PersonalDetailsViewModel
@@ -49,7 +50,12 @@ class OnboardingStep5To7ViewModelsTest {
         assertFalse(viewModel.uiState.value.isValid)
         assertNotNull(viewModel.uiState.value.ageError)
 
-        // Valid age
+        // Minor age < 18 with weight modification goal (draft has LOSE)
+        viewModel.onAgeChanged("16")
+        assertFalse(viewModel.uiState.value.isValid)
+        assertEquals(NutritionCalculator.MINOR_WEIGHT_MODIFICATION_RESTRICTION_MESSAGE, viewModel.uiState.value.ageError)
+
+        // Valid adult age
         viewModel.onAgeChanged("30")
         assertTrue(viewModel.uiState.value.isValid)
         assertNull(viewModel.uiState.value.ageError)

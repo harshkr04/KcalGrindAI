@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 // ============================================================================
-// Kcal Grind AI V3 — Material 3 Color Schemes
+// KcalGrind V3 — Material 3 Color Schemes
 // ============================================================================
 
 private val KcalGrindAILightColorScheme: ColorScheme = lightColorScheme(

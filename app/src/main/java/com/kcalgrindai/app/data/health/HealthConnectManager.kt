@@ -1,4 +1,4 @@
-package com.kcalgrindai.app.data.health
+﻿package com.kcalgrindai.app.data.health
 
 import android.content.Context
 import androidx.activity.result.contract.ActivityResultContract
@@ -34,7 +34,7 @@ class HealthConnectManager @Inject constructor(
 ) {
     val stepsPermission: String = HealthPermission.getReadPermission(StepsRecord::class)
     val activeCaloriesPermission: String = HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class)
-    val requiredPermissions: Set<String> = setOf(stepsPermission, activeCaloriesPermission)
+    val requiredPermissions: Set<String> = setOf(stepsPermission)
 
     fun checkAvailability(): HealthConnectAvailability {
         return try {

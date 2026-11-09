@@ -76,9 +76,18 @@ fun KcalGrindNavHost(
     val routeMap = remember(destinations) { KcalGrindRoute.validatedRouteMap(destinations) }
     val launchDestination by launchViewModel.destination.collectAsState()
 
-    androidx.compose.runtime.LaunchedEffect(launchDestination, initialRoute) {
-        if (launchDestination is LaunchDestination.Home && initialRoute != null) {
-            val valid = routeMap[initialRoute]
+    val initialMealSlot = remember(initialRoute) {
+        if (initialRoute != null && initialRoute.contains("mealSlot=", ignoreCase = true)) {
+            initialRoute.substringAfter("=").takeIf { it.isNotBlank() }
+        } else null
+    }
+    val baseInitialRoute = remember(initialRoute) {
+        initialRoute?.substringBefore("?")
+    }
+
+    androidx.compose.runtime.LaunchedEffect(launchDestination, baseInitialRoute) {
+        if (launchDestination is LaunchDestination.Home && baseInitialRoute != null) {
+            val valid = routeMap[baseInitialRoute]
             if (valid != null && navController.currentDestination?.route != valid.route) {
                 navController.navigate(valid.route)
             }
@@ -87,6 +96,18 @@ fun KcalGrindNavHost(
 
     val navigateToRoute: (String) -> Unit = { route ->
         navController.navigate(routeMap.getValue(route).route)
+    }
+
+    val navigateBackWithFallback: () -> Unit = {
+        val popped = navController.popBackStack()
+        if (!popped) {
+            navController.navigate(KcalGrindRoute.Home.route) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+            }
+        }
     }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -120,7 +141,7 @@ fun KcalGrindNavHost(
     }
 
     val startRoute = if (launchDestination is LaunchDestination.Home) {
-        KcalGrindRoute.Home.route
+        baseInitialRoute?.takeIf { routeMap.containsKey(it) } ?: KcalGrindRoute.Home.route
     } else {
         KcalGrindRoute.Welcome.route
     }
@@ -437,10 +458,11 @@ fun KcalGrindNavHost(
                     }
                     KcalGrindRoute.AiChat, KcalGrindRoute.AiAssistant, KcalGrindRoute.AiConfirmation -> {
                         AiChatScreen(
-                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateBack = navigateBackWithFallback,
                             onNavigateToTab = onNavigateToTab,
                             onOpenAddFood = { navController.navigate(KcalGrindRoute.AddFoodSheet.route) },
-                            onNavigateToSubscription = { navController.navigate(KcalGrindRoute.Subscription.route) }
+                            onNavigateToSubscription = { navController.navigate(KcalGrindRoute.Subscription.route) },
+                            initialPrompt = it.arguments?.getString("prompt") ?: it.arguments?.getString("initialPrompt")
                         )
                     }
                     KcalGrindRoute.Home -> {
@@ -466,7 +488,8 @@ fun KcalGrindNavHost(
                             onNavigateToAddFood = { navController.navigate(KcalGrindRoute.AddFoodSheet.route) },
                             onNavigateToMealDetail = { mealId ->
                                 navController.navigate("${KcalGrindRoute.MealDetail.route}?mealId=$mealId")
-                            }
+                            },
+                            initialMealSlot = initialMealSlot
                         )
                     }
                     KcalGrindRoute.MealDetail -> {
@@ -588,6 +611,19 @@ fun KcalGrindNavHost(
                 onFoodSaved = {
                     navController.popBackStack()
                 }
+            )
+        }
+        composable(
+            route = "${KcalGrindRoute.AiChat.route}?prompt={prompt}",
+            arguments = listOf(navArgument("prompt") { nullable = true; defaultValue = null; type = NavType.StringType })
+        ) { backStackEntry ->
+            val promptArg = backStackEntry.arguments?.getString("prompt")
+            AiChatScreen(
+                onNavigateBack = navigateBackWithFallback,
+                onNavigateToTab = onNavigateToTab,
+                onOpenAddFood = { navController.navigate(KcalGrindRoute.AddFoodSheet.route) },
+                onNavigateToSubscription = { navController.navigate(KcalGrindRoute.Subscription.route) },
+                initialPrompt = promptArg
             )
         }
         composable(

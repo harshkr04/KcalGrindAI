@@ -11,7 +11,21 @@ import kotlin.math.round
 
 object NutritionCalculator {
 
-    const val CAL_FLOOR = 1200
+    /**
+     * Conservative application guardrails for daily calorie floors.
+     *
+     * NOTE: These values (1500 kcal/day for males, 1200 kcal/day for females/unspecified)
+     * are conservative application guardrails to prevent harmful crash dieting, severe
+     * undereating, and micronutrient deficiencies during self-directed mobile logging.
+     * They are NOT clinical diagnostic or individualized medical standards. Users with
+     * clinical conditions, pregnancy, or specialized needs should consult a physician.
+     */
+    const val CAL_FLOOR_FEMALE = 1200
+    const val CAL_FLOOR_MALE = 1500
+    const val CAL_FLOOR = CAL_FLOOR_FEMALE
+
+    const val MINOR_WEIGHT_MODIFICATION_RESTRICTION_MESSAGE =
+        "Weight modification goals are restricted to ages 18 and older. Younger users may select 'Maintain' or 'Eat Healthier'."
 
     object Limits {
         const val MIN_AGE = 13
@@ -20,6 +34,13 @@ object NutritionCalculator {
         const val MAX_HEIGHT_CM = 250.0
         const val MIN_WEIGHT_KG = 30.0
         const val MAX_WEIGHT_KG = 300.0
+
+        // Calorie and weight-change safety bounds (conservative app guardrails, not clinical standards)
+        const val MIN_DAILY_CALORIES_FEMALE = CAL_FLOOR_FEMALE
+        const val MIN_DAILY_CALORIES_MALE = CAL_FLOOR_MALE
+        const val MIN_DAILY_CALORIES = CAL_FLOOR_FEMALE
+        const val MAX_DAILY_CALORIES = 5000     // 5000 kcal/day upper sanity bound
+        const val MAX_DAILY_SURPLUS_CALORIES = 750  // max surplus upper bound
     }
 
     data class MacroSplitResult(
@@ -61,6 +82,8 @@ object NutritionCalculator {
     private fun jsRound(n: Double): Long = Math.round(n)
 
     fun round1(n: Double): Double = jsRound(n * 10.0) / 10.0
+
+    fun round2(n: Double): Double = jsRound(n * 100.0) / 100.0
 
     fun kgToLb(kg: Double): Int = jsRound(kg * 2.2046226).toInt()
 
@@ -145,6 +168,33 @@ object NutritionCalculator {
         )
     }
 
+    fun calorieFloor(sex: String? = null): Int {
+        return when (sex?.lowercase()?.trim()) {
+            "male", "m" -> CAL_FLOOR_MALE
+            "female", "f" -> CAL_FLOOR_FEMALE
+            else -> CAL_FLOOR
+        }
+    }
+
+    fun isWeightModificationGoal(goal: GoalType): Boolean =
+        goal == GoalType.LOSE || goal == GoalType.GAIN || goal == GoalType.MUSCLE
+
+    /**
+     * Maximum safe weekly weight change rate is dynamically capped at 1% of current body weight per week.
+     * E.g.: 50 kg -> 0.50 kg/week; 70 kg -> 0.70 kg/week; 100 kg -> 1.00 kg/week.
+     */
+    fun maxWeeklyWeightChangeKg(weightKg: Double): Double = round2(weightKg * 0.01)
+
+    /**
+     * Maximum safe daily calorie deficit based on 1% weekly body weight change.
+     * 1 kg fat ~ 7700 kcal -> (weightKg * 0.01 * 7700) / 7 days = weightKg * 11 kcal/day.
+     */
+    fun maxDailyDeficitCalories(weightKg: Double): Int =
+        jsRound((weightKg * 0.01 * 7700.0) / 7.0).toInt()
+
+    fun maxDailySurplusCalories(weightKg: Double): Int =
+        min(Limits.MAX_DAILY_SURPLUS_CALORIES, maxDailyDeficitCalories(weightKg))
+
     fun calculate(
         weightKg: Double,
         heightCm: Double,
@@ -152,10 +202,16 @@ object NutritionCalculator {
         goal: GoalType,
         activity: ActivityLevel,
         goalWeightKg: Double? = null,
-        dietTags: List<String> = emptyList()
+        dietTags: List<String> = emptyList(),
+        sex: String? = null
     ): CalculationResult {
         if (weightKg <= 0 || heightCm <= 0 || age <= 0) {
             throw IllegalArgumentException("missing_profile: weight, height, and age must be positive")
+        }
+
+        // Safety guardrail: minors (< 18) are prohibited from weight-loss or weight-gain goals
+        if (age < 18 && isWeightModificationGoal(goal)) {
+            throw IllegalArgumentException(MINOR_WEIGHT_MODIFICATION_RESTRICTION_MESSAGE)
         }
 
         val baseBmr = bmr(weightKg, heightCm, age)
@@ -172,12 +228,15 @@ object NutritionCalculator {
             delta = -250
         }
 
-        var calories = (jsRound((tdee + delta) / 10.0) * 10).toInt()
+        val safeDelta = clampDailyCalorieDelta(delta, weightKg)
+        var calories = (jsRound((tdee + safeDelta) / 10.0) * 10).toInt()
         var floored = false
-        val floor = max(CAL_FLOOR, (jsRound(baseBmr * 0.95 / 10.0) * 10).toInt())
+        val floor = max(calorieFloor(sex), (jsRound(baseBmr * 0.95 / 10.0) * 10).toInt())
         if (calories < floor) {
             calories = floor
             floored = true
+        } else if (calories > Limits.MAX_DAILY_CALORIES) {
+            calories = Limits.MAX_DAILY_CALORIES
         }
 
         val macros = macroSplit(calories, weightKg, goal, dietTags)
@@ -293,5 +352,14 @@ object NutritionCalculator {
             return "Your target sits about ${result.delta} kcal above your estimated daily burn — enough to build without unnecessary excess."
         }
         return "Your target matches your estimated daily burn, which keeps things stable while you get into a rhythm."
+    }
+
+    fun isWeeklyPaceSafe(weeklyWeightChangeKg: Double, weightKg: Double = 70.0): Boolean =
+        abs(weeklyWeightChangeKg) <= maxWeeklyWeightChangeKg(weightKg)
+
+    fun clampDailyCalorieDelta(delta: Int, weightKg: Double = 70.0): Int {
+        val maxDeficit = maxDailyDeficitCalories(weightKg)
+        val maxSurplus = maxDailySurplusCalories(weightKg)
+        return delta.coerceIn(-maxDeficit, maxSurplus)
     }
 }

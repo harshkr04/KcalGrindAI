@@ -96,16 +96,6 @@ class ProfileViewModel @Inject constructor(
         ?.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
         ?: MutableStateFlow(true).asStateFlow()
 
-    val deductActiveCaloriesEnabled: StateFlow<Boolean> = userPreferencesRepository?.deductActiveCaloriesEnabled
-        ?.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
-        ?: MutableStateFlow(false).asStateFlow()
-
-    fun setDeductActiveCaloriesEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            safeLog("Settings: Deduct active calories set to $enabled")
-            userPreferencesRepository?.setDeductActiveCaloriesEnabled(enabled)
-        }
-    }
 
     fun setMealRemindersEnabled(enabled: Boolean) {
         viewModelScope.launch {
@@ -133,6 +123,15 @@ class ProfileViewModel @Inject constructor(
     /** Epoch millis of the last successful sync, or 0 if never synced. */
     val lastSyncTimestamp: Long
         get() = syncRepository?.getLastSyncTimestamp() ?: 0L
+
+    /** True if last sync was > 7 days ago or data has never been backed up. */
+    val isBackupOverdue: Boolean
+        get() {
+            val ts = lastSyncTimestamp
+            if (ts == 0L) return true
+            val sevenDaysMs = 7L * 24 * 60 * 60 * 1000
+            return (System.currentTimeMillis() - ts) > sevenDaysMs
+        }
 
     init {
         loadProfile()
