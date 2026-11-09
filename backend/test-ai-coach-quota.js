@@ -1,4 +1,10 @@
 process.env.TEST = 'true';
+if (!process.env.FIREBASE_PROJECT_ID) {
+  process.env.FIREBASE_PROJECT_ID = 'test-kcalgrind-ci';
+}
+if (!process.env.GEMINI_API_KEY) {
+  process.env.GEMINI_API_KEY = 'mock-ci-gemini-key';
+}
 import assert from 'node:assert';
 
 const {
