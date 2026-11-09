@@ -58,12 +58,12 @@ jobs:
           fi
 
       - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace || gradle testDebugUnitTest --no-daemon --stacktrace
 
       - name: Build Release APK Verification
         env:
           PROD_BACKEND_URL: "https://api.kcalgrind.app"
-        run: ./gradlew assembleRelease --no-daemon --stacktrace
+        run: ./gradlew assembleRelease --no-daemon --stacktrace || gradle assembleRelease --no-daemon --stacktrace
 
   backend-tests:
     name: Backend Proxy Tests
