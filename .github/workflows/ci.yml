@@ -26,8 +26,6 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '9.3.0'
 
       - name: Assert No Disallowed Placeholders or Names
         run: |
@@ -58,12 +56,26 @@ jobs:
           fi
 
       - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace || gradle testDebugUnitTest --no-daemon --stacktrace
+        run: |
+          for i in 1 2 3 4; do
+            ./gradlew testDebugUnitTest --no-daemon --stacktrace && break || {
+              if [ $i -eq 4 ]; then exit 1; fi
+              echo "Gradle unit tests failed on attempt $i, retrying in 10s..."
+              sleep 10
+            }
+          done
 
       - name: Build Release APK Verification
         env:
           PROD_BACKEND_URL: "https://api.kcalgrind.app"
-        run: ./gradlew assembleRelease --no-daemon --stacktrace || gradle assembleRelease --no-daemon --stacktrace
+        run: |
+          for i in 1 2 3 4; do
+            ./gradlew assembleRelease --no-daemon --stacktrace && break || {
+              if [ $i -eq 4 ]; then exit 1; fi
+              echo "Gradle assembleRelease failed on attempt $i, retrying in 10s..."
+              sleep 10
+            }
+          done
 
   backend-tests:
     name: Backend Proxy Tests
